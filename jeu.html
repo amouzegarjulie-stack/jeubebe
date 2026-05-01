@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Questions de Couple</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+    }
+
+    .app {
+      width: 100%;
+      height: 100dvh;
+      max-width: 430px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 26px 0 18px;
+    }
+
+    .card-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+    }
+
+    .card {
+      width: min(82vw, 340px);
+      height: min(82vw, 340px);
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 28px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 28px;
+      box-shadow: 0 18px 45px rgba(255, 0, 127, 0.22);
+    }
+
+    .back {
+      background: #FF007F;
+      color: white;
+      font-size: 110px;
+      font-weight: 900;
+    }
+
+    .front {
+      background: white;
+      color: black;
+      transform: rotateY(180deg);
+      font-size: clamp(21px, 5.5vw, 30px);
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: -0.7px;
+    }
+
+    .nav {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 8px;
+    }
+
+    button {
+      height: 44px;
+      border: 2px solid #FF007F;
+      border-radius: 999px;
+      background: transparent;
+      color: #FF007F;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      background: #FF007F;
+      color: #000000;
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <section class="card-area">
+      <div class="card" id="card">
+        <div class="face back">♥</div>
+        <div class="face front" id="questionText">Choisis une catégorie</div>
+      </div>
+    </section>
+
+    <nav class="nav">
+      <button data-category="politique">Politique</button>
+      <button data-category="societe">Société</button>
+      <button data-category="intime">Intime</button>
+      <button data-category="chretien">Chrétien</button>
+    </nav>
+  </main>
+
+  <script>
+    const questions = {
+      politique: [
+        "Quel rôle l'État devrait-il jouer dans notre vie quotidienne ?",
+        "La liberté individuelle doit-elle parfois passer après le bien commun ?",
+        "Jusqu'où accepterais-tu des restrictions pour protéger l'environnement ?",
+        "Quelle injustice politique te révolte le plus ?",
+        "Penses-tu que voter est un devoir moral ?",
+        "L'État doit-il davantage taxer les plus riches ?",
+        "La sécurité justifie-t-elle une surveillance plus importante ?",
+        "Quelle cause politique pourrais-tu défendre publiquement ?",
+        "Faut-il privilégier l'égalité ou la liberté ?",
+        "Quelle limite poserais-tu à la liberté d'expression ?",
+        "Le capitalisme est-il compatible avec la justice sociale ?",
+        "L'écologie devrait-elle être prioritaire sur l'économie ?",
+        "Quel sujet politique refuses-tu de banaliser ?",
+        "La désobéissance civile peut-elle être légitime ?",
+        "Quel type de dirigeant t'inspire confiance ?",
+        "Le système démocratique actuel te semble-t-il suffisant ?",
+        "L'État doit-il intervenir dans l'éducation des enfants ?",
+        "Faut-il accueillir plus largement les migrants ?",
+        "Quelle loi aimerais-tu voir changer ?",
+        "La politique devrait-elle avoir une place dans notre couple ?",
+        "Peut-on aimer quelqu'un qui vote très différemment de nous ?",
+        "Quelle valeur politique veux-tu transmettre à nos enfants ?"
+      ],
+
+      societe: [
+        "Le travail doit-il être central dans une vie réussie ?",
+        "Quelle place devrait avoir la technologie dans notre foyer ?",
+        "Les réseaux sociaux rendent-ils les couples plus fragiles ?",
+        "L'école prépare-t-elle vraiment à la vie ?",
+        "Quelle pression sociale ressens-tu le plus ?",
+        "Le féminisme est-il encore nécessaire aujourd'hui ?",
+        "La réussite sociale est-elle trop valorisée ?",
+        "Comment définirais-tu une vie simple mais riche ?",
+        "La société respecte-t-elle assez les familles ?",
+        "L'intelligence artificielle te fait-elle peur ou envie ?",
+        "Quelle norme sociale aimerais-tu briser ?",
+        "Le mariage est-il encore important dans notre société ?",
+        "Les enfants devraient-ils grandir avec moins d'écrans ?",
+        "Quelle habitude moderne abîme le plus les relations ?",
+        "La société pousse-t-elle trop à la comparaison ?",
+        "Faut-il toujours chercher à être productif ?",
+        "Quelle place donner à l'argent dans une vie équilibrée ?",
+        "Les hommes parlent-ils assez de leurs émotions ?",
+        "Les femmes subissent-elles encore trop de charges invisibles ?",
+        "Quel changement social aimerais-tu voir dans 20 ans ?",
+        "Que veux-tu absolument protéger de l'influence du monde ?",
+        "Quelle tradition mérite d'être conservée ?"
+      ],
+
+      intime: [
+        "Quand te sens-tu le plus aimé par moi ?",
+        "Quelle peur as-tu parfois dans notre relation ?",
+        "Quel souvenir de nous te touche le plus ?",
+        "Quel désir as-tu du mal à exprimer ?",
+        "Qu'est-ce qui te rassure profondément ?",
+        "Quelle blessure du passé influence encore ta façon d'aimer ?",
+        "De quoi as-tu besoin quand tu vas mal ?",
+        "Quelle partie de toi aimerais-tu que je comprenne mieux ?",
+        "Quel projet de vie te fait rêver avec moi ?",
+        "Qu'est-ce qui te fait te sentir désiré ?",
+        "Quelle parole aimerais-tu entendre plus souvent ?",
+        "Quel sujet intime évites-tu parfois ?",
+        "Comment aimerais-tu que l'on traverse les conflits ?",
+        "Qu'est-ce qui te donne confiance en notre avenir ?",
+        "Quelle est ta plus grande attente dans notre couple ?",
+        "Qu'aimerais-tu vivre avec moi que nous n'avons pas encore vécu ?",
+        "Quel moment simple aimerais-tu répéter plus souvent ?",
+        "Dans quoi aimerais-tu que je te soutienne davantage ?",
+        "Qu'est-ce qui te rend vulnérable avec moi ?",
+        "Quelle habitude pourrait renforcer notre amour ?",
+        "Quelle version de nous veux-tu construire ?",
+        "Que veux-tu que je n'oublie jamais de toi ?"
+      ],
+
+      chretien: [
+        "Comment vois-tu Dieu agir dans notre couple ?",
+        "Quelle place veux-tu donner à la prière à deux ?",
+        "Comment pouvons-nous mieux lire la Bible ensemble ?",
+        "Quelle valeur biblique veux-tu mettre au centre de notre foyer ?",
+        "Comment vivre le pardon dans notre couple ?",
+        "Quelle peur aimerais-tu remettre à Dieu ?",
+        "Comment discerner ensemble les grandes décisions ?",
+        "Que signifie pour toi aimer comme Christ aime ?",
+        "Quelle habitude spirituelle aimerais-tu développer ?",
+        "Comment protéger notre couple spirituellement ?",
+        "Quelle vision biblique as-tu de la famille ?",
+        "Comment rester unis dans les saisons difficiles ?",
+        "Quel verset parle le plus à notre relation ?",
+        "Comment servir Dieu ensemble concrètement ?",
+        "Quelle place donner à l'Église dans notre vie ?",
+        "Comment éviter que la foi devienne une routine ?",
+        "Quelle qualité spirituelle admires-tu chez moi ?",
+        "Comment encourager la croissance spirituelle de l'autre ?",
+        "Quelle décision aimerais-tu confier davantage à Dieu ?",
+        "Comment vivre l'humilité dans notre couple ?",
+        "Quelle mission aimerais-tu que notre couple porte ?",
+        "Comment aimerais-tu que notre maison reflète notre foi ?"
+      ]
+    };
+
+    const card = document.getElementById("card");
+    const questionText = document.getElementById("questionText");
+    const buttons = document.querySelectorAll("button");
+
+    const lastQuestions = {
+      politique: null,
+      societe: null,
+      intime: null,
+      chretien: null
+    };
+
+    let currentQuestion = "Choisis une catégorie";
+
+    function getRandomQuestion(category) {
+      const list = questions[category];
+      let selected;
+
+      do {
+        selected = list[Math.floor(Math.random() * list.length)];
+      } while (selected === lastQuestions[category] && list.length > 1);
+
+      lastQuestions[category] = selected;
+      return selected;
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.category;
+
+        card.classList.remove("flipped");
+
+        currentQuestion = getRandomQuestion(category);
+
+        setTimeout(() => {
+          questionText.textContent = currentQuestion;
+        }, 300);
+      });
+    });
+
+    card.addEventListener("click", () => {
+      card.classList.toggle("flipped");
+    });
+  </script>
+</body>
+</html>
