@@ -806,13 +806,13 @@
       setupPresence(roomId).catch(console.error);
     }
 
-    function subscribeRoom(roomId) {
-      if (state.unsub) state.unsub();
-      state.unsub = onValue(roomRef(roomId), snapshot => {
-        state.game = snapshot.val();
-        render();
-      });
-    }
+   function subscribeRoom(roomId) {
+  if (state.unsub) state.unsub();
+  state.unsub = onValue(roomRef(roomId), snapshot => {
+    state.game = snapshot.val() ? normalizeGame(snapshot.val()) : null;
+    render();
+  });
+}
 
     async function setupPresence(roomId) {
       if (!firebaseReady) return;
@@ -820,16 +820,39 @@
       await set(onlineRef, true);
       onDisconnect(onlineRef).set(false);
     }
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  return Object.values(value);
+}
 
-    async function mutateGame(mutator) {
-      requireFirebase();
-      await runTransaction(roomRef(state.roomId), current => {
-        if (!current) return current;
-        const next = mutator(current);
-        next.updatedAt = Date.now();
-        return next;
-      });
-    }
+function normalizeGame(game) {
+  if (!game) return game;
+
+  game.deck = asArray(game.deck);
+  game.discard = asArray(game.discard);
+  game.log = asArray(game.log);
+  game.playerOrder = asArray(game.playerOrder);
+
+  Object.values(game.players || {}).forEach(player => {
+    player.hand = asArray(player.hand);
+    player.safeties = asArray(player.safeties);
+    player.distanceCards = asArray(player.distanceCards);
+  });
+
+  return game;
+}
+
+   async function mutateGame(mutator) {
+  requireFirebase();
+  await runTransaction(roomRef(state.roomId), current => {
+    if (!current) return current;
+    current = normalizeGame(current);
+    const next = mutator(current);
+    next.updatedAt = Date.now();
+    return next;
+  });
+}
 
     function currentPlayer(game) {
       return game.players[game.turnPlayerId];
@@ -1194,10 +1217,11 @@
 
       refs.handTitle.textContent = isMyTurn ? "Ta main · choisis une carte" : "Ta main";
       refs.handCount.textContent = `${player.hand.length} carte${player.hand.length > 1 ? "s" : ""}`;
-      refs.handCards.innerHTML = player.hand.map((cardId, index) => {
-        const card = CARD_DEFS[cardId];
-        const disabled = !isMyTurn || !isPlaying;
-        return `
+     refs.handCards.innerHTML = player.hand.map((cardId, index) => {
+  const card = CARD_DEFS[cardId];
+  if (!card) return "";
+  const disabled = !isMyTurn || !isPlaying;
+  return `
           <article class="game-card ${card.type}">
             <div>
               <h3>${escapeHtml(card.name)}</h3>
