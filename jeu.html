@@ -98,7 +98,7 @@
     .nav {
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+   grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       padding: 0 8px;
     }
@@ -214,7 +214,7 @@
     "Que veux-tu absolument protéger de l’influence du monde moderne ?",
     "Quel changement de société te ferait vraiment peur ?",
     "Qu’est-ce qui te ferait dire que la société va dans la mauvaise direction ?"
-]
+
       ],
 
       intime: [
@@ -287,7 +287,22 @@
     const card = document.getElementById("card");
     const questionText = document.getElementById("questionText");
  const buttons = document.querySelectorAll("button[data-category]");
-    const randomBtn = document.getElementById("randomBtn");
+ const randomBtn = document.getElementById("randomBtn");
+
+const lastQuestions = {
+  politique: null,
+  societe: null,
+  intime: null,
+  chretien: null
+};
+
+let currentQuestion = "Choisis une catégorie";
+
+function getRandomFromAll() {
+  const categories = Object.keys(questions);
+  const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+  return getRandomQuestion(randomCategory);
+}
 
 randomBtn.addEventListener("click", () => {
   card.classList.remove("flipped");
@@ -298,14 +313,7 @@ randomBtn.addEventListener("click", () => {
   }, 300);
 });
 
-    const lastQuestions = {
-      politique: null,
-      societe: null,
-      intime: null,
-      chretien: null
-    };
 
-    let currentQuestion = "Choisis une catégorie";
 
     function getRandomQuestion(category) {
       const list = questions[category];
