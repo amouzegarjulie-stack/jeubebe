@@ -7,18 +7,17 @@
 
   <style>
     :root {
-      --bg: #F4F4F9;
+      --bg: #f4f4f9;
       --text: #333;
       --muted: #767676;
-      --card: #FFFFFF;
-      --border: #E2E2EA;
+      --card: #ffffff;
+      --border: #e2e2ea;
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-      --mint: #BDEBD0;
-      --coral: #FFAAA5;
-      --sky: #B8E4FF;
-      --gold: #FFE8A3;
-      --danger: #FF6B6B;
-      --success: #51C878;
+      --mint: #bdebd0;
+      --coral: #ffaaa5;
+      --sky: #b8e4ff;
+      --gold: #ffe8a3;
+      --danger: #ff6b6b;
       --radius: 22px;
       --tap: 52px;
     }
@@ -55,7 +54,7 @@
     }
 
     button.secondary {
-      background: #ECECF3;
+      background: #ececf3;
       color: var(--text);
     }
 
@@ -63,6 +62,10 @@
       background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
+    }
+
+    button.danger {
+      background: var(--danger);
     }
 
     button:disabled {
@@ -224,6 +227,7 @@
     .player-card {
       display: grid;
       gap: 12px;
+      margin-bottom: 12px;
     }
 
     .player-head {
@@ -247,8 +251,8 @@
       min-height: 96px;
       border-radius: 18px;
       padding: 12px;
-      background: #FAFAFD;
-      border: 1px dashed #D9D9E5;
+      background: #fafafd;
+      border: 1px dashed #d9d9e5;
       display: grid;
       gap: 8px;
     }
@@ -270,7 +274,7 @@
       padding: 6px 9px;
       font-size: 0.75rem;
       font-weight: 900;
-      background: #EFEFF6;
+      background: #efeff6;
     }
 
     .mini-card.distance { background: var(--mint); }
@@ -376,22 +380,6 @@
       border-radius: 14px;
     }
 
-    .leaderboard {
-      display: grid;
-      gap: 10px;
-    }
-
-    .leader-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      padding: 12px;
-      background: #FAFAFD;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
-
     .toast {
       position: fixed;
       left: 50%;
@@ -414,17 +402,14 @@
       opacity: 1;
     }
 
-    svg {
-      width: 22px;
-      height: 22px;
-      flex: 0 0 auto;
+    .help {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.4;
     }
 
     @media (min-width: 481px) {
-      body {
-        background: #EAEAEE;
-      }
-
+      body { background: #eaeaee; }
       .app {
         border-left: 1px solid var(--border);
         border-right: 1px solid var(--border);
@@ -437,13 +422,8 @@
   <main class="app">
     <section id="lobbyScreen" class="screen landing">
       <div class="brand">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 14h11l3 3h2" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6 17h.01M15 17h.01" stroke="#333" stroke-width="4" stroke-linecap="round"/>
-          <path d="M7 10h6l2 4H5l2-4Z" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
         <h1>1000<br>Bornes</h1>
-        <p>Version mobile, minimaliste, deux joueurs en ligne avec synchronisation temps réel. Sans config Firebase, le jeu fonctionne en mode test local entre deux onglets.</p>
+        <p>Deux joueurs en ligne avec Firebase Realtime Database.</p>
       </div>
 
       <div class="card-panel form-grid">
@@ -453,15 +433,12 @@
           <button id="createRoomBtn">Créer</button>
           <button id="joinRoomBtn" class="secondary">Rejoindre</button>
         </div>
-        <button id="quickRoomBtn" class="ghost">Salon aléatoire</button>
+        <button id="quickRoomBtn" class="ghost">Créer salon aléatoire</button>
+        <div id="connectionStatus" class="help"></div>
       </div>
 
-      <div class="card-panel leaderboard">
-        <div class="player-head">
-          <strong>Classement</strong>
-          <span class="pill">Ratio victoires</span>
-        </div>
-        <div id="leaderboardList"></div>
+      <div class="card-panel help">
+        Téléphone 1: créer un salon. Téléphone 2: entrer exactement le même code puis rejoindre.
       </div>
     </section>
 
@@ -497,6 +474,11 @@
           <button id="endTurnBtn" class="secondary">Fin du tour</button>
         </section>
 
+        <section class="center-actions">
+          <button id="newRoundBtn" class="ghost">Nouvelle manche</button>
+          <button id="leaveBtn" class="danger">Quitter</button>
+        </section>
+
         <section class="card-panel">
           <div class="player-head">
             <strong>Journal</strong>
@@ -524,69 +506,39 @@
       getDatabase,
       ref,
       set,
-      update,
       get,
       onValue,
       runTransaction,
-      serverTimestamp
+      serverTimestamp,
+      onDisconnect,
+      remove
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    /*****************************************************************
-     * 1) CONFIG FIREBASE
-     * Remplace ces valeurs par celles de ton projet Firebase.
-     * Active Realtime Database en mode test pendant le développement.
-     *****************************************************************/
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+    /***************************************************************
+     * IMPORTANT
+     * Replace this object with your real Firebase web app config.
+     * Firebase Console > Project settings > Your apps > Web app.
+     * You must also enable Realtime Database.
+     ***************************************************************/
+ const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
 
-    const usingLocalSync = firebaseConfig.apiKey === "YOUR_API_KEY";
-    const app = usingLocalSync ? null : initializeApp(firebaseConfig);
-    const db = usingLocalSync ? null : getDatabase(app);
+    const firebaseReady = !firebaseConfig.apiKey.includes("PASTE_");
+    let app = null;
+    let db = null;
 
-    // Mode test local : permet de jouer sur le même PC dans deux onglets,
-    // sans Firebase configuré. La synchro passe par localStorage + BroadcastChannel.
-    const localChannel = usingLocalSync ? new BroadcastChannel("mille-bornes-local-sync") : null;
-    let localRoomListener = null;
-
-    if (localChannel) {
-      localChannel.onmessage = event => {
-        if (!event.data || event.data.roomId !== state.roomId || !localRoomListener) return;
-        localRoomListener(localReadRoom(event.data.roomId));
-      };
+    if (firebaseReady) {
+      app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
     }
 
-    window.addEventListener("storage", event => {
-      if (!usingLocalSync || !state.roomId || event.key !== localRoomKey(state.roomId) || !localRoomListener) return;
-      localRoomListener(localReadRoom(state.roomId));
-    });
-
-    function localRoomKey(roomId) {
-      return `mille-bornes-room-${roomId}`;
-    }
-
-    function localLeaderboardKey() {
-      return "mille-bornes-leaderboard";
-    }
-
-    function localReadRoom(roomId) {
-      return JSON.parse(localStorage.getItem(localRoomKey(roomId)) || "null");
-    }
-
-    function localWriteRoom(roomId, game) {
-      localStorage.setItem(localRoomKey(roomId), JSON.stringify(game));
-      if (localChannel) localChannel.postMessage({ roomId });
-    }
-
-    /*****************************************************************
-     * 2) DONNÉES DU JEU
-     *****************************************************************/
     const CARD_DEFS = {
       d25: { id: "d25", type: "distance", value: 25, name: "25 km", text: "Avance de 25 km.", count: 10 },
       d50: { id: "d50", type: "distance", value: 50, name: "50 km", text: "Avance de 50 km.", count: 10 },
@@ -628,23 +580,6 @@
         return acc;
       }, {});
 
-    const urlParams = new URLSearchParams(location.search);
-    const forceNewPlayer = urlParams.has("newPlayer");
-    const storedPlayerId = localStorage.getItem("mille-bornes-player-id");
-
-    const state = {
-      playerId: forceNewPlayer || !storedPlayerId ? crypto.randomUUID() : storedPlayerId,
-      playerName: localStorage.getItem("mille-bornes-player-name") || "",
-      roomId: "",
-      game: null,
-      unsub: null,
-      selectedCard: null
-    };
-    localStorage.setItem("mille-bornes-player-id", state.playerId);
-
-    /*****************************************************************
-     * 3) HELPERS UI
-     *****************************************************************/
     const $ = selector => document.querySelector(selector);
 
     const refs = {
@@ -655,7 +590,7 @@
       createRoomBtn: $("#createRoomBtn"),
       joinRoomBtn: $("#joinRoomBtn"),
       quickRoomBtn: $("#quickRoomBtn"),
-      leaderboardList: $("#leaderboardList"),
+      connectionStatus: $("#connectionStatus"),
       roomLabel: $("#roomLabel"),
       turnPill: $("#turnPill"),
       deckCount: $("#deckCount"),
@@ -664,6 +599,8 @@
       playersArea: $("#playersArea"),
       drawBtn: $("#drawBtn"),
       endTurnBtn: $("#endTurnBtn"),
+      newRoundBtn: $("#newRoundBtn"),
+      leaveBtn: $("#leaveBtn"),
       log: $("#log"),
       scorePill: $("#scorePill"),
       handDrawer: $("#handDrawer"),
@@ -674,28 +611,70 @@
       toast: $("#toast")
     };
 
-    refs.playerName.value = state.playerName;
+    const savedName = localStorage.getItem("mille-bornes-player-name") || "";
+    refs.playerName.value = savedName;
+
+    let playerId = sessionStorage.getItem("mille-bornes-session-player-id");
+    if (!playerId) {
+      playerId = crypto.randomUUID();
+      sessionStorage.setItem("mille-bornes-session-player-id", playerId);
+    }
+
+    const state = {
+      roomId: "",
+      game: null,
+      unsub: null
+    };
+
+    refs.connectionStatus.textContent = firebaseReady
+      ? "Firebase configuré. Le jeu peut fonctionner entre deux téléphones."
+      : "Firebase non configuré. Remplace firebaseConfig avant de tester entre deux téléphones.";
 
     function toast(message) {
       refs.toast.textContent = message;
       refs.toast.classList.add("show");
-      setTimeout(() => refs.toast.classList.remove("show"), 1700);
+      setTimeout(() => refs.toast.classList.remove("show"), 1800);
     }
 
-    function iconFor(card) {
-      if (card.type === "distance") return "<svg viewBox='0 0 24 24' fill='none'><path d='M5 12h14M13 6l6 6-6 6' stroke='#333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
-      if (card.type === "attack") return "<svg viewBox='0 0 24 24' fill='none'><path d='M12 8v5M12 17h.01M10.3 4.4 2.8 17.5A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.5L13.7 4.4a2 2 0 0 0-3.4 0Z' stroke='#333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
-      if (card.type === "remedy") return "<svg viewBox='0 0 24 24' fill='none'><path d='M12 5v14M5 12h14' stroke='#333' stroke-width='2' stroke-linecap='round'/></svg>";
-      return "<svg viewBox='0 0 24 24' fill='none'><path d='M12 3 5 6v5c0 5 3.2 8.7 7 10 3.8-1.3 7-5 7-10V6l-7-3Z' stroke='#333' stroke-width='2' stroke-linejoin='round'/></svg>";
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
     function cardName(cardId) {
       return CARD_DEFS[cardId]?.name || "-";
     }
 
-    /*****************************************************************
-     * 4) CRÉATION DE DECK ET ÉTAT INITIAL
-     *****************************************************************/
+    function requireFirebase() {
+      if (!firebaseReady || !db) {
+        throw new Error("Firebase n'est pas configuré dans le code.");
+      }
+    }
+
+    function roomPath(roomId) {
+      return `rooms/${roomId}`;
+    }
+
+    function roomRef(roomId) {
+      return ref(db, roomPath(roomId));
+    }
+
+    function cleanRoomId(value) {
+      return value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+    }
+
+    function getLobbyInput() {
+      const name = refs.playerName.value.trim() || "Pilote";
+      const roomId = cleanRoomId(refs.roomId.value) || `route-${Math.floor(1000 + Math.random() * 9000)}`;
+      refs.roomId.value = roomId;
+      localStorage.setItem("mille-bornes-player-name", name);
+      return { name, roomId };
+    }
+
     function shuffle(array) {
       const copy = [...array];
       for (let i = copy.length - 1; i > 0; i--) {
@@ -713,10 +692,11 @@
       return shuffle(deck);
     }
 
-    function makePlayer(name) {
+    function makePlayer(name, id) {
       return {
-        id: crypto.randomUUID(),
+        id,
         name,
+        online: true,
         hand: [],
         distance: 0,
         speedLimit: false,
@@ -730,137 +710,133 @@
       };
     }
 
-    function createInitialGame(firstPlayerName) {
+    function createInitialGame(name) {
       const deck = buildDeck();
-      const p1 = makePlayer(firstPlayerName);
-      p1.id = state.playerId;
+      const p1 = makePlayer(name, playerId);
       p1.hand = deck.splice(0, 6);
 
       return {
         createdAt: Date.now(),
+        updatedAt: Date.now(),
         status: "waiting",
-        hostId: state.playerId,
-        players: { [p1.id]: p1 },
-        playerOrder: [p1.id],
-        turnPlayerId: p1.id,
+        hostId: playerId,
+        players: { [playerId]: p1 },
+        playerOrder: [playerId],
+        turnPlayerId: playerId,
         deck,
         discard: [],
-        log: [`${firstPlayerName} a créé le salon.`],
+        log: [`${name} a créé le salon.`],
         winnerId: null,
         round: 1
       };
     }
 
-    /*****************************************************************
-     * 5) SYNCHRONISATION FIREBASE
-     *****************************************************************/
-    function roomRef(roomId) {
-      return ref(db, `rooms/${roomId}`);
-    }
-
     async function readRoom(roomId) {
-      if (usingLocalSync) return localReadRoom(roomId);
+      requireFirebase();
       const snap = await get(roomRef(roomId));
       return snap.exists() ? snap.val() : null;
     }
 
-    async function saveGame(nextGame) {
-      if (usingLocalSync) {
-        localWriteRoom(state.roomId, nextGame);
-        state.game = nextGame;
-        render();
+    async function createRoom() {
+      const { name, roomId } = getLobbyInput();
+      requireFirebase();
+
+      const result = await runTransaction(roomRef(roomId), current => {
+        if (current) return;
+        return createInitialGame(name);
+      });
+
+      if (!result.committed) {
+        toast("Ce salon existe déjà.");
         return;
       }
-      await set(roomRef(state.roomId), nextGame);
+
+      enterRoom(roomId);
     }
 
-    async function mutateGame(mutator) {
-      if (usingLocalSync) {
-        const current = localReadRoom(state.roomId);
-        if (!current) throw new Error("Salon introuvable.");
-        const next = mutator(structuredClone(current));
-        localWriteRoom(state.roomId, next);
-        state.game = next;
-        render();
+    async function joinRoom() {
+      const { name, roomId } = getLobbyInput();
+      requireFirebase();
+
+      const result = await runTransaction(roomRef(roomId), current => {
+        if (!current) return current;
+
+        current.players = current.players || {};
+        current.playerOrder = current.playerOrder || [];
+        current.deck = current.deck || [];
+        current.log = current.log || [];
+
+        if (!current.players[playerId]) {
+          if (current.playerOrder.length >= 2) return current;
+
+          const player = makePlayer(name, playerId);
+          player.hand = current.deck.splice(0, 6);
+          current.players[playerId] = player;
+          current.playerOrder.push(playerId);
+          current.status = "playing";
+          current.log.unshift(`${name} rejoint la partie.`);
+        } else {
+          current.players[playerId].online = true;
+          current.players[playerId].name = name;
+        }
+
+        current.updatedAt = Date.now();
+        return current;
+      });
+
+      const game = result.snapshot.val();
+      if (!game) {
+        toast("Salon introuvable.");
+        return;
+      }
+      if (!game.players || !game.players[playerId]) {
+        toast("Salon complet.");
         return;
       }
 
-      await runTransaction(roomRef(state.roomId), current => {
-        if (!current) return current;
-        return mutator(structuredClone(current));
-      });
+      enterRoom(roomId);
+    }
+
+    function enterRoom(roomId) {
+      state.roomId = roomId;
+      refs.lobbyScreen.classList.add("hidden");
+      refs.gameScreen.classList.remove("hidden");
+      refs.roomLabel.textContent = `Salon ${roomId}`;
+      subscribeRoom(roomId);
+      setupPresence(roomId).catch(console.error);
     }
 
     function subscribeRoom(roomId) {
       if (state.unsub) state.unsub();
-
-      if (usingLocalSync) {
-        localRoomListener = game => {
-          state.game = game;
-          render();
-        };
-        localRoomListener(localReadRoom(roomId));
-        state.unsub = () => { localRoomListener = null; };
-        return;
-      }
-
       state.unsub = onValue(roomRef(roomId), snapshot => {
         state.game = snapshot.val();
         render();
       });
     }
 
-    async function loadLeaderboard() {
-      const board = usingLocalSync
-        ? JSON.parse(localStorage.getItem(localLeaderboardKey()) || "{}")
-        : ((await get(ref(db, "leaderboard"))).val() || {});
-      const rows = Object.values(board)
-        .sort((a, b) => (b.wins / Math.max(1, b.games)) - (a.wins / Math.max(1, a.games)))
-        .slice(0, 8);
-
-      refs.leaderboardList.innerHTML = rows.length ? rows.map(row => {
-        const ratio = Math.round((row.wins / Math.max(1, row.games)) * 100);
-        return `<div class="leader-row"><strong>${escapeHtml(row.name)}</strong><span>${ratio}% · ${row.wins}/${row.games}</span></div>`;
-      }).join("") : `<div class="leader-row"><span>Aucun résultat</span><span>-</span></div>`;
+    async function setupPresence(roomId) {
+      if (!firebaseReady) return;
+      const onlineRef = ref(db, `${roomPath(roomId)}/players/${playerId}/online`);
+      await set(onlineRef, true);
+      onDisconnect(onlineRef).set(false);
     }
 
-    async function recordWin(winner, loser) {
-      if (usingLocalSync) {
-        const board = JSON.parse(localStorage.getItem(localLeaderboardKey()) || "{}");
-        board[winner.id] = {
-          name: winner.name,
-          wins: (board[winner.id]?.wins || 0) + 1,
-          games: (board[winner.id]?.games || 0) + 1
-        };
-        board[loser.id] = {
-          name: loser.name,
-          wins: board[loser.id]?.wins || 0,
-          games: (board[loser.id]?.games || 0) + 1
-        };
-        localStorage.setItem(localLeaderboardKey(), JSON.stringify(board));
-        loadLeaderboard().catch(console.error);
-        return;
-      }
-
-      const updates = {};
-      updates[`leaderboard/${winner.id}/name`] = winner.name;
-      updates[`leaderboard/${winner.id}/wins`] = (winner.wins || 0) + 1;
-      updates[`leaderboard/${winner.id}/games`] = (winner.wins || 0) + (winner.losses || 0) + 1;
-      updates[`leaderboard/${loser.id}/name`] = loser.name;
-      updates[`leaderboard/${loser.id}/wins`] = loser.wins || 0;
-      updates[`leaderboard/${loser.id}/games`] = (loser.wins || 0) + (loser.losses || 0) + 1;
-      await update(ref(db), updates);
+    async function mutateGame(mutator) {
+      requireFirebase();
+      await runTransaction(roomRef(state.roomId), current => {
+        if (!current) return current;
+        const next = mutator(current);
+        next.updatedAt = Date.now();
+        return next;
+      });
     }
 
-    /*****************************************************************
-     * 6) RÈGLES DU JEU
-     *****************************************************************/
     function currentPlayer(game) {
       return game.players[game.turnPlayerId];
     }
 
-    function opponentOf(game, playerId) {
-      const otherId = game.playerOrder.find(id => id !== playerId);
+    function opponentOf(game, id) {
+      const otherId = (game.playerOrder || []).find(pid => pid !== id);
       return otherId ? game.players[otherId] : null;
     }
 
@@ -897,13 +873,14 @@
       return !player.safeties.includes(card.id);
     }
 
-    function validatePlay(game, playerId, cardId, target) {
+    function validatePlay(game, id, cardId, target) {
       if (game.status !== "playing") return "La manche n'est pas active.";
-      if (game.turnPlayerId !== playerId) return "Ce n'est pas ton tour.";
-      const player = game.players[playerId];
+      if (game.turnPlayerId !== id) return "Ce n'est pas ton tour.";
+      const player = game.players[id];
+      if (!player) return "Joueur introuvable.";
       if (!player.hand.includes(cardId)) return "Cette carte n'est pas dans ta main.";
       const card = CARD_DEFS[cardId];
-      const opponent = opponentOf(game, playerId);
+      const opponent = opponentOf(game, id);
 
       if (target === "discard") return null;
       if (card.type === "distance") return canPlayDistance(player, card) ? null : "Tu ne peux pas poser cette borne.";
@@ -918,12 +895,72 @@
       if (index >= 0) player.hand.splice(index, 1);
     }
 
-    function playCardInGame(game, playerId, cardId, target) {
-      const error = validatePlay(game, playerId, cardId, target);
+    function nextTurn(game) {
+      const order = game.playerOrder || [];
+      const index = order.indexOf(game.turnPlayerId);
+      const nextIndex = (index + 1) % order.length;
+      game.turnPlayerId = order[nextIndex];
+      if (game.players[game.turnPlayerId]) {
+        game.players[game.turnPlayerId].drewThisTurn = false;
+      }
+    }
+
+    function drawFor(game, id) {
+      const player = game.players[id];
+      if (game.status !== "playing") throw new Error("La manche n'est pas active.");
+      if (game.turnPlayerId !== id) throw new Error("Ce n'est pas ton tour.");
+      if (player.drewThisTurn) throw new Error("Tu as déjà pioché ce tour-ci.");
+      if (!game.deck.length) throw new Error("La pioche est vide.");
+      player.hand.push(game.deck.shift());
+      player.drewThisTurn = true;
+      game.log.unshift(`${player.name} pioche.`);
+      return game;
+    }
+
+    function calculateScore(player, won) {
+      let score = player.distance;
+      score += player.safeties.length * 100;
+      if (won) score += 400;
+      if (player.distance === 1000) score += 300;
+      return score;
+    }
+
+    function finishRound(game, winnerId) {
+      const winner = game.players[winnerId];
+      const loser = opponentOf(game, winnerId);
+      winner.wins = (winner.wins || 0) + 1;
+      winner.score += calculateScore(winner, true);
+      if (loser) {
+        loser.losses = (loser.losses || 0) + 1;
+        loser.score += calculateScore(loser, false);
+      }
+      game.status = "finished";
+      game.winnerId = winnerId;
+      game.log.unshift(`${winner.name} gagne la manche !`);
+    }
+
+    function tryCoupFourre(game, attackedPlayerId, attackCardId) {
+      const attacked = game.players[attackedPlayerId];
+      const attack = CARD_DEFS[attackCardId];
+      const safetyId = SAFETY_BY_PROBLEM[attack.problem];
+      if (!safetyId || !attacked.hand.includes(safetyId)) return false;
+
+      removeCardFromHand(attacked, safetyId);
+      attacked.safeties.push(safetyId);
+      attacked.problem = "none";
+      if (attack.problem === "speedLimit") attacked.speedLimit = false;
+      attacked.score += 300;
+      game.turnPlayerId = attackedPlayerId;
+      game.log.unshift(`Coup-fourré ! ${attacked.name} pose ${CARD_DEFS[safetyId].name}.`);
+      return true;
+    }
+
+    function playCardInGame(game, id, cardId, target) {
+      const error = validatePlay(game, id, cardId, target);
       if (error) throw new Error(error);
 
-      const player = game.players[playerId];
-      const opponent = opponentOf(game, playerId);
+      const player = game.players[id];
+      const opponent = opponentOf(game, id);
       const card = CARD_DEFS[cardId];
       removeCardFromHand(player, cardId);
 
@@ -962,94 +999,44 @@
         game.log.unshift(`${player.name} pose la botte ${card.name}.`);
       }
 
-      if (player.distance === 1000) finishRound(game, playerId);
+      if (player.distance === 1000) finishRound(game, id);
       return game;
     }
 
-    function tryCoupFourre(game, attackedPlayerId, attackCardId) {
-      const attacked = game.players[attackedPlayerId];
-      const attack = CARD_DEFS[attackCardId];
-      const safetyId = SAFETY_BY_PROBLEM[attack.problem];
-      if (!safetyId || !attacked.hand.includes(safetyId)) return false;
+    function startNewRound(game) {
+      if (game.status !== "finished") throw new Error("La manche n'est pas finie.");
+      const order = game.playerOrder || [];
+      if (order.length < 2) throw new Error("Il faut deux joueurs.");
 
-      removeCardFromHand(attacked, safetyId);
-      attacked.safeties.push(safetyId);
-      attacked.problem = "none";
-      if (attack.problem === "speedLimit") attacked.speedLimit = false;
-      attacked.score += 300;
-      game.turnPlayerId = attackedPlayerId;
-      game.log.unshift(`Coup-fourré ! ${attacked.name} pose ${CARD_DEFS[safetyId].name}.`);
-      return true;
-    }
+      const oldPlayers = game.players;
+      const deck = buildDeck();
+      const players = {};
 
-    function nextTurn(game) {
-      const index = game.playerOrder.indexOf(game.turnPlayerId);
-      const nextIndex = (index + 1) % game.playerOrder.length;
-      game.turnPlayerId = game.playerOrder[nextIndex];
-      game.players[game.turnPlayerId].drewThisTurn = false;
-    }
+      order.forEach(id => {
+        const old = oldPlayers[id];
+        const p = makePlayer(old.name, id);
+        p.score = old.score || 0;
+        p.wins = old.wins || 0;
+        p.losses = old.losses || 0;
+        p.online = old.online !== false;
+        p.hand = deck.splice(0, 6);
+        players[id] = p;
+      });
 
-    function drawFor(game, playerId) {
-      const player = game.players[playerId];
-      if (game.status !== "playing") throw new Error("La manche n'est pas active.");
-      if (game.turnPlayerId !== playerId) throw new Error("Ce n'est pas ton tour.");
-      if (player.drewThisTurn) throw new Error("Tu as déjà pioché ce tour-ci.");
-      if (!game.deck.length) throw new Error("La pioche est vide.");
-      player.hand.push(game.deck.shift());
-      player.drewThisTurn = true;
-      game.log.unshift(`${player.name} pioche.`);
+      game.players = players;
+      game.deck = deck;
+      game.discard = [];
+      game.status = "playing";
+      game.winnerId = null;
+      game.round = (game.round || 1) + 1;
+      game.turnPlayerId = order[(game.round + 1) % 2];
+      game.log.unshift(`Nouvelle manche ${game.round}.`);
       return game;
-    }
-
-    function finishRound(game, winnerId) {
-      const winner = game.players[winnerId];
-      const loser = opponentOf(game, winnerId);
-      winner.wins = (winner.wins || 0) + 1;
-      loser.losses = (loser.losses || 0) + 1;
-      winner.score += calculateScore(winner, true);
-      loser.score += calculateScore(loser, false);
-      game.status = "finished";
-      game.winnerId = winnerId;
-      game.log.unshift(`${winner.name} gagne la manche !`);
-      recordWin(winner, loser).catch(console.error);
-    }
-
-    function calculateScore(player, won) {
-      let score = player.distance;
-      score += player.safeties.length * 100;
-      if (won) score += 400;
-      if (player.distance === 1000) score += 300;
-      return score;
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    /*****************************************************************
-     * 7) ACTIONS UTILISATEUR
-     *****************************************************************/
-    function getLobbyInput() {
-      const name = refs.playerName.value.trim() || "Pilote";
-      const roomId = refs.roomId.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "") || `route-${Math.floor(Math.random() * 9999)}`;
-      state.playerName = name;
-      state.roomId = roomId;
-      localStorage.setItem("mille-bornes-player-name", name);
-      return { name, roomId };
     }
 
     refs.createRoomBtn.addEventListener("click", async () => {
       try {
-        const { name, roomId } = getLobbyInput();
-        const existing = await readRoom(roomId);
-        if (existing) return toast("Ce salon existe déjà.");
-        await saveGame(createInitialGame(name));
-        enterRoom(roomId);
+        await createRoom();
       } catch (error) {
         console.error(error);
         toast(error.message || "Erreur création salon.");
@@ -1058,33 +1045,7 @@
 
     refs.joinRoomBtn.addEventListener("click", async () => {
       try {
-        const { name, roomId } = getLobbyInput();
-        const game = await readRoom(roomId);
-        if (!game) return toast("Salon introuvable.");
-
-        const sameBrowserHost = game.playerOrder.length === 1 && game.players[state.playerId];
-        if (sameBrowserHost) {
-          state.playerId = crypto.randomUUID();
-          localStorage.setItem("mille-bornes-player-id", state.playerId);
-        }
-
-        if (!game.players[state.playerId]) {
-          if (game.playerOrder.length >= 2) return toast("Salon complet.");
-          const deck = game.deck || [];
-          const player = makePlayer(name);
-          player.id = state.playerId;
-          player.hand = deck.splice(0, 6);
-          game.deck = deck;
-          game.players[state.playerId] = player;
-          game.playerOrder.push(state.playerId);
-          game.status = "playing";
-          game.log.unshift(`${name} rejoint la partie.`);
-
-          if (usingLocalSync) localWriteRoom(roomId, game);
-          else await set(roomRef(roomId), game);
-        }
-
-        enterRoom(roomId);
+        await joinRoom();
       } catch (error) {
         console.error(error);
         toast(error.message || "Erreur rejoindre salon.");
@@ -1096,17 +1057,9 @@
       refs.createRoomBtn.click();
     });
 
-    function enterRoom(roomId) {
-      state.roomId = roomId;
-      refs.lobbyScreen.classList.add("hidden");
-      refs.gameScreen.classList.remove("hidden");
-      refs.roomLabel.textContent = `Salon ${roomId}`;
-      subscribeRoom(roomId);
-    }
-
     refs.drawBtn.addEventListener("click", async () => {
       try {
-        await mutateGame(game => drawFor(game, state.playerId));
+        await mutateGame(game => drawFor(game, playerId));
       } catch (error) {
         toast(error.message);
       }
@@ -1115,13 +1068,33 @@
     refs.endTurnBtn.addEventListener("click", async () => {
       try {
         await mutateGame(game => {
-          if (game.turnPlayerId !== state.playerId) throw new Error("Ce n'est pas ton tour.");
+          if (game.turnPlayerId !== playerId) throw new Error("Ce n'est pas ton tour.");
+          if (game.status !== "playing") throw new Error("La manche n'est pas active.");
           nextTurn(game);
           return game;
         });
       } catch (error) {
         toast(error.message);
       }
+    });
+
+    refs.newRoundBtn.addEventListener("click", async () => {
+      try {
+        await mutateGame(game => startNewRound(game));
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+
+    refs.leaveBtn.addEventListener("click", async () => {
+      try {
+        if (state.roomId && firebaseReady) {
+          await set(ref(db, `${roomPath(state.roomId)}/players/${playerId}/online`), false);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      location.reload();
     });
 
     refs.drawerHandle.addEventListener("click", () => {
@@ -1131,17 +1104,16 @@
     async function playCard(cardId, target) {
       try {
         await mutateGame(game => {
-          const player = game.players[state.playerId];
-          const opponent = opponentOf(game, state.playerId);
+          const opponent = opponentOf(game, playerId);
           const card = CARD_DEFS[cardId];
 
-          playCardInGame(game, state.playerId, cardId, target);
+          playCardInGame(game, playerId, cardId, target);
 
           if (target !== "discard" && card.type === "attack" && opponent) {
             tryCoupFourre(game, opponent.id, cardId);
           }
 
-          if (game.status === "playing" && game.turnPlayerId === state.playerId) {
+          if (game.status === "playing" && game.turnPlayerId === playerId) {
             nextTurn(game);
           }
 
@@ -1152,16 +1124,17 @@
       }
     }
 
-    /*****************************************************************
-     * 8) RENDU
-     *****************************************************************/
+    window.playCardFromUI = (cardId, action) => {
+      playCard(cardId, action === "discard" ? "discard" : "play");
+    };
+
     function render() {
       const game = state.game;
       if (!game) return;
 
-      const me = game.players[state.playerId];
-      const isMyTurn = game.turnPlayerId === state.playerId;
-      const players = game.playerOrder.map(id => game.players[id]).filter(Boolean);
+      const me = game.players?.[playerId];
+      const isMyTurn = game.turnPlayerId === playerId;
+      const players = (game.playerOrder || []).map(id => game.players[id]).filter(Boolean);
       const p1 = players[0];
       const p2 = players[1];
 
@@ -1172,8 +1145,9 @@
       refs.scorePill.textContent = p1 && p2 ? `${p1.score || 0} - ${p2.score || 0}` : "0 - 0";
       refs.drawBtn.disabled = !me || !isMyTurn || game.status !== "playing" || me.drewThisTurn;
       refs.endTurnBtn.disabled = !me || !isMyTurn || game.status !== "playing";
+      refs.newRoundBtn.disabled = game.status !== "finished";
 
-      refs.playersArea.innerHTML = players.map(player => renderPlayer(player, player.id === state.playerId)).join("");
+      refs.playersArea.innerHTML = players.map(player => renderPlayer(player, player.id === playerId)).join("");
       refs.log.innerHTML = (game.log || []).slice(0, 12).map(item => `<div>${escapeHtml(item)}</div>`).join("");
 
       renderHand(me, isMyTurn, game.status === "playing");
@@ -1185,7 +1159,7 @@
           <div class="player-head">
             <div>
               <div class="player-name">${escapeHtml(player.name)} ${isMe ? "· toi" : ""}</div>
-              <small>${player.distance}/1000 km · ${PROBLEM_LABELS[player.problem] || player.problem}</small>
+              <small>${player.distance}/1000 km · ${PROBLEM_LABELS[player.problem] || player.problem} · ${player.online === false ? "hors ligne" : "en ligne"}</small>
             </div>
             <span class="pill">${player.hand?.length || 0} cartes</span>
           </div>
@@ -1220,13 +1194,12 @@
 
       refs.handTitle.textContent = isMyTurn ? "Ta main · choisis une carte" : "Ta main";
       refs.handCount.textContent = `${player.hand.length} carte${player.hand.length > 1 ? "s" : ""}`;
-      refs.handCards.innerHTML = player.hand.map(cardId => {
+      refs.handCards.innerHTML = player.hand.map((cardId, index) => {
         const card = CARD_DEFS[cardId];
         const disabled = !isMyTurn || !isPlaying;
         return `
           <article class="game-card ${card.type}">
             <div>
-              ${iconFor(card)}
               <h3>${escapeHtml(card.name)}</h3>
               <p>${escapeHtml(card.text)}</p>
             </div>
@@ -1238,12 +1211,6 @@
         `;
       }).join("");
     }
-
-    window.playCardFromUI = (cardId, action) => {
-      playCard(cardId, action === "discard" ? "discard" : "play");
-    };
-
-    loadLeaderboard().catch(console.error);
   </script>
 </body>
 </html>
