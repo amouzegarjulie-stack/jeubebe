@@ -102,6 +102,10 @@
       gap: 8px;
       padding: 0 8px;
     }
+        .dice-btn {
+  font-size: 22px;
+  line-height: 1;
+}
 
     button {
       height: 44px;
@@ -121,6 +125,7 @@
       color: #000000;
       transform: scale(0.96);
     }
+
   </style>
 </head>
 
@@ -138,115 +143,160 @@
       <button data-category="societe">Société</button>
       <button data-category="intime">Intime</button>
       <button data-category="chretien">Chrétien</button>
+      <button id="randomBtn" class="dice-btn" aria-label="Question aléatoire">🎲</button>
     </nav>
   </main>
 
   <script>
     const questions = {
       politique: [
-        "Quel rôle l'État devrait-il jouer dans notre vie quotidienne ?",
-        "La liberté individuelle doit-elle parfois passer après le bien commun ?",
-        "Jusqu'où accepterais-tu des restrictions pour protéger l'environnement ?",
-        "Quelle injustice politique te révolte le plus ?",
-        "Penses-tu que voter est un devoir moral ?",
-        "L'État doit-il davantage taxer les plus riches ?",
-        "La sécurité justifie-t-elle une surveillance plus importante ?",
-        "Quelle cause politique pourrais-tu défendre publiquement ?",
-        "Faut-il privilégier l'égalité ou la liberté ?",
-        "Quelle limite poserais-tu à la liberté d'expression ?",
-        "Le capitalisme est-il compatible avec la justice sociale ?",
-        "L'écologie devrait-elle être prioritaire sur l'économie ?",
-        "Quel sujet politique refuses-tu de banaliser ?",
-        "La désobéissance civile peut-elle être légitime ?",
-        "Quel type de dirigeant t'inspire confiance ?",
-        "Le système démocratique actuel te semble-t-il suffisant ?",
-        "L'État doit-il intervenir dans l'éducation des enfants ?",
-        "Faut-il accueillir plus largement les migrants ?",
-        "Quelle loi aimerais-tu voir changer ?",
-        "La politique devrait-elle avoir une place dans notre couple ?",
-        "Peut-on aimer quelqu'un qui vote très différemment de nous ?",
-        "Quelle valeur politique veux-tu transmettre à nos enfants ?"
-      ],
+          "Qu’est-ce qui compte le plus pour toi aujourd’hui : mériter ce que tu as ou corriger les inégalités ?",
+    "Penses-tu qu’on peut réussir uniquement par le mérite personnel aujourd’hui ?",
+    "Jusqu’où l’État doit-il aller pour corriger les injustices sociales ?",
+    "Est-ce que l’identité culturelle doit être protégée, et si oui, comment ?",
+    "Qu’est-ce que ça veut dire pour toi “être intégré” dans un pays ?",
+    "Penses-tu que certaines valeurs doivent être non négociables dans une société ?",
+    "Est-ce que la réussite individuelle doit primer sur la solidarité collective ?",
+    "La discrimination positive est-elle une solution juste ou une injustice déguisée ?",
+    "Qu’est-ce qui te met le plus mal à l’aise dans les débats sur l’immigration ?",
+    "Est-ce qu’on peut être critique envers son pays tout en l’aimant profondément ?",
+    "Quelle limite poserais-tu à l’assistanat social ?",
+    "Penses-tu que certaines cultures sont incompatibles entre elles ?",
+    "Qu’est-ce que tu refuses de sacrifier, même pour plus de sécurité ?",
+    "Le travail est-il avant tout une valeur morale ou une nécessité économique ?",
+    "Faut-il privilégier l’ordre ou la liberté en période de crise ?",
+    "Est-ce que tu te sens plus proche de tes racines ou de ton pays actuel ?",
+    "Quelle est la plus grande hypocrisie que tu vois dans le débat politique actuel ?",
+    "Penses-tu qu’on peut encore débattre sereinement de politique aujourd’hui ?",
+    "Est-ce que certaines opinions devraient être socialement inacceptables ?",
+    "Qu’est-ce qui te ferait changer radicalement d’opinion politique ?",
+    "Quel compromis politique serais-tu incapable d’accepter ?",
+    "Est-ce que la réussite financière est une preuve de valeur personnelle ?",
+    "Quelle responsabilité avons-nous envers la génération suivante ?",
+    "Faut-il parfois être injuste pour maintenir l’équilibre d’une société ?",
+    "Est-ce que tu préfères une société plus juste ou plus stable ?",
+    "Qu’est-ce que tu trouves le plus dangereux : trop de liberté ou trop de contrôle ?",
+    "Quelle expérience personnelle a le plus influencé ta vision politique ?",
+    "Est-ce que ton éducation a plus façonné tes idées que tes expériences ?",
+    "Peut-on vraiment comprendre une réalité qu’on n’a jamais vécue ?",
+    "Qu’est-ce qui te ferait perdre confiance en un dirigeant du jour au lendemain ?"
+],
 
       societe: [
-        "Le travail doit-il être central dans une vie réussie ?",
-        "Quelle place devrait avoir la technologie dans notre foyer ?",
-        "Les réseaux sociaux rendent-ils les couples plus fragiles ?",
-        "L'école prépare-t-elle vraiment à la vie ?",
-        "Quelle pression sociale ressens-tu le plus ?",
-        "Le féminisme est-il encore nécessaire aujourd'hui ?",
-        "La réussite sociale est-elle trop valorisée ?",
-        "Comment définirais-tu une vie simple mais riche ?",
-        "La société respecte-t-elle assez les familles ?",
-        "L'intelligence artificielle te fait-elle peur ou envie ?",
-        "Quelle norme sociale aimerais-tu briser ?",
-        "Le mariage est-il encore important dans notre société ?",
-        "Les enfants devraient-ils grandir avec moins d'écrans ?",
-        "Quelle habitude moderne abîme le plus les relations ?",
-        "La société pousse-t-elle trop à la comparaison ?",
-        "Faut-il toujours chercher à être productif ?",
-        "Quelle place donner à l'argent dans une vie équilibrée ?",
-        "Les hommes parlent-ils assez de leurs émotions ?",
-        "Les femmes subissent-elles encore trop de charges invisibles ?",
-        "Quel changement social aimerais-tu voir dans 20 ans ?",
-        "Que veux-tu absolument protéger de l'influence du monde ?",
-        "Quelle tradition mérite d'être conservée ?"
+           "Le travail doit-il être central dans une vie réussie ?",
+    "Est-ce que tu pourrais respecter quelqu’un qui refuse de travailler ?",
+    "À partir de quel moment le travail devient-il une perte de vie plutôt qu’un moyen de vivre ?",
+    "Le mérite est-il encore réellement récompensé aujourd’hui ?",
+    "Faut-il privilégier la stabilité ou l’épanouissement dans le travail ?",
+    "Changer souvent de travail est-il un manque de loyauté ou une preuve d’ambition ?",
+    "Est-ce que tu pourrais sacrifier ta vie perso pour réussir professionnellement ?",
+    "Le travail doit-il forcément avoir du sens ou juste payer correctement ?",
+    "Quelle place devrait avoir la technologie dans notre foyer ?",
+    "L’intelligence artificielle est-elle une opportunité ou une menace pour notre avenir ?",
+    "Les réseaux sociaux rendent-ils les relations plus superficielles ou plus ouvertes ?",
+    "Quelle habitude moderne abîme le plus les relations selon toi ?",
+    "La société pousse-t-elle trop à la comparaison ?",
+    "Quelle pression sociale ressens-tu le plus aujourd’hui ?",
+    "Faut-il toujours chercher à être productif ?",
+    "La réussite sociale est-elle surestimée ?",
+    "Quelle place donner à l’argent dans une vie équilibrée ?",
+    "Peut-on être heureux sans ambition ?",
+    "L’école prépare-t-elle vraiment à la réalité du travail ?",
+    "Faut-il apprendre à obéir ou à contester dans la vie ?",
+    "Les enfants devraient-ils grandir avec moins d’écrans ?",
+    "La société respecte-t-elle encore l’autorité ?",
+    "Quelle norme sociale aimerais-tu briser ?",
+    "Le mariage est-il encore un pilier utile ou juste symbolique ?",
+    "Les hommes parlent-ils assez de leurs émotions ou est-ce survalorisé ?",
+    "Les femmes subissent-elles encore des déséquilibres ou est-ce exagéré aujourd’hui ?",
+    "Qu’est-ce que tu trouves hypocrite dans les discours actuels sur l’égalité ?",
+    "Quelle tradition mérite vraiment d’être conservée ?",
+    "Que veux-tu absolument protéger de l’influence du monde moderne ?",
+    "Quel changement de société te ferait vraiment peur ?",
+    "Qu’est-ce qui te ferait dire que la société va dans la mauvaise direction ?"
+]
       ],
 
       intime: [
-        "Quand te sens-tu le plus aimé par moi ?",
-        "Quelle peur as-tu parfois dans notre relation ?",
-        "Quel souvenir de nous te touche le plus ?",
-        "Quel désir as-tu du mal à exprimer ?",
-        "Qu'est-ce qui te rassure profondément ?",
-        "Quelle blessure du passé influence encore ta façon d'aimer ?",
-        "De quoi as-tu besoin quand tu vas mal ?",
-        "Quelle partie de toi aimerais-tu que je comprenne mieux ?",
-        "Quel projet de vie te fait rêver avec moi ?",
-        "Qu'est-ce qui te fait te sentir désiré ?",
-        "Quelle parole aimerais-tu entendre plus souvent ?",
-        "Quel sujet intime évites-tu parfois ?",
-        "Comment aimerais-tu que l'on traverse les conflits ?",
-        "Qu'est-ce qui te donne confiance en notre avenir ?",
-        "Quelle est ta plus grande attente dans notre couple ?",
-        "Qu'aimerais-tu vivre avec moi que nous n'avons pas encore vécu ?",
-        "Quel moment simple aimerais-tu répéter plus souvent ?",
-        "Dans quoi aimerais-tu que je te soutienne davantage ?",
-        "Qu'est-ce qui te rend vulnérable avec moi ?",
-        "Quelle habitude pourrait renforcer notre amour ?",
-        "Quelle version de nous veux-tu construire ?",
-        "Que veux-tu que je n'oublie jamais de toi ?"
+            "Quand est-ce que tu te sens vraiment désiré par moi, pas juste aimé ?",
+    "Qu’est-ce que je fais qui te donne envie de moi… sans que je m’en rende compte ?",
+    "Quel fantasme ou envie tu n’as jamais osé me dire ?",
+    "Est-ce qu’il t’arrive de te retenir avec moi, et pourquoi ?",
+    "À quel moment tu t’es senti le plus fier de nous ?",
+    "Qu’est-ce qui te manque aujourd’hui dans notre relation sans que tu le dises ?",
+    "Quelle peur silencieuse tu as encore pour nous ?",
+    "Qu’est-ce que tu n’oses pas demander de peur de me déranger ou me perdre ?",
+    "Est-ce que tu te sens totalement libre d’être toi-même avec moi ?",
+    "Quelle version de toi tu montres aux autres mais pas à moi ?",
+    "Qu’est-ce que je pourrais faire différemment pour te rendre encore plus accro à moi ?",
+    "Qu’est-ce qui pourrait un jour créer une vraie distance entre nous ?",
+    "Quel moment récent t’a fait te sentir particulièrement proche de moi ?",
+    "Qu’est-ce qui te fait encore douter parfois dans notre couple ?",
+    "Comment tu sais que tu m’aimes encore aujourd’hui, concrètement ?",
+    "Qu’est-ce qui t’excite le plus chez moi aujourd’hui ?",
+    "Est-ce que notre relation te rassure plus qu’elle ne te challenge ?",
+    "Qu’est-ce que tu aimerais qu’on fasse plus souvent… mais que tu n’oses pas initier ?",
+    "Quel sujet intime tu évites volontairement avec moi ?",
+    "Qu’est-ce qui te rend vulnérable face à moi, même après tout ce temps ?",
+    "Qu’est-ce que tu attends de moi sans jamais le dire clairement ?",
+    "Si tu devais changer une chose chez moi sans conséquence, ce serait quoi ?",
+    "Qu’est-ce que tu trouves le plus attirant chez moi aujourd’hui, vraiment ?",
+    "Qu’est-ce qui pourrait raviver encore plus la passion entre nous ?",
+    "Est-ce que tu penses qu’on se connaît encore à 100% ?",
+    "Quelle habitude à nous pourrait lentement nous abîmer si on ne fait rien ?",
+    "Qu’est-ce que tu veux absolument vivre avec moi avant qu’on soit vieux ?",
+    "Qu’est-ce que tu ne voudrais jamais perdre dans notre relation ?",
+    "Quand est-ce que tu t’es senti le plus en sécurité avec moi ?",
+    "Qu’est-ce que tu veux que je comprenne sans que tu aies besoin de l’expliquer ?"
       ],
 
       chretien: [
-        "Comment vois-tu Dieu agir dans notre couple ?",
-        "Quelle place veux-tu donner à la prière à deux ?",
-        "Comment pouvons-nous mieux lire la Bible ensemble ?",
-        "Quelle valeur biblique veux-tu mettre au centre de notre foyer ?",
-        "Comment vivre le pardon dans notre couple ?",
-        "Quelle peur aimerais-tu remettre à Dieu ?",
-        "Comment discerner ensemble les grandes décisions ?",
-        "Que signifie pour toi aimer comme Christ aime ?",
-        "Quelle habitude spirituelle aimerais-tu développer ?",
-        "Comment protéger notre couple spirituellement ?",
-        "Quelle vision biblique as-tu de la famille ?",
-        "Comment rester unis dans les saisons difficiles ?",
-        "Quel verset parle le plus à notre relation ?",
-        "Comment servir Dieu ensemble concrètement ?",
-        "Quelle place donner à l'Église dans notre vie ?",
-        "Comment éviter que la foi devienne une routine ?",
-        "Quelle qualité spirituelle admires-tu chez moi ?",
-        "Comment encourager la croissance spirituelle de l'autre ?",
-        "Quelle décision aimerais-tu confier davantage à Dieu ?",
-        "Comment vivre l'humilité dans notre couple ?",
-        "Quelle mission aimerais-tu que notre couple porte ?",
-        "Comment aimerais-tu que notre maison reflète notre foi ?"
+           "Est-ce que Dieu influence réellement nos décisions ou est-ce qu’on décide puis on justifie après ?",
+    "Qu’est-ce que tu crois vraiment aujourd’hui… et qu’est-ce que tu fais juste par habitude ?",
+    "Est-ce que notre foi nous rapproche concrètement ou parfois elle nous met une pression en plus ?",
+    "Quelle partie de la Bible te dérange honnêtement ?",
+    "Qu’est-ce que tu trouves le plus difficile à appliquer dans la foi au quotidien ?",
+    "Est-ce qu’on vit une foi authentique ou confortable ?",
+    "Quelle peur serais-tu vraiment prêt à abandonner à Dieu… et laquelle tu gardes encore ?",
+    "Comment savoir si on suit Dieu ou juste notre propre logique ?",
+    "Est-ce que tu penses que Dieu attend quelque chose de spécifique de notre couple ?",
+    "Qu’est-ce qu’on évite de remettre à Dieu volontairement ?",
+    "Est-ce que la prière à deux est une vraie connexion ou parfois une obligation ?",
+    "Qu’est-ce qui pourrait réellement renforcer notre vie spirituelle ensemble ?",
+    "Quelle valeur biblique est la plus difficile à vivre dans notre couple ?",
+    "Est-ce qu’on se pardonne vraiment… ou est-ce qu’on garde des traces ?",
+    "Comment réagirais-tu si on n’était pas d’accord spirituellement sur un sujet important ?",
+    "Est-ce que notre foi influence notre manière de gérer l’argent, le travail ou les priorités ?",
+    "Qu’est-ce qui te fait douter, même légèrement ?",
+    "Est-ce qu’on parle assez honnêtement de nos luttes spirituelles ?",
+    "Quelle dérive religieuse te fait le plus peur aujourd’hui ?",
+    "Est-ce que l’Église est essentielle ou secondaire dans une foi solide ?",
+    "Comment éviter de devenir “religieux” sans être vraiment transformés ?",
+    "Qu’est-ce que tu admires vraiment dans ma foi… et qu’est-ce qui t’interroge ?",
+    "Est-ce que Dieu passe avant notre couple… même concrètement ?",
+    "Quelle décision de vie devrait-on vraiment remettre à Dieu aujourd’hui ?",
+    "Est-ce que notre couple sert quelque chose de plus grand que nous ?",
+    "Qu’est-ce que tu refuses inconsciemment de laisser Dieu changer en toi ?",
+    "Comment savoir si on grandit spirituellement ou si on stagne ?",
+    "Quelle tension vois-tu entre la foi et le monde actuel ?",
+    "Est-ce que tu penses qu’on est trop stricts, pas assez, ou juste équilibrés ?",
+    "À quoi ressemblerait un couple vraiment aligné avec Dieu selon toi ?"
       ]
     };
 
     const card = document.getElementById("card");
     const questionText = document.getElementById("questionText");
-    const buttons = document.querySelectorAll("button");
+ const buttons = document.querySelectorAll("button[data-category]");
+    const randomBtn = document.getElementById("randomBtn");
+
+randomBtn.addEventListener("click", () => {
+  card.classList.remove("flipped");
+  currentQuestion = getRandomFromAll();
+
+  setTimeout(() => {
+    questionText.textContent = currentQuestion;
+  }, 300);
+});
 
     const lastQuestions = {
       politique: null,
