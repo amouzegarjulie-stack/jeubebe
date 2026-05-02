@@ -93,19 +93,43 @@
       line-height: 1.15;
       font-weight: 900;
       letter-spacing: -0.7px;
+      flex-direction: column;
+      padding: 58px 28px 28px;
+      position: relative;
+    }
+
+    .category-label {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ff9ec9;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .question-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
     }
 
     .nav {
       width: 100%;
       display: grid;
-   grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       padding: 0 8px;
     }
-        .dice-btn {
-  font-size: 22px;
-  line-height: 1;
-}
+
+    .dice-btn {
+      font-size: 22px;
+      line-height: 1;
+    }
 
     button {
       height: 44px;
@@ -125,7 +149,6 @@
       color: #000000;
       transform: scale(0.96);
     }
-
   </style>
 </head>
 
@@ -134,7 +157,10 @@
     <section class="card-area">
       <div class="card" id="card">
         <div class="face back">♥</div>
-        <div class="face front" id="questionText">Choisis une catégorie</div>
+        <div class="face front">
+          <div class="category-label" id="categoryText"></div>
+          <div class="question-text" id="questionText">Choisis une catégorie</div>
+        </div>
       </div>
     </section>
 
@@ -150,171 +176,178 @@
   <script>
     const questions = {
       enfance: [
-          "Quel souvenir d’enfance te revient immédiatement quand tu penses au mot ‘liberté’ ?",
-"Qu’est-ce qui te rendait vraiment heureux quand tu étais enfant ?",
-"Quel était ton plus grand rêve quand tu étais petit, et pourquoi ?",
-"Est-ce que tu étais plutôt du genre à obéir ou à tester les limites ?",
-"Quel moment de ton enfance t’a le plus marqué émotionnellement ?",
-"Qu’est-ce que tu aurais aimé que les adultes comprennent mieux chez toi à l’époque ?",
-"Avais-tu un endroit ‘refuge’ quand tu étais enfant ?",
-"Quel rôle jouais-tu dans ton groupe d’amis étant petit ?",
-"Quelle peur d’enfance te semble aujourd’hui irrationnelle, mais très réelle à l’époque ?",
-"Qu’est-ce que tu faisais quand tu t’ennuyais vraiment ?",
-"Quel adulte t’a le plus influencé dans ton enfance ?",
-"Est-ce que tu avais tendance à dire ce que tu pensais ou à te retenir ?",
-"Quel souvenir te fait encore sourire aujourd’hui sans effort ?",
-"Qu’est-ce que tu enviais chez les autres enfants ?",
-"Quel moment t’a fait te sentir ‘grand’ pour la première fois ?",
-"Est-ce que tu préférais jouer seul ou avec les autres ?",
-"Quel objet ou jouet comptait le plus pour toi ?",
-"Qu’est-ce que tu faisais en cachette que tu n’assumerais pas aujourd’hui ?",
-"Quel était ton plus grand sentiment d’injustice étant enfant ?",
-"Qu’est-ce que tu croyais vrai sur le monde, et qui s’est révélé faux ?",
-"Quel souvenir d’école t’a le plus marqué, en bien ou en mal ?",
-"Qu’est-ce qui te mettait le plus en colère quand tu étais petit ?",
-"Quelle règle te semblait la plus absurde à l’époque ?",
-"Qu’est-ce que tu aurais voulu oser faire mais que tu n’as jamais fait ?",
-"Quel moment t’a fait te sentir vraiment compris pour la première fois ?",
-"Qu’est-ce qui te faisait te sentir en sécurité ?",
-"Quel changement t’a le plus perturbé dans ton enfance ?",
-"Qu’est-ce que tu aurais voulu dire à ton ‘toi enfant’ ?",
-"Quel souvenir te rend un peu nostalgique aujourd’hui ?",
-"Qu’est-ce que ton enfance dit encore de la personne que tu es aujourd’hui ?"
-],
+        "Quel souvenir d’enfance te revient immédiatement quand tu penses au mot ‘liberté’ ?",
+        "Qu’est-ce qui te rendait vraiment heureux quand tu étais enfant ?",
+        "Quel était ton plus grand rêve quand tu étais petit, et pourquoi ?",
+        "Est-ce que tu étais plutôt du genre à obéir ou à tester les limites ?",
+        "Quel moment de ton enfance t’a le plus marqué émotionnellement ?",
+        "Qu’est-ce que tu aurais aimé que les adultes comprennent mieux chez toi à l’époque ?",
+        "Avais-tu un endroit ‘refuge’ quand tu étais enfant ?",
+        "Quel rôle jouais-tu dans ton groupe d’amis étant petit ?",
+        "Quelle peur d’enfance te semble aujourd’hui irrationnelle, mais très réelle à l’époque ?",
+        "Qu’est-ce que tu faisais quand tu t’ennuyais vraiment ?",
+        "Quel adulte t’a le plus influencé dans ton enfance ?",
+        "Est-ce que tu avais tendance à dire ce que tu pensais ou à te retenir ?",
+        "Quel souvenir te fait encore sourire aujourd’hui sans effort ?",
+        "Qu’est-ce que tu enviais chez les autres enfants ?",
+        "Quel moment t’a fait te sentir ‘grand’ pour la première fois ?",
+        "Est-ce que tu préférais jouer seul ou avec les autres ?",
+        "Quel objet ou jouet comptait le plus pour toi ?",
+        "Qu’est-ce que tu faisais en cachette que tu n’assumerais pas aujourd’hui ?",
+        "Quel était ton plus grand sentiment d’injustice étant enfant ?",
+        "Qu’est-ce que tu croyais vrai sur le monde, et qui s’est révélé faux ?",
+        "Quel souvenir d’école t’a le plus marqué, en bien ou en mal ?",
+        "Qu’est-ce qui te mettait le plus en colère quand tu étais petit ?",
+        "Quelle règle te semblait la plus absurde à l’époque ?",
+        "Qu’est-ce que tu aurais voulu oser faire mais que tu n’as jamais fait ?",
+        "Quel moment t’a fait te sentir vraiment compris pour la première fois ?",
+        "Qu’est-ce qui te faisait te sentir en sécurité ?",
+        "Quel changement t’a le plus perturbé dans ton enfance ?",
+        "Qu’est-ce que tu aurais voulu dire à ton ‘toi enfant’ ?",
+        "Quel souvenir te rend un peu nostalgique aujourd’hui ?",
+        "Qu’est-ce que ton enfance dit encore de la personne que tu es aujourd’hui ?"
+      ],
 
       societe: [
-          "Tu préfères une société où tout le monde est libre ou où tout le monde est protégé ?",
-"Est-ce qu’on doit aider tout le monde, même ceux qui ne font aucun effort ?",
-"C’est plus important d’être juste ou d’être efficace ?",
-"Est-ce que l’argent change forcément les gens ?",
-"Tu ferais plus confiance à un riche ou à quelqu’un de simple ?",
-"Est-ce que tout le monde mérite les mêmes chances, peu importe ses choix ?",
-"Faut-il réussir sa vie ou la vivre tranquillement ?",
-"Est-ce que la société pousse trop à réussir ?",
-"Tu préfères être libre mais seul ou entouré mais limité ?",
-"Est-ce qu’on peut être heureux sans se comparer aux autres ?",
-"Faut-il dire ce qu’on pense même si ça dérange ?",
-"Est-ce que certaines vérités valent mieux être tues ?",
-"Tu préfères une société honnête mais dure ou douce mais hypocrite ?",
-"Est-ce que le respect doit être automatique ou mérité ?",
-"Faut-il pardonner facilement ou être exigeant ?",
-"Est-ce que les règles sont faites pour être respectées ou discutées ?",
-"Tu préfères avoir raison ou garder la paix ?",
-"Est-ce que chacun est responsable de sa situation ?",
-"Faut-il toujours penser à soi avant les autres ?",
-"Est-ce que la liberté a des limites ?",
-"Tu préfères une vie stable ou pleine de changements ?",
-"Est-ce que la peur est un bon moyen de faire respecter les règles ?",
-"Faut-il s’adapter à la société ou la changer ?",
-"Est-ce que tout le monde peut réussir s’il le veut vraiment ?",
-"Tu préfères une société égalitaire ou méritocratique ?",
-"Est-ce que les gens sont fondamentalement bons ou égoïstes ?",
-"Faut-il tout accepter au nom de la tolérance ?",
-"Est-ce que la société rend les gens plus faibles ou plus forts ?",
-"Tu préfères être compris ou être respecté ?",
-"Est-ce que trop de liberté peut devenir un problème ?"
-
+        "Tu préfères une société où tout le monde est libre ou où tout le monde est protégé ?",
+        "Est-ce qu’on doit aider tout le monde, même ceux qui ne font aucun effort ?",
+        "C’est plus important d’être juste ou d’être efficace ?",
+        "Est-ce que l’argent change forcément les gens ?",
+        "Tu ferais plus confiance à un riche ou à quelqu’un de simple ?",
+        "Est-ce que tout le monde mérite les mêmes chances, peu importe ses choix ?",
+        "Faut-il réussir sa vie ou la vivre tranquillement ?",
+        "Est-ce que la société pousse trop à réussir ?",
+        "Tu préfères être libre mais seul ou entouré mais limité ?",
+        "Est-ce qu’on peut être heureux sans se comparer aux autres ?",
+        "Faut-il dire ce qu’on pense même si ça dérange ?",
+        "Est-ce que certaines vérités valent mieux être tues ?",
+        "Tu préfères une société honnête mais dure ou douce mais hypocrite ?",
+        "Est-ce que le respect doit être automatique ou mérité ?",
+        "Faut-il pardonner facilement ou être exigeant ?",
+        "Est-ce que les règles sont faites pour être respectées ou discutées ?",
+        "Tu préfères avoir raison ou garder la paix ?",
+        "Est-ce que chacun est responsable de sa situation ?",
+        "Faut-il toujours penser à soi avant les autres ?",
+        "Est-ce que la liberté a des limites ?",
+        "Tu préfères une vie stable ou pleine de changements ?",
+        "Est-ce que la peur est un bon moyen de faire respecter les règles ?",
+        "Faut-il s’adapter à la société ou la changer ?",
+        "Est-ce que tout le monde peut réussir s’il le veut vraiment ?",
+        "Tu préfères une société égalitaire ou méritocratique ?",
+        "Est-ce que les gens sont fondamentalement bons ou égoïstes ?",
+        "Faut-il tout accepter au nom de la tolérance ?",
+        "Est-ce que la société rend les gens plus faibles ou plus forts ?",
+        "Tu préfères être compris ou être respecté ?",
+        "Est-ce que trop de liberté peut devenir un problème ?"
       ],
 
       cul: [
         "Qu’est-ce que je fais qui t’allume instantanément, même sans le vouloir ?",
-"À quel moment tu as eu le plus envie de moi récemment ?",
-"Qu’est-ce que tu trouves le plus sexy chez moi… aujourd’hui ?",
-"Est-ce que tu penses à moi de façon un peu coquine quand je ne suis pas là ?",
-"Quel détail chez moi te donne envie sans que tu puisses l’expliquer ?",
-"Qu’est-ce que tu aimerais que je fasse plus souvent quand on est seuls ?",
-"Est-ce que tu préfères quand je prends le contrôle ou quand je te laisse guider ?",
-"Quel moment entre nous t’a le plus marqué physiquement ?",
-"Qu’est-ce qui te fait monter le désir chez moi, selon toi ?",
-"Est-ce que tu te sens totalement libre dans ton désir avec moi ?",
-"Qu’est-ce que tu n’oses pas encore me proposer ?",
-"Tu préfères quand c’est spontané ou quand c’est anticipé ?",
-"Quel type d’ambiance te donne le plus envie ?",
-"Qu’est-ce que tu aimerais explorer avec moi sans pression ?",
-"Qu’est-ce qui te frustre un peu mais que tu ne dis pas ?",
-"À quel moment tu te sens le plus irrésistible ?",
-"Qu’est-ce qui te ferait encore plus lâcher prise avec moi ?",
-"Est-ce que le désir a changé entre nous avec le temps ?",
-"Qu’est-ce qui pourrait pimenter encore plus nos moments ?",
-"Quel souvenir entre nous te donne encore des frissons ?",
-"Qu’est-ce que tu aimerais ressentir plus souvent avec moi ?",
-"Est-ce que tu préfères la tension qui monte ou le moment où tout lâche ?",
-"Qu’est-ce qui te rend accro chez moi, vraiment ?",
-"Qu’est-ce que tu aimerais que je devine sans que tu le dises ?",
-"Quel moment de la journée te donne le plus envie de moi ?",
-"Qu’est-ce qui te surprend encore dans notre attirance ?",
-"Qu’est-ce que tu trouves le plus excitant dans notre complicité ?",
-"Est-ce que tu aimerais qu’on sorte parfois de notre zone de confort ?",
-"Qu’est-ce que tu veux que je fasse différemment pour te faire encore plus vibrer ?",
-"Qu’est-ce qui te fait dire qu’il y a encore beaucoup à découvrir entre nous ?"
-           
+        "À quel moment tu as eu le plus envie de moi récemment ?",
+        "Qu’est-ce que tu trouves le plus sexy chez moi… aujourd’hui ?",
+        "Est-ce que tu penses à moi de façon un peu coquine quand je ne suis pas là ?",
+        "Quel détail chez moi te donne envie sans que tu puisses l’expliquer ?",
+        "Qu’est-ce que tu aimerais que je fasse plus souvent quand on est seuls ?",
+        "Est-ce que tu préfères quand je prends le contrôle ou quand je te laisse guider ?",
+        "Quel moment entre nous t’a le plus marqué physiquement ?",
+        "Qu’est-ce qui te fait monter le désir chez moi, selon toi ?",
+        "Est-ce que tu te sens totalement libre dans ton désir avec moi ?",
+        "Qu’est-ce que tu n’oses pas encore me proposer ?",
+        "Tu préfères quand c’est spontané ou quand c’est anticipé ?",
+        "Quel type d’ambiance te donne le plus envie ?",
+        "Qu’est-ce que tu aimerais explorer avec moi sans pression ?",
+        "Qu’est-ce qui te frustre un peu mais que tu ne dis pas ?",
+        "À quel moment tu te sens le plus irrésistible ?",
+        "Qu’est-ce qui te ferait encore plus lâcher prise avec moi ?",
+        "Est-ce que le désir a changé entre nous avec le temps ?",
+        "Qu’est-ce qui pourrait pimenter encore plus nos moments ?",
+        "Quel souvenir entre nous te donne encore des frissons ?",
+        "Qu’est-ce que tu aimerais ressentir plus souvent avec moi ?",
+        "Est-ce que tu préfères la tension qui monte ou le moment où tout lâche ?",
+        "Qu’est-ce qui te rend accro chez moi, vraiment ?",
+        "Qu’est-ce que tu aimerais que je devine sans que tu le dises ?",
+        "Quel moment de la journée te donne le plus envie de moi ?",
+        "Qu’est-ce qui te surprend encore dans notre attirance ?",
+        "Qu’est-ce que tu trouves le plus excitant dans notre complicité ?",
+        "Est-ce que tu aimerais qu’on sorte parfois de notre zone de confort ?",
+        "Qu’est-ce que tu veux que je fasse différemment pour te faire encore plus vibrer ?",
+        "Qu’est-ce qui te fait dire qu’il y a encore beaucoup à découvrir entre nous ?"
       ],
 
       chretien: [
         "Qu’est-ce que ça veut dire pour toi “avoir une relation personnelle avec Dieu” concrètement ?",
-"Est-ce que tu ressens vraiment la présence de Dieu ou c’est plus une conviction ?",
-"Qu’est-ce qui nourrit le plus ta foi aujourd’hui ?",
-"À quel moment tu te sens le plus proche de Dieu ?",
-"Qu’est-ce qui peut éloigner quelqu’un de Dieu sans qu’il s’en rende compte ?",
-"Est-ce que tu crois qu’on peut perdre sa foi ?",
-"Qu’est-ce que tu penses que Dieu voit en nous que nous on ne voit pas ?",
-"Est-ce que la foi doit se ressentir ou juste se vivre ?",
-"Qu’est-ce qui te donne confiance en Dieu, même quand c’est difficile ?",
-"Est-ce que tu penses que Dieu parle encore aujourd’hui, et comment ?",
-"Qu’est-ce qui te touche le plus dans la personne de Jésus ?",
-"Est-ce que tu trouves facile ou difficile de faire confiance à Dieu ?",
-"Qu’est-ce que ça veut dire pour toi “lâcher prise” avec Dieu ?",
-"Est-ce que tu penses qu’on peut aimer Dieu sans le comprendre ?",
-"Qu’est-ce qui te fait grandir spirituellement en ce moment ?",
-"Est-ce que tu crois qu’on peut suivre Dieu à moitié ?",
-"Qu’est-ce que tu attends vraiment de Dieu dans ta vie ?",
-"Est-ce que la foi change vraiment les décisions du quotidien ?",
-"Qu’est-ce que tu trouves le plus beau dans l’Évangile ?",
-"Est-ce que tu te sens libre dans ta foi ou parfois enfermé ?",
-"Qu’est-ce que tu aimerais vivre avec Dieu que tu n’as pas encore vécu ?",
-"Est-ce que tu penses que Dieu teste notre foi ?",
-"Qu’est-ce que tu fais quand tu ne ressens plus rien spirituellement ?",
-"Est-ce que la foi est plus une question de cœur ou de discipline ?",
-"Qu’est-ce qui te fait rester attaché à Dieu dans les moments de doute ?",
-"Est-ce que tu crois que Dieu a un plan précis ou qu’il nous laisse libres ?",
-"Qu’est-ce que tu aimerais comprendre mieux dans la Bible ?",
-"Est-ce que tu penses que tout arrive pour une raison ?",
-"Qu’est-ce que tu veux absolument transmettre de ta foi plus tard ?",
-"Qu’est-ce qui te ferait te rapprocher encore plus de Dieu aujourd’hui ?"
-           
+        "Est-ce que tu ressens vraiment la présence de Dieu ou c’est plus une conviction ?",
+        "Qu’est-ce qui nourrit le plus ta foi aujourd’hui ?",
+        "À quel moment tu te sens le plus proche de Dieu ?",
+        "Qu’est-ce qui peut éloigner quelqu’un de Dieu sans qu’il s’en rende compte ?",
+        "Est-ce que tu crois qu’on peut perdre sa foi ?",
+        "Qu’est-ce que tu penses que Dieu voit en nous que nous on ne voit pas ?",
+        "Est-ce que la foi doit se ressentir ou juste se vivre ?",
+        "Qu’est-ce qui te donne confiance en Dieu, même quand c’est difficile ?",
+        "Est-ce que tu penses que Dieu parle encore aujourd’hui, et comment ?",
+        "Qu’est-ce qui te touche le plus dans la personne de Jésus ?",
+        "Est-ce que tu trouves facile ou difficile de faire confiance à Dieu ?",
+        "Qu’est-ce que ça veut dire pour toi “lâcher prise” avec Dieu ?",
+        "Est-ce que tu penses qu’on peut aimer Dieu sans le comprendre ?",
+        "Qu’est-ce qui te fait grandir spirituellement en ce moment ?",
+        "Est-ce que tu crois qu’on peut suivre Dieu à moitié ?",
+        "Qu’est-ce que tu attends vraiment de Dieu dans ta vie ?",
+        "Est-ce que la foi change vraiment les décisions du quotidien ?",
+        "Qu’est-ce que tu trouves le plus beau dans l’Évangile ?",
+        "Est-ce que tu te sens libre dans ta foi ou parfois enfermé ?",
+        "Qu’est-ce que tu aimerais vivre avec Dieu que tu n’as pas encore vécu ?",
+        "Est-ce que tu penses que Dieu teste notre foi ?",
+        "Qu’est-ce que tu fais quand tu ne ressens plus rien spirituellement ?",
+        "Est-ce que la foi est plus une question de cœur ou de discipline ?",
+        "Qu’est-ce qui te fait rester attaché à Dieu dans les moments de doute ?",
+        "Est-ce que tu crois que Dieu a un plan précis ou qu’il nous laisse libres ?",
+        "Qu’est-ce que tu aimerais comprendre mieux dans la Bible ?",
+        "Est-ce que tu penses que tout arrive pour une raison ?",
+        "Qu’est-ce que tu veux absolument transmettre de ta foi plus tard ?",
+        "Qu’est-ce qui te ferait te rapprocher encore plus de Dieu aujourd’hui ?"
       ]
+    };
+
+    const categoryNames = {
+      enfance: "Enfance",
+      societe: "Société",
+      cul: "Intime",
+      chretien: "Chrétien"
     };
 
     const card = document.getElementById("card");
     const questionText = document.getElementById("questionText");
- const buttons = document.querySelectorAll("button[data-category]");
- const randomBtn = document.getElementById("randomBtn");
+    const categoryText = document.getElementById("categoryText");
+    const buttons = document.querySelectorAll("button[data-category]");
+    const randomBtn = document.getElementById("randomBtn");
 
-const lastQuestions = {
-  enfance: null,
-  societe: null,
-  cul: null,
-  chretien: null
-};
+    const lastQuestions = {
+      enfance: null,
+      societe: null,
+      cul: null,
+      chretien: null
+    };
 
-let currentQuestion = "Choisis une catégorie";
+    let currentQuestion = "Choisis une catégorie";
+    let currentCategory = "";
 
-function getRandomFromAll() {
-  const categories = Object.keys(questions);
-  const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-  return getRandomQuestion(randomCategory);
-}
+    function getRandomFromAll() {
+      const categories = Object.keys(questions);
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
 
-randomBtn.addEventListener("click", () => {
-  card.classList.remove("flipped");
-  currentQuestion = getRandomFromAll();
+      currentCategory = randomCategory;
+      return getRandomQuestion(randomCategory);
+    }
 
-  setTimeout(() => {
-    questionText.textContent = currentQuestion;
-  }, 300);
-});
+    randomBtn.addEventListener("click", () => {
+      card.classList.remove("flipped");
+      currentQuestion = getRandomFromAll();
 
-
+      setTimeout(() => {
+        questionText.textContent = currentQuestion;
+        categoryText.textContent = categoryNames[currentCategory];
+      }, 300);
+    });
 
     function getRandomQuestion(category) {
       const list = questions[category];
@@ -332,12 +365,15 @@ randomBtn.addEventListener("click", () => {
       button.addEventListener("click", () => {
         const category = button.dataset.category;
 
+        currentCategory = category;
+
         card.classList.remove("flipped");
 
         currentQuestion = getRandomQuestion(category);
 
         setTimeout(() => {
           questionText.textContent = currentQuestion;
+          categoryText.textContent = categoryNames[currentCategory];
         }, 300);
       });
     });
