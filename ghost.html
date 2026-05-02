@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost - Le Mot Fantôme</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase Compat SDKs pour un fichier HTML simple -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui']
+          },
+          colors: {
+            cream: '#F8F9FA',
+            violet: '#7C3AED',
+            mint: '#34D399',
+            coral: '#FB7185',
+            ink: '#111827'
+          },
+          boxShadow: {
+            glass: '0 24px 80px rgba(17, 24, 39, 0.10)',
+            glow: '0 0 40px rgba(124, 58, 237, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.20), transparent 32rem),
+        radial-gradient(circle at bottom right, rgba(52, 211, 153, 0.22), transparent 34rem),
+        radial-gradient(circle at 75% 25%, rgba(251, 113, 133, 0.14), transparent 26rem),
+        #F8F9FA;
+      color: #111827;
+      overflow-x: hidden;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      box-shadow: 0 24px 80px rgba(17, 24, 39, 0.10);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .soft-card {
+      border-radius: 32px;
+      transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .soft-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 32px 90px rgba(17, 24, 39, 0.14);
+    }
+
+    .pressable {
+      transition: transform 120ms ease, opacity 180ms ease, box-shadow 180ms ease;
+    }
+
+    .pressable:active {
+      transform: scale(0.96);
+    }
+
+    .screen {
+      animation: fadeSlide 360ms ease both;
+    }
+
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .active-player {
+      position: relative;
+      border-color: rgba(124, 58, 237, 0.7) !important;
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12), 0 18px 50px rgba(124, 58, 237, 0.18);
+    }
+
+    .active-player::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 30px;
+      border: 2px solid rgba(124, 58, 237, 0.28);
+      animation: pulseRing 1.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { opacity: 0.35; transform: scale(0.99); }
+      50% { opacity: 0.9; transform: scale(1.025); }
+    }
+
+    .letter-space {
+      letter-spacing: 0.18em;
+      text-indent: 0.18em;
+    }
+
+    .keyboard-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 520px) {
+      .keyboard-grid {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+    }
+
+    .toast {
+      animation: toastIn 220ms ease both;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="min-h-screen px-4 py-6 sm:px-6 lg:px-8 flex items-center justify-center">
+    <section class="w-full max-w-5xl">
+      <header class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-sm font700 text-gray-700 shadow-sm backdrop-blur-xl">
+            <i data-lucide="ghost" class="h-4 w-4 text-violet"></i>
+            Le Mot Fantôme
+          </div>
+          <h1 class="mt-4 text-4xl font-black tracking-tight text-ink sm:text-6xl">Ghost</h1>
+          <p class="mt-2 max-w-xl text-base font-medium text-gray-600 sm:text-lg">Ajoute une lettre sans compléter un mot. Bluffe, piège et défie au bon moment.</p>
+        </div>
+
+        <button id="resetBtn" class="pressable hidden rounded-full bg-white/70 px-5 py-3 text-sm font800 text-gray-700 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white">
+          Réinitialiser
+        </button>
+      </header>
+
+      <div id="app" class="screen"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="fixed bottom-5 left-1/2 z-50 hidden w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border border-white/70 bg-white/80 p-4 text-center text-sm font700 text-gray-700 shadow-glass backdrop-blur-xl"></div>
+
+  <script>
+    /************************************************************
+     * 1. CONFIGURATION FIREBASE
+     * Remplace ces placeholders par ta configuration Firebase.
+     ************************************************************/
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    let db = null;
+    let firebaseReady = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      firebaseReady = !firebaseConfig.apiKey.includes('YOUR_');
+    } catch (error) {
+      console.warn('Firebase non initialisé. Renseigne firebaseConfig.', error);
+    }
+
+    /************************************************************
+     * 2. PETIT DICTIONNAIRE DE DÉMO
+     * Remplace ou complète cette liste. Les mots sont en minuscules.
+     ************************************************************/
+    const DICTIONARY = [
+      'avoir','etre','faire','dire','aller','voir','savoir','pouvoir','falloir','vouloir',
+      'venir','prendre','trouver','donner','parler','aimer','passer','mettre','demander','tenir',
+      'sembler','laisser','rester','penser','entendre','regarder','repondre','rendre','connaitre','croire',
+      'porter','montrer','continuer','suivre','appeler','vivre','jouer','attendre','perdre','sentir',
+      'servir','recevoir','partir','arriver','comprendre','devenir','tenir','mourir','ouvrir','lire',
+      'ecrire','changer','travailler','marcher','creer','chercher','entrer','payer','tomber','gagner',
+      'courir','acheter','choisir','apprendre','expliquer','manger','boire','dormir','ecouter','sortir',
+      'maison','temps','jour','homme','femme','enfant','ville','pays','monde','main',
+      'oeil','ami','vie','nuit','porte','voix','coeur','place','travail','question',
+      'moment','raison','histoire','famille','route','guerre','eau','feu','terre','air'
+    ];
+
+    function normalizeWord(value) {
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z]/g, '');
+    }
+
+    function checkValidity(word) {
+      const normalized = normalizeWord(word);
+      return DICTIONARY.includes(normalized);
+    }
+
+    function hasPossibleContinuation(fragment) {
+      const normalized = normalizeWord(fragment);
+      if (!normalized) return true;
+      return DICTIONARY.some(word => word.startsWith(normalized));
+    }
+
+    /************************************************************
+     * 3. ÉTAT LOCAL
+     ************************************************************/
+    const app = document.getElementById('app');
+    const resetBtn = document.getElementById('resetBtn');
+    const toast = document.getElementById('toast');
+
+    const localPlayerId = getOrCreateLocalId();
+    let roomId = new URLSearchParams(location.search).get('room') || '';
+    let roomRef = null;
+    let unsubscribeRoom = null;
+    let currentRoom = null;
+
+    function getOrCreateLocalId() {
+      const key = 'ghostPlayerId';
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = 'p_' + Math.random().toString(36).slice(2, 11);
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    function showToast(message, type = 'info') {
+      toast.textContent = message;
+      toast.className = 'fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border p-4 text-center text-sm font800 shadow-glass backdrop-blur-xl toast ' +
+        (type === 'error'
+          ? 'border-coral/30 bg-rose-50/90 text-rose-700'
+          : type === 'success'
+            ? 'border-mint/30 bg-emerald-50/90 text-emerald-700'
+            : 'border-white/70 bg-white/80 text-gray-700');
+      toast.classList.remove('hidden');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.add('hidden'), 3200);
+    }
+
+    function setScreen(html) {
+      app.classList.remove('screen');
+      void app.offsetWidth;
+      app.innerHTML = html;
+      app.classList.add('screen');
+      lucide.createIcons();
+    }
+
+    function requireFirebase() {
+      if (!firebaseReady || !db) {
+        showToast('Ajoute ta configuration Firebase avant de lancer une partie.', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    function generateRoomId() {
+      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+      return Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+    }
+
+    function makePlayer(slot) {
+      return {
+        id: localPlayerId,
+        name: slot === 'p1' ? 'Joueur 1' : 'Joueur 2',
+        slot,
+        joinedAt: Date.now()
+      };
+    }
+
+    /************************************************************
+     * 4. ÉCRAN D'ENTRÉE
+     ************************************************************/
+    function renderHome() {
+      resetBtn.classList.add('hidden');
+      setScreen(`
+        <div class="grid gap-5 lg:grid-cols-5">
+          <button id="createGameBtn" class="soft-card pressable glass group min-h-[260px] p-7 text-left lg:col-span-3">
+            <div class="flex h-full flex-col justify-between gap-8">
+              <div class="flex items-start justify-between gap-5">
+                <div class="rounded-[28px] bg-violet p-4 text-white shadow-glow">
+                  <i data-lucide="sparkles" class="h-8 w-8"></i>
+                </div>
+                <span class="rounded-full bg-violet/10 px-4 py-2 text-sm font900 text-violet">Host</span>
+              </div>
+              <div>
+                <h2 class="text-3xl font-black tracking-tight text-ink sm:text-4xl">Créer une partie</h2>
+                <p class="mt-3 max-w-md text-base font600 leading-7 text-gray-600">Génère un code de 4 lettres et invite un deuxième joueur à rejoindre le lobby.</p>
+              </div>
+            </div>
+          </button>
+
+          <div class="soft-card glass min-h-[260px] p-7 lg:col-span-2">
+            <div class="flex h-full flex-col justify-between gap-7">
+              <div class="flex items-start justify-between gap-5">
+                <div class="rounded-[28px] bg-mint p-4 text-white shadow-lg">
+                  <i data-lucide="log-in" class="h-8 w-8"></i>
+                </div>
+                <span class="rounded-full bg-mint/10 px-4 py-2 text-sm font900 text-emerald-600">Join</span>
+              </div>
+
+              <div>
+                <h2 class="text-3xl font-black tracking-tight text-ink">Rejoindre</h2>
+                <p class="mt-3 text-base font600 leading-7 text-gray-600">Entre le code reçu.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <input id="joinInput" maxlength="4" placeholder="ABCD" class="w-full rounded-[24px] border border-white/80 bg-white/75 px-5 py-4 text-center text-2xl font-black uppercase tracking-[0.35em] text-ink outline-none ring-0 transition focus:border-violet/30 focus:bg-white focus:shadow-glow" />
+                <button id="joinBtn" class="pressable rounded-[24px] bg-ink px-5 text-white shadow-lg hover:opacity-90" aria-label="Rejoindre la partie">
+                  <i data-lucide="arrow-right" class="h-6 w-6"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 grid gap-5 md:grid-cols-3">
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="keyboard" class="h-5 w-5 text-coral"></i> Clavier intégré</div>
+            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Aucune saisie native nécessaire pendant la partie.</p>
+          </div>
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="radio-tower" class="h-5 w-5 text-violet"></i> Temps réel</div>
+            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Synchronisation via Firebase Realtime Database.</p>
+          </div>
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="swords" class="h-5 w-5 text-mint"></i> Défis</div>
+            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Conteste un fragment impossible ou un mot terminé.</p>
+          </div>
+        </div>
+      `);
+
+      document.getElementById('createGameBtn').addEventListener('click', createGame);
+      document.getElementById('joinBtn').addEventListener('click', () => joinGame(document.getElementById('joinInput').value));
+      document.getElementById('joinInput').addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+      });
+      document.getElementById('joinInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') joinGame(e.target.value);
+      });
+    }
+
+    /************************************************************
+     * 5. FIREBASE ROOMS
+     ************************************************************/
+    async function createGame() {
+      if (!requireFirebase()) return;
+
+      roomId = generateRoomId();
+      roomRef = db.ref('ghostRooms/' + roomId);
+
+      const room = {
+        roomId,
+        currentWord: '',
+        turn: localPlayerId,
+        winner: null,
+        status: 'lobby',
+        lastAction: 'Partie créée.',
+        createdAt: Date.now(),
+        players: {
+          p1: makePlayer('p1')
+        }
+      };
+
+      await roomRef.set(room);
+      history.replaceState(null, '', '?room=' + roomId);
+      listenRoom(roomId);
+      showToast('Partie créée. Code : ' + roomId, 'success');
+    }
+
+    async function joinGame(rawCode) {
+      if (!requireFirebase()) return;
+
+      const code = String(rawCode || '').toUpperCase().trim();
+      if (code.length !== 4) {
+        showToast('Entre un code de 4 lettres.', 'error');
+        return;
+      }
+
+      roomId = code;
+      roomRef = db.ref('ghostRooms/' + roomId);
+      const snapshot = await roomRef.get();
+
+      if (!snapshot.exists()) {
+        showToast('Partie introuvable.', 'error');
+        return;
+      }
+
+      const room = snapshot.val();
+      const existingSlot = getMySlot(room);
+
+      if (!existingSlot) {
+        if (room.players?.p2) {
+          showToast('Cette partie est déjà complète.', 'error');
+          return;
+        }
+        await roomRef.child('players/p2').set(makePlayer('p2'));
+        await roomRef.update({ status: 'playing', lastAction: 'Joueur 2 a rejoint la partie.' });
+      }
+
+      history.replaceState(null, '', '?room=' + roomId);
+      listenRoom(roomId);
+      showToast('Partie rejointe.', 'success');
+    }
+
+    function listenRoom(code) {
+      if (unsubscribeRoom) roomRef.off('value', unsubscribeRoom);
+      roomRef = db.ref('ghostRooms/' + code);
+      unsubscribeRoom = roomRef.on('value', snapshot => {
+        currentRoom = snapshot.val();
+        if (!currentRoom) {
+          renderHome();
+          showToast('La partie a été supprimée.', 'error');
+          return;
+        }
+        renderRoom(currentRoom);
+      });
+    }
+
+    function getMySlot(room) {
+      if (room?.players?.p1?.id === localPlayerId) return 'p1';
+      if (room?.players?.p2?.id === localPlayerId) return 'p2';
+      return null;
+    }
+
+    function getOpponentSlot(slot) {
+      return slot === 'p1' ? 'p2' : 'p1';
+    }
+
+    function getPlayerById(room, playerId) {
+      return Object.values(room.players || {}).find(player => player.id === playerId);
+    }
+
+    function getOpponent(room) {
+      const mySlot = getMySlot(room);
+      return room.players?.[getOpponentSlot(mySlot)];
+    }
+
+    /************************************************************
+     * 6. LOBBY + JEU
+     ************************************************************/
+    function renderRoom(room) {
+      resetBtn.classList.remove('hidden');
+      resetBtn.onclick = leaveRoom;
+
+      const mySlot = getMySlot(room);
+      const amInRoom = Boolean(mySlot);
+      const isPlaying = room.status === 'playing' && room.players?.p1 && room.players?.p2;
+      const isMyTurn = room.turn === localPlayerId;
+      const activePlayer = getPlayerById(room, room.turn);
+      const word = room.currentWord || '';
+
+      setScreen(`
+        <div class="glass rounded-[36px] p-5 sm:p-7 lg:p-8">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="rounded-full bg-ink px-4 py-2 text-sm font900 text-white">Code ${room.roomId}</span>
+                <button id="copyCodeBtn" class="pressable rounded-full bg-white/75 px-4 py-2 text-sm font800 text-gray-700 ring-1 ring-white/80 hover:bg-white">
+                  Copier le code
+                </button>
+              </div>
+              <h2 class="mt-5 text-3xl font-black tracking-tight text-ink sm:text-4xl">
+                ${isPlaying ? 'La partie est lancée' : 'Lobby'}
+              </h2>
+              <p class="mt-2 text-base font600 text-gray-600">${escapeHtml(room.lastAction || 'En attente...')}</p>
+            </div>
+
+            <div class="grid min-w-full gap-3 sm:grid-cols-2 lg:min-w-[420px]">
+              ${playerCard(room.players?.p1, 'Joueur 1', room.turn)}
+              ${playerCard(room.players?.p2, 'Joueur 2', room.turn)}
+            </div>
+          </div>
+
+          ${!amInRoom ? spectatorNotice() : ''}
+          ${!isPlaying ? lobbyContent(room) : gameContent(room, isMyTurn, activePlayer, word)}
+        </div>
+      `);
+
+      document.getElementById('copyCodeBtn')?.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(room.roomId);
+        showToast('Code copié.', 'success');
+      });
+
+      if (isPlaying && amInRoom && !room.winner) bindGameEvents(room, isMyTurn);
+    }
+
+    function playerCard(player, fallback, activeId) {
+      const connected = Boolean(player);
+      const active = connected && player.id === activeId;
+      const badgeColor = fallback.endsWith('1') ? 'bg-violet/10 text-violet' : 'bg-mint/10 text-emerald-600';
+
+      return `
+        <div class="${active ? 'active-player' : ''} relative rounded-[26px] border border-white/80 bg-white/62 p-4 backdrop-blur transition">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <div class="text-xs font900 uppercase tracking-[0.22em] text-gray-400">${fallback}</div>
+              <div class="mt-1 text-lg font-black text-ink">${connected ? escapeHtml(player.name) : 'En attente'}</div>
+            </div>
+            <div class="rounded-full ${connected ? badgeColor : 'bg-gray-100 text-gray-400'} px-3 py-2 text-xs font900">
+              ${connected ? (active ? 'À jouer' : 'Connecté') : 'Vide'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function spectatorNotice() {
+      return `
+        <div class="mt-6 rounded-[28px] border border-coral/20 bg-rose-50/70 p-5 text-sm font800 text-rose-700">
+          Cette partie est complète. Tu peux la regarder, mais pas jouer.
+        </div>
+      `;
+    }
+
+    function lobbyContent(room) {
+      return `
+        <div class="mt-7 rounded-[32px] bg-white/52 p-7 text-center ring-1 ring-white/70">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-violet/10 text-violet">
+            <i data-lucide="users" class="h-8 w-8"></i>
+          </div>
+          <h3 class="mt-5 text-2xl font-black text-ink">En attente du deuxième joueur</h3>
+          <p class="mx-auto mt-3 max-w-lg text-base font600 leading-7 text-gray-600">Partage le code <span class="font-black text-violet">${room.roomId}</span>. La partie démarre automatiquement dès que Joueur 2 rejoint.</p>
+        </div>
+      `;
+    }
+
+    function gameContent(room, isMyTurn, activePlayer, word) {
+      const winner = room.winner;
+      const displayWord = word ? word.toUpperCase() : '· · ·';
+      const turnText = winner
+        ? winner.reason
+        : isMyTurn
+          ? 'À toi de poser une lettre.'
+          : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}. Tu peux défier si tu penses que le fragment est impossible.`;
+
+      return `
+        <div class="mt-8 grid gap-5 lg:grid-cols-5">
+          <section class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70 lg:col-span-3">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font900 uppercase tracking-[0.22em] text-gray-400">Fragment actuel</p>
+                <p class="mt-2 text-base font800 text-gray-600">${turnText}</p>
+              </div>
+              <div class="rounded-full ${isMyTurn ? 'bg-violet/10 text-violet' : 'bg-coral/10 text-coral'} px-4 py-2 text-sm font900">
+                ${winner ? 'Terminé' : isMyTurn ? 'Ton tour' : 'Défense'}
+              </div>
+            </div>
+
+            <div class="my-10 flex min-h-[150px] items-center justify-center rounded-[32px] border border-white/80 bg-white/65 px-5 py-8 shadow-inner">
+              <div class="letter-space break-all text-center text-5xl font-black uppercase tracking-[0.18em] text-ink sm:text-7xl lg:text-8xl">${escapeHtml(displayWord)}</div>
+            </div>
+
+            ${winner ? winnerContent(room) : keyboardContent(isMyTurn)}
+          </section>
+
+          <aside class="flex flex-col gap-5 lg:col-span-2">
+            <div class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70">
+              <div class="flex items-center gap-3">
+                <div class="rounded-[22px] bg-coral/10 p-3 text-coral"><i data-lucide="swords" class="h-6 w-6"></i></div>
+                <div>
+                  <h3 class="text-xl font-black text-ink">Défier !</h3>
+                  <p class="text-sm font700 text-gray-500">À utiliser quand ce n'est pas ton tour.</p>
+                </div>
+              </div>
+
+              <button id="challengeBtn" ${isMyTurn || winner ? 'disabled' : ''} class="pressable mt-6 w-full rounded-[28px] bg-coral px-5 py-5 text-lg font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
+                Défier !
+              </button>
+
+              <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font600 leading-6 text-gray-600">
+                Si le fragment ne peut mener à aucun mot, le joueur précédent perd. Si le fragment est déjà un mot de plus de 3 lettres, le joueur précédent perd aussi.
+              </div>
+            </div>
+
+            <div class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70">
+              <h3 class="text-lg font-black text-ink">Rappel des règles</h3>
+              <ul class="mt-4 space-y-3 text-sm font700 leading-6 text-gray-600">
+                <li class="flex gap-3"><span class="text-violet">01</span> Chaque joueur ajoute une lettre.</li>
+                <li class="flex gap-3"><span class="text-violet">02</span> Il ne faut pas terminer un mot de plus de 3 lettres.</li>
+                <li class="flex gap-3"><span class="text-violet">03</span> Un défi vérifie le fragment avec le dictionnaire.</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      `;
+    }
+
+    function keyboardContent(isMyTurn) {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      return `
+        <div>
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <p class="text-sm font900 uppercase tracking-[0.22em] text-gray-400">Clavier</p>
+            <p class="text-sm font800 ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Choisis une lettre' : 'Verrouillé'}</p>
+          </div>
+          <div class="keyboard-grid">
+            ${letters.map(letter => `
+              <button data-letter="${letter}" ${isMyTurn ? '' : 'disabled'} class="pressable aspect-square rounded-[18px] bg-ink text-sm font-black text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none sm:text-base">
+                ${letter}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function winnerContent(room) {
+      const winner = getPlayerById(room, room.winner?.playerId);
+      return `
+        <div class="rounded-[32px] border border-mint/20 bg-emerald-50/80 p-6 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-mint text-white shadow-lg">
+            <i data-lucide="trophy" class="h-8 w-8"></i>
+          </div>
+          <h3 class="mt-5 text-3xl font-black text-ink">${escapeHtml(winner?.name || 'Un joueur')} gagne !</h3>
+          <p class="mt-2 text-base font700 text-emerald-700">${escapeHtml(room.winner?.reason || 'Partie terminée.')}</p>
+          <button id="newRoundBtn" class="pressable mt-6 rounded-[28px] bg-ink px-6 py-4 text-base font-black text-white shadow-lg hover:opacity-90">Nouvelle manche</button>
+        </div>
+      `;
+    }
+
+    function bindGameEvents(room, isMyTurn) {
+      document.querySelectorAll('[data-letter]').forEach(button => {
+        button.addEventListener('click', () => playLetter(button.dataset.letter));
+      });
+
+      document.getElementById('challengeBtn')?.addEventListener('click', challengeWord);
+      document.getElementById('newRoundBtn')?.addEventListener('click', newRound);
+    }
+
+    /************************************************************
+     * 7. LOGIQUE GHOST
+     ************************************************************/
+    async function playLetter(letter) {
+      if (!currentRoom || currentRoom.winner) return;
+      if (currentRoom.turn !== localPlayerId) {
+        showToast("Ce n'est pas ton tour.", 'error');
+        return;
+      }
+
+      const mySlot = getMySlot(currentRoom);
+      const opponent = currentRoom.players?.[getOpponentSlot(mySlot)];
+      if (!opponent) return;
+
+      const nextWord = normalizeWord((currentRoom.currentWord || '') + letter);
+
+      if (nextWord.length > 3 && checkValidity(nextWord)) {
+        await roomRef.update({
+          currentWord: nextWord,
+          winner: {
+            playerId: opponent.id,
+            reason: `Mot complété : ${nextWord.toUpperCase()}.`
+          },
+          lastAction: `Mot complété : ${nextWord.toUpperCase()}.`,
+          updatedAt: Date.now()
+        });
+        return;
+      }
+
+      await roomRef.update({
+        currentWord: nextWord,
+        turn: opponent.id,
+        lastAction: `${currentRoom.players[mySlot].name} a ajouté une lettre.`,
+        updatedAt: Date.now()
+      });
+    }
+
+    async function challengeWord() {
+      if (!currentRoom || currentRoom.winner) return;
+      if (currentRoom.turn === localPlayerId) {
+        showToast("Tu peux défier seulement quand ce n'est pas ton tour.", 'error');
+        return;
+      }
+
+      const fragment = normalizeWord(currentRoom.currentWord || '');
+      if (!fragment) {
+        showToast('Impossible de défier un fragment vide.', 'error');
+        return;
+      }
+
+      const challengerId = localPlayerId;
+      const challengedId = currentRoom.turn;
+      const challenger = getPlayerById(currentRoom, challengerId);
+      const challenged = getPlayerById(currentRoom, challengedId);
+
+      const isCompletedWord = fragment.length > 3 && checkValidity(fragment);
+      const canContinue = hasPossibleContinuation(fragment);
+
+      let winnerId;
+      let reason;
+
+      if (isCompletedWord) {
+        winnerId = challengerId;
+        reason = `${challenged?.name || 'Le joueur actif'} a laissé un mot complet : ${fragment.toUpperCase()}.`;
+      } else if (!canContinue) {
+        winnerId = challengerId;
+        reason = `${fragment.toUpperCase()} ne mène à aucun mot du dictionnaire.`;
+      } else {
+        winnerId = challengedId;
+        reason = `${fragment.toUpperCase()} est encore valide. Défi raté.`;
+      }
+
+      await roomRef.update({
+        winner: {
+          playerId: winnerId,
+          reason
+        },
+        lastAction: `${challenger?.name || 'Un joueur'} a lancé un défi.`,
+        updatedAt: Date.now()
+      });
+    }
+
+    async function newRound() {
+      if (!currentRoom) return;
+      const p1 = currentRoom.players?.p1;
+      const p2 = currentRoom.players?.p2;
+      if (!p1 || !p2) return;
+
+      const starter = currentRoom.winner?.playerId === p1.id ? p2.id : p1.id;
+      await roomRef.update({
+        currentWord: '',
+        turn: starter,
+        winner: null,
+        status: 'playing',
+        lastAction: 'Nouvelle manche lancée.',
+        updatedAt: Date.now()
+      });
+    }
+
+    function leaveRoom() {
+      if (unsubscribeRoom && roomRef) roomRef.off('value', unsubscribeRoom);
+      unsubscribeRoom = null;
+      currentRoom = null;
+      roomId = '';
+      history.replaceState(null, '', location.pathname);
+      renderHome();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    /************************************************************
+     * 8. INIT
+     ************************************************************/
+    renderHome();
+
+    if (roomId && firebaseReady) {
+      joinGame(roomId);
+    }
+  </script>
+</body>
+</html>
