@@ -675,9 +675,19 @@
 
       show(els.gameView);
 
-      const master = isCurrentMaster();
-      drawTarget(d.targetValue || 90);
-      setNeedle(d.guessValue ?? 90);
+    const master = isCurrentMaster();
+const reveal = d.phase === "reveal";
+const hideTarget = !master && !reveal;
+
+els.targetZones.classList.toggle("hidden-target", hideTarget);
+
+if (hideTarget) {
+  els.targetZones.innerHTML = "";
+} else {
+  drawTarget(d.targetValue || 90);
+}
+
+setNeedle(d.guessValue ?? 90);
 
       els.roleLabel.textContent = master ? "Maître" : "Devin";
       els.roundLabel.textContent = "Manche " + d.round + "/5";
