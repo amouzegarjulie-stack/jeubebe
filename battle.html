@@ -53,6 +53,8 @@
     .uno-card {
       width: 74px;
       height: 112px;
+      min-width: 74px;
+      flex: 0 0 auto;
       border-radius: 18px;
       position: relative;
       display: grid;
@@ -130,7 +132,7 @@
     @keyframes pulseSoft { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
 
     @media (min-width: 768px) {
-      .uno-card { width: 88px; height: 132px; border-radius: 22px; }
+      .uno-card { width: 88px; height: 132px; min-width: 88px; border-radius: 22px; }
       .uno-card .value { width: 62px; height: 62px; font-size: 28px; }
     }
   </style>
@@ -186,6 +188,7 @@
     };
     const SPECIAL_LABELS = {
       '+2': '+2',
+      '+4': '+4',
       skip: '⦸',
       reverse: '↺',
       wild: '★'
@@ -294,7 +297,7 @@
         id: uid('card'),
         color,
         value,
-        points: value === 'wild' ? 50 : ['+2', 'skip', 'reverse'].includes(value) ? 20 : Number(value) || 0
+        points: ['wild', '+4'].includes(value) ? 50 : ['+2', 'skip', 'reverse'].includes(value) ? 20 : Number(value) || 0
       };
     }
 
@@ -319,6 +322,7 @@
       }
 
       for (let i = 0; i < 4; i++) deck.push(makeCard('wild', 'wild'));
+      for (let i = 0; i < 4; i++) deck.push(makeCard('wild', '+4'));
       return shuffle(deck);
     }
 
@@ -327,7 +331,7 @@
       const hand = deck.splice(0, 7);
       let topCard = deck.shift();
 
-      while (topCard.value === 'wild' || ['+2', 'skip', 'reverse'].includes(topCard.value)) {
+      while (['wild', '+4', '+2', 'skip', 'reverse'].includes(topCard.value)) {
         deck.push(topCard);
         deck = shuffle(deck);
         topCard = deck.shift();
@@ -413,11 +417,18 @@
         text = 'Inversion jouée. En duel, le joueur adverse passe son tour.';
       }
 
+      if (card.value === '+4') {
+        const target = nextTurnIndex(game, 0);
+        drawCards(game, target, 4);
+        skip = 1;
+        text = `${game.players[target].name} pioche 4 cartes et passe son tour. Couleur changée en ${COLOR_LABELS[chosenColor]}.`;
+      }
+
       if (card.value === 'wild') {
         text = `Couleur changée en ${COLOR_LABELS[chosenColor]}.`;
       }
 
-      game.activeColor = card.value === 'wild' ? chosenColor : card.color;
+      game.activeColor = ['wild', '+4'].includes(card.value) ? chosenColor : card.color;
       game.turnIndex = nextTurnIndex(game, skip);
       return text;
     }
@@ -425,7 +436,7 @@
     function displayCard(card) {
       if (!card) return '';
       const label = SPECIAL_LABELS[card.value] || card.value;
-      return card.value === 'wild' ? 'Wild' : `${label} ${COLOR_LABELS[card.color]}`;
+      return ['wild', '+4'].includes(card.value) ? label : `${label} ${COLOR_LABELS[card.color]}`;
     }
 
     async function createGame() {
@@ -556,7 +567,7 @@
 
           const card = player.hand[cardIndex];
           if (!canPlay(card, game)) return game;
-          if (card.value === 'wild' && !COLORS.includes(chosenColor)) return game;
+          if (['wild', '+4'].includes(card.value) && !COLORS.includes(chosenColor)) return game;
 
           player.hand.splice(cardIndex, 1);
           game.discardPile.push(card);
@@ -579,8 +590,11 @@
           return game;
         });
 
-        state.wildCardId = null;
-        if (!result.committed) toast('Action refusée. Vérifiez que c’est votre tour et que la carte est jouable.');
+        if (result.committed) {
+          setState({ wildCardId: null });
+        } else {
+          toast('Action refusée. Vérifiez que c’est votre tour et que la carte est jouable.');
+        }
       } catch (error) {
         console.error('[UNO] Erreur jouer:', error);
         toast(firebaseMessage(error));
@@ -618,7 +632,7 @@
           if (game.rematchVotes.length >= 2) {
             let deck = createDeck();
             let topCard = deck.shift();
-            while (topCard.value === 'wild' || ['+2', 'skip', 'reverse'].includes(topCard.value)) {
+            while (['wild', '+4', '+2', 'skip', 'reverse'].includes(topCard.value)) {
               deck.push(topCard);
               deck = shuffle(deck);
               topCard = deck.shift();
@@ -891,7 +905,7 @@
         button.addEventListener('click', () => {
           const cardId = button.dataset.cardId;
           const value = button.dataset.cardValue;
-          if (value === 'wild') {
+          if (['wild', '+4'].includes(value)) {
             setState({ wildCardId: cardId });
           } else {
             playCard(cardId);
