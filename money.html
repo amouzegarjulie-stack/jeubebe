@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Le Compte de la Discorde</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Police moderne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(14, 165, 233, 0.22), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.2), transparent 35%),
+        #0f172a;
+    }
+
+    .glass {
+      background: rgba(15, 23, 42, 0.62);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .soft-glow {
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.18);
+    }
+
+    .score-pop {
+      animation: scorePop 0.7s ease;
+    }
+
+    @keyframes scorePop {
+      0% { transform: scale(1); color: #e2e8f0; }
+      35% { transform: scale(1.18); color: #67e8f9; }
+      100% { transform: scale(1); color: #e2e8f0; }
+    }
+
+    .floaty {
+      animation: floaty 5s ease-in-out infinite;
+    }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .avatar-one {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+    }
+
+    .avatar-two {
+      background: linear-gradient(135deg, #f472b6, #9333ea);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+    }
+
+    .btn-neutral {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+  </style>
+</head>
+
+<body class="text-slate-100">
+  <div id="app" class="min-h-screen flex flex-col"></div>
+
+  <script type="module">
+    /**********************************************************************
+     * Le Compte de la Discorde
+     * Prototype multijoueur temps réel dans un seul fichier HTML.
+     *
+     * À faire avant de lancer :
+     * 1. Créer un projet Firebase.
+     * 2. Activer Realtime Database.
+     * 3. Remplir la constante firebaseConfig ci-dessous.
+     * 4. Adapter les règles de sécurité avant toute mise en production.
+     **********************************************************************/
+
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+    import {
+      getDatabase,
+      ref,
+      push,
+      set,
+      get,
+      update,
+      onValue,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+
+    // Configuration Firebase à remplir.
+    const firebaseConfig = {
+      apiKey: '',
+      authDomain: '',
+      databaseURL: '',
+      projectId: '',
+      storageBucket: '',
+      messagingSenderId: '',
+      appId: ''
+    };
+
+    // Questions volontairement difficiles, gênantes ou moralement ambiguës.
+    const QUESTIONS = [
+      { amount: 1000, action: 'lire à voix haute le dernier message privé embarrassant que tu as envoyé' },
+      { amount: 1500, action: 'laisser ton adversaire publier une story avec une photo ridicule de toi pendant 24 heures' },
+      { amount: 2000, action: 'avouer à un proche un mensonge que tu as gardé pour éviter une dispute' },
+      { amount: 2500, action: 'donner ton téléphone déverrouillé à ton adversaire pendant trois minutes' },
+      { amount: 3000, action: 'appeler ton patron et lui dire une vérité que tu n’as jamais osé dire' },
+      { amount: 3500, action: 'révéler le surnom le plus honteux que tu as donné à quelqu’un dans son dos' },
+      { amount: 4000, action: 'envoyer “il faut qu’on parle” à une personne importante sans contexte' },
+      { amount: 4500, action: 'laisser ton adversaire choisir ton prochain statut WhatsApp pendant une semaine' },
+      { amount: 5000, action: 'montrer ton historique de recherche récent à ton adversaire' },
+      { amount: 6000, action: 'confesser devant l’autre joueur une jalousie ou une rancune que tu caches encore' }
+    ];
+
+    const MAX_PLAYERS = 2;
+    const TOTAL_ROUNDS = QUESTIONS.length;
+    const BONUS_ON_DOUBLE_REFUSAL = 500;
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const rootRef = ref(db, 'compteDiscordeRooms');
+
+    const $app = document.querySelector('#app');
+
+    // État local du client.
+    const local = {
+      playerId: localStorage.getItem('lcd_player_id') || crypto.randomUUID(),
+      pseudo: localStorage.getItem('lcd_pseudo') || '',
+      roomId: new URLSearchParams(location.search).get('room') || '',
+      room: null,
+      unsubscribe: null,
+      lastScores: {}
+    };
+
+    localStorage.setItem('lcd_player_id', local.playerId);
+
+    /**********************************************************************
+     * Helpers généraux
+     **********************************************************************/
+
+    function formatCHF(value) {
+      return new Intl.NumberFormat('fr-CH', {
+        style: 'currency',
+        currency: 'CHF',
+        maximumFractionDigits: 0
+      }).format(value || 0);
+    }
+
+    function sanitizePseudo(name) {
+      return String(name || '')
+        .trim()
+        .replace(/[<>]/g, '')
+        .slice(0, 18) || 'Anonyme';
+    }
+
+    function getPlayers(room = local.room) {
+      return Object.entries(room?.players || {}).map(([id, value]) => ({ id, ...value }));
+    }
+
+    function getMe(room = local.room) {
+      return room?.players?.[local.playerId] || null;
+    }
+
+    function getOpponent(room = local.room) {
+      return getPlayers(room).find(player => player.id !== local.playerId) || null;
+    }
+
+    function currentRoundIndex(room = local.room) {
+      return room?.currentRound || 0;
+    }
+
+    function currentQuestion(room = local.room) {
+      return QUESTIONS[currentRoundIndex(room)] || QUESTIONS[QUESTIONS.length - 1];
+    }
+
+    function currentAmount(room = local.room) {
+      return currentQuestion(room).amount + (room?.bonus || 0);
+    }
+
+    function roomPath(path = '') {
+      return `compteDiscordeRooms/${local.roomId}${path ? '/' + path : ''}`;
+    }
+
+    function copyRoomLink() {
+      navigator.clipboard?.writeText(location.href);
+      toast('Lien de partie copié.');
+    }
+
+    function toast(message) {
+      const el = document.createElement('div');
+      el.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl glass text-sm text-slate-100';
+      el.textContent = message;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1900);
+    }
+
+    /**********************************************************************
+     * Gestion des rooms
+     **********************************************************************/
+
+    async function findOrCreateRoom(pseudo) {
+      local.pseudo = sanitizePseudo(pseudo);
+      localStorage.setItem('lcd_pseudo', local.pseudo);
+
+      // Si une room est présente dans l'URL, on tente de la rejoindre directement.
+      if (local.roomId) {
+        await joinRoom(local.roomId);
+        return;
+      }
+
+      // Recherche d'une room en attente. Le second joueur rejoint automatiquement.
+      const snapshot = await get(rootRef);
+      const rooms = snapshot.exists() ? snapshot.val() : {};
+      const waitingRoom = Object.entries(rooms).find(([, room]) => {
+        const players = Object.keys(room.players || {});
+        return room.status === 'waiting' && players.length < MAX_PLAYERS;
+      });
+
+      if (waitingRoom) {
+        local.roomId = waitingRoom[0];
+        await joinRoom(local.roomId);
+        return;
+      }
+
+      // Aucune room disponible : le joueur crée une nouvelle partie.
+      const newRoomRef = push(rootRef);
+      local.roomId = newRoomRef.key;
+      await set(newRoomRef, createInitialRoom(local.pseudo));
+      replaceUrlWithRoom(local.roomId);
+      subscribeRoom();
+    }
+
+    function createInitialRoom(pseudo) {
+      return {
+        status: 'waiting',
+        currentRound: 0,
+        bonus: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        players: {
+          [local.playerId]: {
+            pseudo,
+            slot: 1,
+            score: 0,
+            readyForNext: false,
+            joinedAt: serverTimestamp()
+          }
+        },
+        rounds: {}
+      };
+    }
+
+    async function joinRoom(roomId) {
+      const snapshot = await get(ref(db, `compteDiscordeRooms/${roomId}`));
+
+      if (!snapshot.exists()) {
+        local.roomId = '';
+        replaceUrlWithRoom('');
+        toast('Partie introuvable. Une nouvelle recherche va commencer.');
+        await findOrCreateRoom(local.pseudo);
+        return;
+      }
+
+      const room = snapshot.val();
+      const players = Object.keys(room.players || {});
+      const alreadyInRoom = players.includes(local.playerId);
+
+      if (!alreadyInRoom && players.length >= MAX_PLAYERS) {
+        renderFullRoom();
+        return;
+      }
+
+      const slot = alreadyInRoom ? room.players[local.playerId].slot : players.length + 1;
+
+      await update(ref(db, roomPath()), {
+        [`players/${local.playerId}`]: {
+          pseudo: local.pseudo,
+          slot,
+          score: room.players?.[local.playerId]?.score || 0,
+          readyForNext: false,
+          joinedAt: serverTimestamp()
+        },
+        status: players.length + (alreadyInRoom ? 0 : 1) >= MAX_PLAYERS ? 'playing' : 'waiting',
+        updatedAt: serverTimestamp()
+      });
+
+      replaceUrlWithRoom(roomId);
+      subscribeRoom();
+    }
+
+    function replaceUrlWithRoom(roomId) {
+      const url = new URL(location.href);
+      if (roomId) url.searchParams.set('room', roomId);
+      else url.searchParams.delete('room');
+      history.replaceState(null, '', url.toString());
+    }
+
+    function subscribeRoom() {
+      if (local.unsubscribe) local.unsubscribe();
+      local.unsubscribe = onValue(ref(db, roomPath()), snapshot => {
+        local.room = snapshot.val();
+        render();
+      });
+    }
+
+    /**********************************************************************
+     * Actions de jeu
+     **********************************************************************/
+
+    async function vote(accepted) {
+      const round = currentRoundIndex();
+      await update(ref(db, roomPath()), {
+        [`rounds/${round}/votes/${local.playerId}`]: accepted,
+        updatedAt: serverTimestamp()
+      });
+
+      await tryResolveRound(round);
+    }
+
+    async function tryResolveRound(round) {
+      const snapshot = await get(ref(db, roomPath()));
+      if (!snapshot.exists()) return;
+
+      const room = snapshot.val();
+      const players = getPlayers(room);
+      const votes = room.rounds?.[round]?.votes || {};
+      const alreadyResolved = room.rounds?.[round]?.resolved;
+
+      if (alreadyResolved || players.length < MAX_PLAYERS) return;
+      if (!players.every(player => Object.prototype.hasOwnProperty.call(votes, player.id))) return;
+
+      const amount = currentAmount(room);
+      const [p1, p2] = players.sort((a, b) => a.slot - b.slot);
+      const p1Accepts = votes[p1.id] === true;
+      const p2Accepts = votes[p2.id] === true;
+
+      let gains = { [p1.id]: 0, [p2.id]: 0 };
+      let nextBonus = 0;
+
+      if (p1Accepts && p2Accepts) {
+        gains[p1.id] = amount / 2;
+        gains[p2.id] = amount / 2;
+      } else if (p1Accepts && !p2Accepts) {
+        gains[p1.id] = amount;
+      } else if (!p1Accepts && p2Accepts) {
+        gains[p2.id] = amount;
+      } else {
+        nextBonus = (room.bonus || 0) + BONUS_ON_DOUBLE_REFUSAL;
+      }
+
+      await update(ref(db, roomPath()), {
+        [`rounds/${round}/resolved`]: true,
+        [`rounds/${round}/amount`]: amount,
+        [`rounds/${round}/gains`]: gains,
+        [`rounds/${round}/choices`]: votes,
+        [`players/${p1.id}/score`]: (p1.score || 0) + gains[p1.id],
+        [`players/${p2.id}/score`]: (p2.score || 0) + gains[p2.id],
+        [`players/${p1.id}/readyForNext`]: false,
+        [`players/${p2.id}/readyForNext`]: false,
+        bonus: nextBonus,
+        status: 'reveal',
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function markReadyForNext() {
+      await update(ref(db, roomPath()), {
+        [`players/${local.playerId}/readyForNext`]: true,
+        updatedAt: serverTimestamp()
+      });
+
+      await tryAdvanceRound();
+    }
+
+    async function tryAdvanceRound() {
+      const snapshot = await get(ref(db, roomPath()));
+      if (!snapshot.exists()) return;
+
+      const room = snapshot.val();
+      const players = getPlayers(room);
+      if (!players.every(player => player.readyForNext)) return;
+
+      const nextRound = (room.currentRound || 0) + 1;
+      const patch = {
+        currentRound: nextRound,
+        updatedAt: serverTimestamp()
+      };
+
+      if (nextRound >= TOTAL_ROUNDS) {
+        patch.status = 'finished';
+      } else {
+        patch.status = 'playing';
+        players.forEach(player => {
+          patch[`players/${player.id}/readyForNext`] = false;
+        });
+      }
+
+      await update(ref(db, roomPath()), patch);
+    }
+
+    async function restartGame() {
+      const players = getPlayers().sort((a, b) => a.slot - b.slot);
+      const patch = {
+        status: players.length >= MAX_PLAYERS ? 'playing' : 'waiting',
+        currentRound: 0,
+        bonus: 0,
+        rounds: null,
+        updatedAt: serverTimestamp()
+      };
+
+      players.forEach(player => {
+        patch[`players/${player.id}/score`] = 0;
+        patch[`players/${player.id}/readyForNext`] = false;
+      });
+
+      await update(ref(db, roomPath()), patch);
+    }
+
+    /**********************************************************************
+     * Rendu UI
+     **********************************************************************/
+
+    function render() {
+      if (!local.room) {
+        renderLoading('Connexion à la partie...');
+        return;
+      }
+
+      const room = local.room;
+      const me = getMe(room);
+      if (!me) {
+        renderFullRoom();
+        return;
+      }
+
+      if (room.status === 'waiting') renderWaiting();
+      else if (room.status === 'playing') renderPlaying();
+      else if (room.status === 'reveal') renderReveal();
+      else if (room.status === 'finished') renderFinal();
+      else renderLoading('Synchronisation...');
+    }
+
+    function baseLayout(content) {
+      const players = getPlayers().sort((a, b) => a.slot - b.slot);
+      const p1 = players.find(player => player.slot === 1);
+      const p2 = players.find(player => player.slot === 2);
+
+      return `
+        ${renderHud(p1, p2)}
+        <main class="flex-1 flex items-center justify-center px-4 py-28">
+          <section class="w-full max-w-3xl glass rounded-[2rem] p-6 md:p-10 soft-glow">
+            ${content}
+          </section>
+        </main>
+      `;
+    }
+
+    function renderHud(p1, p2) {
+      return `
+        <header class="fixed top-0 left-0 right-0 z-30 px-4 pt-4">
+          <div class="max-w-6xl mx-auto grid grid-cols-2 gap-3">
+            ${renderPlayerCard(p1, 1, 'text-left')}
+            ${renderPlayerCard(p2, 2, 'text-right flex-row-reverse')}
+          </div>
+        </header>
+      `;
+    }
+
+    function renderPlayerCard(player, slot, alignment) {
+      const score = player?.score || 0;
+      const previous = local.lastScores[player?.id] ?? score;
+      const popClass = previous !== score ? 'score-pop' : '';
+      if (player?.id) local.lastScores[player.id] = score;
+
+      return `
+        <div class="glass rounded-3xl px-4 py-3 flex items-center gap-3 ${alignment}">
+          <div class="relative shrink-0 w-12 h-12 rounded-2xl ${slot === 1 ? 'avatar-one' : 'avatar-two'} grid place-items-center overflow-hidden">
+            <div class="absolute inset-2 rounded-full bg-white/15"></div>
+            <div class="relative w-5 h-5 rounded-full bg-white/80"></div>
+          </div>
+          <div class="min-w-0 ${alignment.includes('right') ? 'text-right' : ''}">
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Joueur ${slot}</p>
+            <p class="font-bold truncate">${player?.pseudo || 'En attente'}</p>
+            <p class="text-lg font-black text-slate-200 ${popClass}" data-score>${formatCHF(score)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHome() {
+      $app.innerHTML = `
+        <main class="min-h-screen flex items-center justify-center px-4 py-10">
+          <section class="w-full max-w-xl glass rounded-[2rem] p-8 md:p-10 soft-glow text-center floaty">
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-4">Jeu de duel moral</p>
+            <h1 class="text-4xl md:text-6xl font-black leading-tight mb-4">Le Compte de la Discorde</h1>
+            <p class="text-slate-300 mb-8">Deux joueurs, dix dilemmes, un seul pactole. Accepte, refuse, trahis ou partage.</p>
+
+            <form id="joinForm" class="space-y-4">
+              <input
+                id="pseudoInput"
+                class="w-full rounded-2xl bg-slate-950/70 border border-slate-700 px-5 py-4 outline-none focus:ring-2 focus:ring-cyan-400"
+                placeholder="Ton pseudo"
+                maxlength="18"
+                value="${local.pseudo}"
+                required
+              />
+              <button class="w-full btn-primary rounded-2xl px-5 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
+                Entrer dans l'arène
+              </button>
+            </form>
+
+            <p class="text-xs text-slate-500 mt-6">Le premier joueur crée une room. Le second rejoint automatiquement la première room disponible.</p>
+          </section>
+        </main>
+      `;
+
+      document.querySelector('#joinForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        renderLoading('Recherche ou création de partie...');
+        await findOrCreateRoom(document.querySelector('#pseudoInput').value);
+      });
+    }
+
+    function renderWaiting() {
+      $app.innerHTML = baseLayout(`
+        <div class="text-center space-y-6">
+          <div class="mx-auto w-20 h-20 rounded-[1.5rem] avatar-one grid place-items-center floaty">
+            <span class="text-3xl font-black">1</span>
+          </div>
+          <div>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Salle ouverte</p>
+            <h2 class="text-3xl md:text-5xl font-black mb-3">En attente d'un adversaire</h2>
+            <p class="text-slate-300">Partage le lien ou laisse le second joueur rejoindre automatiquement.</p>
+          </div>
+          <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4 text-sm break-all text-slate-300">${location.href}</div>
+          <button id="copyLink" class="btn-neutral rounded-2xl px-5 py-3 font-bold hover:bg-slate-700 transition">Copier le lien</button>
+        </div>
+      `);
+      document.querySelector('#copyLink').addEventListener('click', copyRoomLink);
+    }
+
+    function renderPlaying() {
+      const room = local.room;
+      const round = currentRoundIndex(room);
+      const question = currentQuestion(room);
+      const amount = currentAmount(room);
+      const votes = room.rounds?.[round]?.votes || {};
+      const hasVoted = Object.prototype.hasOwnProperty.call(votes, local.playerId);
+      const opponent = getOpponent(room);
+
+      $app.innerHTML = baseLayout(`
+        <div class="space-y-8 text-center">
+          <div>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Round ${round + 1} / ${TOTAL_ROUNDS}</p>
+            <div class="inline-flex items-center gap-2 rounded-full bg-slate-950/60 border border-slate-700 px-4 py-2 text-sm text-slate-300 mb-5">
+              Montant en jeu : <strong class="text-cyan-200">${formatCHF(amount)}</strong>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-black leading-tight">Pour ${formatCHF(amount)}, acceptes-tu de ${question.action} ?</h2>
+          </div>
+
+          ${hasVoted ? `
+            <div class="rounded-3xl bg-slate-950/60 border border-slate-700 p-8">
+              <div class="mx-auto mb-5 w-14 h-14 rounded-2xl bg-cyan-400/15 grid place-items-center animate-pulse">
+                <span class="text-2xl">...</span>
+              </div>
+              <h3 class="text-2xl font-black mb-2">L'adversaire réfléchit...</h3>
+              <p class="text-slate-400">Ton choix est verrouillé et masqué jusqu'à ce que ${opponent?.pseudo || 'l’autre joueur'} réponde.</p>
+            </div>
+          ` : `
+            <div class="grid md:grid-cols-2 gap-4">
+              <button id="acceptBtn" class="btn-primary rounded-3xl p-6 font-black text-xl hover:scale-[1.02] active:scale-[0.98] transition">
+                J'accepte
+                <span class="block text-sm font-medium text-cyan-100/80 mt-2">Je tente de prendre l'argent</span>
+              </button>
+              <button id="refuseBtn" class="btn-danger rounded-3xl p-6 font-black text-xl hover:scale-[1.02] active:scale-[0.98] transition">
+                Je refuse
+                <span class="block text-sm font-medium text-rose-100/80 mt-2">Je garde ma dignité</span>
+              </button>
+            </div>
+          `}
+        </div>
+      `);
+
+      document.querySelector('#acceptBtn')?.addEventListener('click', () => vote(true));
+      document.querySelector('#refuseBtn')?.addEventListener('click', () => vote(false));
+    }
+
+    function renderReveal() {
+      const room = local.room;
+      const round = currentRoundIndex(room);
+      const result = room.rounds?.[round] || {};
+      const me = getMe(room);
+      const opponent = getOpponent(room);
+      const myChoice = result.choices?.[local.playerId];
+      const opponentChoice = result.choices?.[opponent?.id];
+      const myGain = result.gains?.[local.playerId] || 0;
+      const opponentGain = result.gains?.[opponent?.id] || 0;
+      const bothRefused = myChoice === false && opponentChoice === false;
+
+      $app.innerHTML = baseLayout(`
+        <div class="space-y-8 text-center">
+          <div>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Résultat du round ${round + 1}</p>
+            <h2 class="text-3xl md:text-5xl font-black">Les cartes sont retournées</h2>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-left">
+            ${renderChoiceCard(me, myChoice, myGain, true)}
+            ${renderChoiceCard(opponent, opponentChoice, opponentGain, false)}
+          </div>
+
+          ${bothRefused ? `
+            <div class="rounded-3xl bg-amber-500/10 border border-amber-300/20 p-5 text-amber-100">
+              Double refus : personne ne gagne, mais le prochain round augmente de ${formatCHF(BONUS_ON_DOUBLE_REFUSAL)}.
+            </div>
+          ` : ''}
+
+          <button id="nextBtn" class="btn-primary rounded-2xl px-8 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
+            ${round + 1 >= TOTAL_ROUNDS ? 'Voir le verdict final' : 'Round suivant'}
+          </button>
+        </div>
+      `);
+
+      document.querySelector('#nextBtn').addEventListener('click', markReadyForNext);
+    }
+
+    function renderChoiceCard(player, choice, gain, isMe) {
+      return `
+        <article class="rounded-3xl bg-slate-950/60 border border-slate-700 p-5">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-12 h-12 rounded-2xl ${player?.slot === 1 ? 'avatar-one' : 'avatar-two'} grid place-items-center font-black">${player?.slot || '?'}</div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-slate-500">${isMe ? 'Toi' : 'Adversaire'}</p>
+              <h3 class="font-black text-xl">${player?.pseudo || 'Joueur'}</h3>
+            </div>
+          </div>
+          <div class="rounded-2xl ${choice ? 'bg-cyan-400/10 border-cyan-300/20' : 'bg-rose-400/10 border-rose-300/20'} border p-4">
+            <p class="text-sm text-slate-400 mb-1">Choix</p>
+            <p class="text-2xl font-black">${choice ? 'A accepté' : 'A refusé'}</p>
+          </div>
+          <p class="mt-5 text-slate-400">Gain du round</p>
+          <p class="text-3xl font-black text-slate-100">${formatCHF(gain)}</p>
+        </article>
+      `;
+    }
+
+    function renderFinal() {
+      const players = getPlayers().sort((a, b) => (b.score || 0) - (a.score || 0));
+      const winner = players[0];
+      const loser = players[1];
+      const isDraw = winner && loser && winner.score === loser.score;
+      const rounds = local.room.rounds || {};
+
+      const rows = Array.from({ length: TOTAL_ROUNDS }, (_, index) => {
+        const result = rounds[index] || {};
+        return `
+          <tr class="border-t border-slate-800">
+            <td class="py-3 pr-3 text-slate-400">${index + 1}</td>
+            <td class="py-3 pr-3">${formatCHF(result.amount || QUESTIONS[index].amount)}</td>
+            <td class="py-3 pr-3 text-slate-300">${summarizeRound(result)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      $app.innerHTML = baseLayout(`
+        <div class="space-y-8 text-center">
+          <div>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Verdict final</p>
+            <h2 class="text-4xl md:text-6xl font-black">${isDraw ? 'Égalité parfaite' : `${winner?.pseudo || 'Joueur'} gagne`}</h2>
+            <p class="text-slate-300 mt-3">Score final : ${players.map(player => `${player.pseudo} ${formatCHF(player.score)}`).join(' contre ')}</p>
+          </div>
+
+          <div class="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950/50 text-left">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wide text-xs">
+                <tr>
+                  <th class="py-3 px-4">#</th>
+                  <th class="py-3 px-4">Montant</th>
+                  <th class="py-3 px-4">Résumé</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+
+          <button id="restartBtn" class="btn-primary rounded-2xl px-8 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
+            Relancer une partie
+          </button>
+        </div>
+      `);
+
+      document.querySelector('#restartBtn').addEventListener('click', restartGame);
+    }
+
+    function summarizeRound(result) {
+      if (!result.choices || !result.gains) return 'Aucun résultat';
+      const players = getPlayers().sort((a, b) => a.slot - b.slot);
+      return players.map(player => {
+        const choice = result.choices[player.id] ? 'accepte' : 'refuse';
+        const gain = formatCHF(result.gains[player.id] || 0);
+        return `${player.pseudo} ${choice}, ${gain}`;
+      }).join(' | ');
+    }
+
+    function renderLoading(message) {
+      $app.innerHTML = `
+        <main class="min-h-screen flex items-center justify-center px-4">
+          <section class="glass rounded-[2rem] p-8 text-center soft-glow">
+            <div class="mx-auto mb-5 w-14 h-14 rounded-2xl bg-cyan-400/15 grid place-items-center animate-pulse">
+              <span class="text-2xl">...</span>
+            </div>
+            <h1 class="text-2xl font-black">${message}</h1>
+          </section>
+        </main>
+      `;
+    }
+
+    function renderFullRoom() {
+      $app.innerHTML = `
+        <main class="min-h-screen flex items-center justify-center px-4">
+          <section class="glass rounded-[2rem] p-8 text-center soft-glow max-w-lg">
+            <h1 class="text-3xl font-black mb-3">Partie complète</h1>
+            <p class="text-slate-300 mb-6">Cette room contient déjà deux joueurs. Supprime le paramètre room dans l'URL pour chercher une autre partie.</p>
+            <button id="newRoomBtn" class="btn-primary rounded-2xl px-6 py-3 font-black">Chercher une autre partie</button>
+          </section>
+        </main>
+      `;
+      document.querySelector('#newRoomBtn').addEventListener('click', () => {
+        local.roomId = '';
+        replaceUrlWithRoom('');
+        renderHome();
+      });
+    }
+
+    // Démarrage de l'application.
+    renderHome();
+  </script>
+</body>
+</html>
