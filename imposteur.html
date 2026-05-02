@@ -333,14 +333,17 @@ const firebaseConfig = {
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
 
-    const { createApp, markRaw } = Vue;
+   const { createApp } = Vue;
+
+const raw = {
+  db: null,
+  roomRef: null,
+  connectedRef: null
+};
 
     createApp({
       data() {
         return {
-          db: null,
-          roomRef: null,
-          connectedRef: null,
           screen: 'home',
           fatalError: '',
           connected: false,
@@ -473,8 +476,8 @@ const firebaseConfig = {
               return;
             }
             firebase.initializeApp(firebaseConfig);
-            this.db = markRaw(firebase.database());
-            firebase.database().ref('.info/connected').on('value', snap => {
+raw.db = firebase.database();
+raw.db.ref('.info/connected').on('value', snap => {
               this.connected = !!snap.val();
             });
           } catch (err) {
@@ -485,19 +488,19 @@ const firebaseConfig = {
           return String(Math.floor(1000 + Math.random() * 9000));
         },
         async createRoom() {
-          if (!this.db) return;
+          if (!raw.db) return;
           this.loading = true;
           try {
             let code = this.randomCode();
-            let snap = await this.db.ref(`rooms/${code}`).get();
+            let snap = await raw.db.ref(`rooms/${code}`).get();
             while (snap.exists()) {
               code = this.randomCode();
-              snap = await this.db.ref(`rooms/${code}`).get();
+              snap = await raw.db.ref(`rooms/${code}`).get();
             }
             this.roomCode = code;
             this.playerId = 'p1';
             this.isHost = true;
-            await this.db.ref(`rooms/${code}`).set({
+            await raw.db.ref(`rooms/${code}`).set({
               createdAt: firebase.database.ServerValue.TIMESTAMP,
               phase: 'lobby',
               host: 'p1',
@@ -515,12 +518,12 @@ const firebaseConfig = {
           }
         },
         async joinRoom() {
-          if (!this.db) return;
+          if (!raw.db) return;
           const code = (this.joinCode || '').replace(/\D/g, '').slice(0, 4);
           if (code.length !== 4) return;
           this.loading = true;
           try {
-            const ref = markRaw(this.db.ref(`rooms/${code}`));
+            const ref = markRaw(raw.db.ref(`rooms/${code}`));
             const snap = await ref.get();
             if (!snap.exists()) {
               this.fatalError = 'Salon introuvable.';
@@ -545,22 +548,25 @@ const firebaseConfig = {
             this.loading = false;
           }
         },
-        attachRoom(code) {
-          this.detachRoom();
-          this.roomRef = markRaw(this.db.ref(`rooms/${code}`));
-          this.roomRef.on('value', snap => { this.room = snap.val(); });
-          const statusRef = markRaw(this.db.ref(`rooms/${code}/players/${this.playerId}/online`));
-          this.connectedRef = statusRef;
-          statusRef.onDisconnect().set(false);
-          statusRef.set(true);
-        },
-        detachRoom() {
-          if (this.roomRef) this.roomRef.off();
-          this.roomRef = null;
-        },
-        markOffline() {
-          if (this.connectedRef) this.connectedRef.set(false);
-        },
+   attachRoom(code) {
+  this.detachRoom();
+
+  raw.roomRef = raw.db.ref(`rooms/${code}`);
+  raw.roomRef.on('value', snap => {
+    this.room = snap.val();
+  });
+
+  raw.connectedRef = raw.db.ref(`rooms/${code}/players/${this.playerId}/online`);
+  raw.connectedRef.onDisconnect().set(false);
+  raw.connectedRef.set(true);
+},
+detachRoom() {
+  if (raw.roomRef) raw.roomRef.off();
+  raw.roomRef = null;
+},
+markOffline() {
+  if (raw.connectedRef) raw.connectedRef.set(false);
+},
         hearts(n) {
           return '♥'.repeat(Math.max(0, n)) + '♡'.repeat(Math.max(0, 3 - n));
         },
@@ -583,7 +589,7 @@ const firebaseConfig = {
             p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
             p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
           };
-          await this.roomRef.update({
+          await raw.roomRef.update({
             phase: 'scan',
             roundNumber: (this.room?.roundNumber || 0) + 1,
             round: {
@@ -614,7 +620,7 @@ const firebaseConfig = {
             this.scanProgress = Math.min(100, elapsed / 3000 * 100);
             if (this.scanProgress >= 100) {
               this.cancelScan(false);
-              this.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
+              raw.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
               this.checkScanReady();
             }
           }, 40);
@@ -627,10 +633,10 @@ const firebaseConfig = {
         async checkScanReady() {
           if (!this.isHost) return;
           setTimeout(async () => {
-            const snap = await this.db.ref(`rooms/${this.roomCode}/scanReady`).get();
+            const snap = await raw.db.ref(`rooms/${this.roomCode}/scanReady`).get();
             const ready = snap.val() || {};
             if (ready.p1 && ready.p2) {
-              await this.roomRef.update({ phase: 'game', scanReady: null });
+              await raw.roomRef.update({ phase: 'game', scanReady: null });
             }
           }, 250);
         },
@@ -648,8 +654,8 @@ const firebaseConfig = {
           this.gameTimer = null;
         },
         async sabotage() {
-          if (this.sabotageCooldown > 0 || !this.roomRef) return;
-          await this.roomRef.child('sabotage').set({
+          if (this.sabotageCooldown > 0 || !raw.roomRef) return;
+          await raw.roomRef.child('sabotage').set({
             by: this.playerId,
             ts: firebase.database.ServerValue.TIMESTAMP,
             nonce: Math.random().toString(36).slice(2)
@@ -670,11 +676,11 @@ const firebaseConfig = {
           setTimeout(() => { this.localGlitch = false; }, 1800);
         },
         async goVote() {
-          if (this.roomRef) await this.roomRef.update({ phase: 'vote' });
+          if (raw.roomRef) await raw.roomRef.update({ phase: 'vote' });
         },
         async vote(choice) {
           if (!this.round || this.hasVoted) return;
-          await this.roomRef.child(`round/votes/${this.playerId}`).set(choice);
+          await raw.roomRef.child(`round/votes/${this.playerId}`).set(choice);
         },
         async resolveVotesOnce() {
           if (!this.isHost || this.round?.resolved) return;
@@ -689,11 +695,11 @@ const firebaseConfig = {
               updates[`players/${pid}/hearts`] = Math.max(0, current - stake);
             }
           });
-          await this.roomRef.update(updates);
+          await raw.roomRef.update(updates);
         },
         async resetMatch() {
           if (!this.isHost) return;
-          await this.roomRef.update({
+          await raw.roomRef.update({
             phase: 'lobby',
             round: null,
             roundNumber: 0,
