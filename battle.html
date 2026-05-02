@@ -457,7 +457,7 @@
           status: 'playing',
           currentPlayer: 'p1',
           updatedAt: Date.now(),
-          lastMessage: `${pseudo} a rejoint. ${room.players.p1.pseudo} commence.`,
+          lastMessage: `${pseudo} a rejoint. C’est à ${room.players.p1.pseudo} de jouer.`,
           'players/p2/id': state.playerId,
           'players/p2/pseudo': pseudo,
           'players/p2/connectedAt': Date.now()
@@ -511,6 +511,9 @@
       try {
         const result = await runTransaction(ref(db, `rooms/${state.roomId}`), (room) => {
           if (!room) return room;
+
+          fixRoomShape(room);
+
           if (room.status !== 'playing') return room;
           if (!room.players?.p1?.id || !room.players?.p2?.id) return room;
           if (room.currentPlayer !== state.playerKey) return room;
@@ -526,10 +529,10 @@
 
           if (state.playerKey === 'p1') {
             room.currentPlayer = 'p2';
-            room.lastMessage = `${player.pseudo} a posé sa carte. À ${room.players.p2.pseudo} de jouer.`;
+            room.lastMessage = `${player.pseudo} a posé sa carte. C’est à ${room.players.p2.pseudo} de jouer.`;
           } else {
             resolveRound(room);
-            room.currentPlayer = 'p1';
+            if (room.status === 'playing') room.currentPlayer = 'p1';
           }
 
           return room;
@@ -544,6 +547,13 @@
       } finally {
         state.localLock = false;
       }
+    }
+
+    function fixRoomShape(room) {
+      if (!room.table) room.table = { p1: null, p2: null };
+      if (!room.lastRound) room.lastRound = { p1: null, p2: null, message: '' };
+      if (!room.pot) room.pot = [];
+      if (!room.currentPlayer) room.currentPlayer = 'p1';
     }
 
     function resolveRound(room) {
@@ -688,6 +698,8 @@
     function renderGame() {
       const room = state.room;
       if (!room || !state.playerKey) return;
+
+      fixRoomShape(room);
 
       const my = room.players?.[state.playerKey];
       const otherKey = state.playerKey === 'p1' ? 'p2' : 'p1';
