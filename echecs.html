@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>VECTEURS 8</title>
@@ -24,6 +24,9 @@
       --danger: #ff8e8e;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
+      --topbar-h: 54px;
+      --status-h: 36px;
+      --bottom-h: 136px;
     }
 
     * {
@@ -38,22 +41,23 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
-      overflow: hidden;
+      min-height: 100%;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: none;
     }
 
     body {
-      position: fixed;
-      inset: 0;
+      min-height: 100svh;
     }
 
     .app {
-      width: 100vw;
-      height: 100dvh;
-      min-height: 100vh;
+      width: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       background: radial-gradient(circle at 50% 0%, #111 0%, #000 54%);
@@ -62,26 +66,29 @@
     }
 
     .topbar {
-      height: 54px;
-      min-height: 54px;
+      height: var(--topbar-h);
+      min-height: var(--topbar-h);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 8px 12px;
       border-bottom: 1px solid #111;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .brand {
       display: flex;
       flex-direction: column;
       line-height: 1;
+      min-width: 0;
     }
 
     .brand strong {
       font-size: 16px;
       letter-spacing: 0.18em;
       font-weight: 800;
+      white-space: nowrap;
     }
 
     .brand span {
@@ -96,6 +103,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-shrink: 0;
     }
 
     input,
@@ -128,7 +136,8 @@
     }
 
     .status {
-      min-height: 36px;
+      height: var(--status-h);
+      min-height: var(--status-h);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -136,6 +145,7 @@
       font-size: 12px;
       color: var(--muted);
       border-bottom: 1px solid #0c0c0c;
+      flex-shrink: 0;
     }
 
     .status b {
@@ -144,27 +154,36 @@
     }
 
     .board-wrap {
-      width: 100vw;
-      height: 100vw;
-      max-height: calc(100dvh - 54px - 36px - 144px - var(--safe-bottom));
-      min-height: 280px;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
+      padding: 4px 0;
     }
 
     .board {
-      width: min(100vw, 100dvh - 54px - 36px - 144px - var(--safe-bottom));
-      height: min(100vw, 100dvh - 54px - 36px - 144px - var(--safe-bottom));
-      min-width: 280px;
-      min-height: 280px;
+      width: min(100vw, calc(100svh - var(--safe-top) - var(--safe-bottom) - var(--topbar-h) - var(--status-h) - var(--bottom-h) - 8px));
+      height: min(100vw, calc(100svh - var(--safe-top) - var(--safe-bottom) - var(--topbar-h) - var(--status-h) - var(--bottom-h) - 8px));
+      min-width: 250px;
+      min-height: 250px;
+      max-width: 100vw;
+      max-height: 100%;
       position: relative;
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
       border: 1px solid var(--grid);
       background: #030303;
+      flex-shrink: 0;
+    }
+
+    @supports (height: 100dvh) {
+      .board {
+        width: min(100vw, calc(100dvh - var(--safe-top) - var(--safe-bottom) - var(--topbar-h) - var(--status-h) - var(--bottom-h) - 8px));
+        height: min(100vw, calc(100dvh - var(--safe-top) - var(--safe-bottom) - var(--topbar-h) - var(--status-h) - var(--bottom-h) - 8px));
+      }
     }
 
     .cell {
@@ -198,12 +217,12 @@
 
     .piece {
       position: absolute;
-      width: 9.6vw;
-      height: 9.6vw;
+      width: min(9.6vw, 42px);
+      height: min(9.6vw, 42px);
       max-width: 42px;
       max-height: 42px;
-      min-width: 28px;
-      min-height: 28px;
+      min-width: 24px;
+      min-height: 24px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
       transition: left 160ms ease, top 160ms ease, transform 140ms ease, box-shadow 140ms ease;
@@ -239,12 +258,13 @@
     }
 
     .bottom {
-      margin-top: auto;
       width: 100%;
-      min-height: 144px;
-      padding: 10px 10px calc(10px + var(--safe-bottom));
+      height: calc(var(--bottom-h) + var(--safe-bottom));
+      min-height: calc(var(--bottom-h) + var(--safe-bottom));
+      padding: 9px 10px calc(9px + var(--safe-bottom));
       background: linear-gradient(180deg, rgba(0,0,0,0), #050505 18%, #050505 100%);
       border-top: 1px solid #111;
+      flex-shrink: 0;
     }
 
     .cards {
@@ -255,21 +275,22 @@
 
     .card {
       flex: 1;
-      height: 88px;
-      border-radius: 20px;
+      height: 82px;
+      border-radius: 18px;
       border: 1px solid #242424;
       background: #080808;
       color: var(--text);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12px 9px;
+      padding: 10px 9px;
       transition: transform 130ms ease, border-color 130ms ease, background 130ms ease;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      overflow: hidden;
     }
 
     .card.selected {
-      transform: translateY(-10px);
+      transform: translateY(-8px);
       border-color: rgba(185,245,216,0.75);
       background: #0d1612;
     }
@@ -283,11 +304,11 @@
     .card-desc {
       font-size: clamp(9px, 2.6vw, 11px);
       color: #9a9a9a;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     .hint {
-      margin-top: 10px;
+      margin-top: 8px;
       color: #777;
       font-size: 12px;
       text-align: center;
@@ -301,7 +322,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
       z-index: 20;
     }
 
@@ -353,6 +374,54 @@
     .hidden {
       display: none !important;
     }
+
+    @media (max-height: 760px) {
+      :root {
+        --topbar-h: 50px;
+        --status-h: 32px;
+        --bottom-h: 124px;
+      }
+
+      .topbar {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .brand strong {
+        font-size: 14px;
+      }
+
+      input,
+      button {
+        height: 32px;
+      }
+
+      .card {
+        height: 74px;
+        border-radius: 16px;
+        padding: 9px 8px;
+      }
+
+      .hint {
+        margin-top: 6px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-height: 680px) {
+      :root {
+        --bottom-h: 112px;
+      }
+
+      .card {
+        height: 66px;
+        padding: 8px 7px;
+      }
+
+      .card-desc {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -399,26 +468,15 @@
   </div>
 
   <script>
-    /*
-      1) Remplace cette configuration par celle de ton projet Firebase.
-      2) Active Realtime Database dans Firebase Console.
-      3) Règles de test possibles pendant le développement :
-         {
-           "rules": {
-             ".read": true,
-             ".write": true
-           }
-         }
-    */
-const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
     const CARD_DEFS = {
       AVANT: {
@@ -728,6 +786,7 @@ const firebaseConfig = {
       listenRoom();
       overlay.classList.remove("show");
       setHint("Salon créé. Partage le code à 4 chiffres.");
+      window.scrollTo(0, 0);
       render();
     }
 
@@ -752,6 +811,7 @@ const firebaseConfig = {
       listenRoom();
       overlay.classList.remove("show");
       setHint(`Connecté au salon ${roomCode}. Tu es joueur ${myPlayer}.`);
+      window.scrollTo(0, 0);
       render();
     }
 
@@ -782,12 +842,15 @@ const firebaseConfig = {
       state = freshGame();
       overlay.classList.remove("show");
       setHint("Mode local : les deux joueurs jouent sur cet iPhone.");
+      window.scrollTo(0, 0);
       render();
     }, { passive: true });
 
     startCodeInput.addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
     roomCodeInput.addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
+
     window.addEventListener("resize", render);
+    window.addEventListener("orientationchange", () => setTimeout(render, 250));
 
     initBoard();
     render();
