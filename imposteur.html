@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>BLUFF//ADN</title>
 
-  <!-- Vue 3 + Tailwind CDN -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Firebase SDK 9 compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -62,10 +59,7 @@
         linear-gradient(90deg, rgba(143,255,224,.035) 1px, transparent 1px);
       background-size: auto, auto, auto, 34px 34px, 34px 34px;
     }
-    .glitching {
-      animation: glitchScreen .12s infinite;
-      filter: hue-rotate(80deg) contrast(1.35) saturate(1.6);
-    }
+    .glitching { animation: glitchScreen .12s infinite; filter: hue-rotate(80deg) contrast(1.35) saturate(1.6); }
     .glitching::after {
       content: 'SIGNAL SABOTÉ // SIGNAL SABOTÉ // SIGNAL SABOTÉ';
       position: fixed;
@@ -129,34 +123,32 @@
         </div>
       </header>
 
-      <section v-if="fatalError" class="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-danger shadow-pink">
+      <section v-if="fatalError" class="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-danger shadow-pink mb-4">
         <p class="font-black">ERREUR SYSTÈME</p>
-        <p class="text-sm mt-1">{{ fatalError }}</p>
+        <p class="text-sm mt-1 whitespace-pre-line">{{ fatalError }}</p>
       </section>
 
-      <!-- ÉCRAN 1 -->
       <section v-if="screen === 'home'" class="flex-1 flex flex-col justify-center gap-4">
         <div class="rounded-3xl border border-mint/25 bg-panel/80 p-5 shadow-neon backdrop-blur">
           <p class="text-pink text-xs tracking-[.3em] mb-2">ACCÈS TERMINAL</p>
           <h2 class="text-3xl font-black text-white mb-2">Créer ou rejoindre un salon</h2>
-          <p class="text-sm text-lavender/75">Code à 4 chiffres. Deux joueurs maximum. Les données sont synchronisées via Firebase.</p>
+          <p class="text-sm text-lavender/75">Code à 4 chiffres. Deux joueurs maximum. Synchronisé via Firebase.</p>
         </div>
 
-        <button @click="createRoom" class="w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition">
-          CRÉER UN SALON
+        <button @click="createRoom" :disabled="loading || !connected" class="w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition disabled:opacity-40">
+          {{ loading ? 'TRAITEMENT...' : 'CRÉER UN SALON' }}
         </button>
 
         <div class="rounded-2xl border border-lavender/20 bg-panel/70 p-4">
           <label class="text-xs text-lavender tracking-widest">CODE SALON</label>
           <input v-model="joinCode" inputmode="numeric" maxlength="4" placeholder="0000"
                  class="mt-2 w-full rounded-xl bg-void/80 border border-mint/25 px-4 py-4 text-center text-3xl tracking-[.4em] text-white outline-none focus:border-pink" />
-          <button @click="joinRoom" class="mt-3 w-full rounded-xl border border-pink/60 text-pink font-black py-3 shadow-pink active:scale-[.98] transition">
-            REJOINDRE
+          <button @click="joinRoom" :disabled="loading || !connected || cleanJoinCode.length !== 4" class="mt-3 w-full rounded-xl border border-pink/60 text-pink font-black py-3 shadow-pink active:scale-[.98] transition disabled:opacity-40">
+            {{ loading ? 'CONNEXION...' : 'REJOINDRE' }}
           </button>
         </div>
       </section>
 
-      <!-- ÉCRAN 2 -->
       <section v-if="screen === 'lobby'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-lavender/25 bg-panel/80 p-5 shadow-lav">
           <p class="text-xs text-pink tracking-[.3em]">LOBBY</p>
@@ -167,25 +159,20 @@
         <div class="grid grid-cols-2 gap-3">
           <div v-for="p in ['p1','p2']" :key="p" class="rounded-2xl border border-mint/20 bg-panel/70 p-4">
             <p class="text-xs text-lavender">{{ p === playerId ? 'TOI' : 'ADVERSAIRE' }}</p>
-            <p class="text-lg font-black" :class="players[p]?.online ? 'text-mint' : 'text-danger'">
-              {{ players[p]?.online ? 'CONNECTÉ' : 'ABSENT' }}
+            <p class="text-lg font-black" :class="playerExists(p) ? 'text-mint' : 'text-danger'">
+              {{ playerExists(p) ? 'CONNECTÉ' : 'ABSENT' }}
             </p>
             <p class="mt-2 text-2xl">{{ hearts(players[p]?.hearts ?? 3) }}</p>
           </div>
         </div>
 
-        <div v-if="opponentDisconnected" class="rounded-2xl border border-danger/40 bg-danger/10 p-4 text-danger text-sm">
-          Signal perdu : l'autre joueur semble déconnecté.
-        </div>
-
         <button v-if="isHost" @click="startRound" :disabled="!bothPlayersOnline || loading"
                 class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition disabled:opacity-35">
-          LANCER LA MANCHE
+          {{ bothPlayersOnline ? 'LANCER LA MANCHE' : 'EN ATTENTE DU JOUEUR 2' }}
         </button>
         <p v-else class="mt-auto text-center text-sm text-lavender/70">En attente du lancement par l'hôte...</p>
       </section>
 
-      <!-- ÉCRAN 3 -->
       <section v-if="screen === 'scan'" class="flex-1 flex flex-col justify-center gap-6 select-none">
         <div class="text-center">
           <p class="text-pink text-xs tracking-[.35em]">PHASE DE SCAN ADN</p>
@@ -215,7 +202,6 @@
         </div>
       </section>
 
-      <!-- ÉCRAN 4 -->
       <section v-if="screen === 'game'" class="flex-1 flex flex-col gap-4">
         <div v-if="round?.doubleStake" class="rounded-2xl border border-amber/60 bg-amber/10 p-3 text-amber text-center font-black shadow-neon">
           MANCHE CRITIQUE : ENJEU x2 CŒURS
@@ -265,7 +251,6 @@
         </button>
       </section>
 
-      <!-- ÉCRAN 5 -->
       <section v-if="screen === 'vote'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-pink/25 bg-panel/80 p-5 shadow-pink">
           <p class="text-xs text-pink tracking-[.3em]">VOTE FINAL</p>
@@ -315,7 +300,7 @@
         <button v-if="bothVoted && isHost && !gameOver" @click="startRound" class="mt-auto w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition">
           NOUVELLE MANCHE
         </button>
-        <button v-if="bothVoted && gameOver" @click="resetMatch" class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition">
+        <button v-if="bothVoted && isHost && gameOver" @click="resetMatch" class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition">
           RELANCER MATCH
         </button>
       </section>
@@ -323,7 +308,7 @@
   </div>
 
   <script>
-const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -333,13 +318,15 @@ const firebaseConfig = {
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
 
-   const { createApp } = Vue;
+    const firebaseState = {
+      db: null,
+      roomRef: null,
+      playerRef: null,
+      roomListener: null,
+      heartbeat: null
+    };
 
-const raw = {
-  db: null,
-  roomRef: null,
-  connectedRef: null
-};
+    const { createApp } = Vue;
 
     createApp({
       data() {
@@ -363,6 +350,8 @@ const raw = {
           localGlitch: false,
           sabotageCooldown: 0,
           cooldownTimer: null,
+          lastSabotageNonce: '',
+          resolving: false,
           words: [
             ['Avion', 'Hélicoptère'], ['Grotte', 'Tunnel'], ['Robot', 'Cyborg'], ['Lune', 'Mars'], ['Pirate', 'Corsaire'],
             ['Château', 'Manoir'], ['Serpent', 'Dragon'], ['Train', 'Métro'], ['Vampire', 'Fantôme'], ['Désert', 'Savane'],
@@ -385,15 +374,15 @@ const raw = {
         };
       },
       computed: {
-       bothPlayersOnline() {
-  return !!(this.players.p1 && this.players.p2);
-},
+        cleanJoinCode() {
+          return String(this.joinCode || '').replace(/\D/g, '').slice(0, 4);
+        },
+        bothPlayersOnline() {
+          return this.playerExists('p1') && this.playerExists('p2');
+        },
         opponentId() {
           return this.playerId === 'p1' ? 'p2' : 'p1';
         },
-       opponentDisconnected() {
-  return false;
-},
         myRole() {
           return this.round?.roles?.[this.playerId] || '';
         },
@@ -410,8 +399,7 @@ const raw = {
           return this.myRole === 'impostor' ? this.round.impostorWord : this.round.commonWord;
         },
         mySabotageObjective() {
-          if (!this.round?.sabotageObjective) return '';
-          return this.myRole === 'impostor' ? this.round.sabotageObjective : '';
+          return this.myRole === 'impostor' ? (this.round?.sabotageObjective || '') : '';
         },
         modeText() {
           if (!this.round) return '';
@@ -434,9 +422,7 @@ const raw = {
         },
         roundResult() {
           if (!this.bothVoted || !this.round) return { iLost: false };
-          const myGuess = this.round.votes[this.playerId];
-          const truth = this.opponentRole;
-          return { iLost: myGuess !== truth };
+          return { iLost: this.round.votes[this.playerId] !== this.opponentRole };
         },
         gameOver() {
           return (this.players.p1?.hearts ?? 1) <= 0 || (this.players.p2?.hearts ?? 1) <= 0;
@@ -472,101 +458,133 @@ const raw = {
         initFirebase() {
           try {
             if (!firebaseConfig.databaseURL) {
-              this.fatalError = 'Ajoute ta configuration Firebase dans firebaseConfig avant de lancer le jeu.';
+              this.fatalError = 'Remplis firebaseConfig avec tes clés Firebase avant de lancer le jeu.';
               return;
             }
-            firebase.initializeApp(firebaseConfig);
-raw.db = firebase.database();
-raw.db.ref('.info/connected').on('value', snap => {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            firebaseState.db = firebase.database();
+            firebaseState.db.ref('.info/connected').on('value', snap => {
               this.connected = !!snap.val();
             });
           } catch (err) {
-            this.fatalError = err.message || 'Firebase impossible à initialiser.';
+            this.fatalError = err?.message || 'Firebase impossible à initialiser.';
           }
+        },
+        playerExists(pid) {
+          return !!this.players?.[pid]?.joined;
         },
         randomCode() {
           return String(Math.floor(1000 + Math.random() * 9000));
         },
         async createRoom() {
-          if (!raw.db) return;
+          if (!firebaseState.db || this.loading) return;
           this.loading = true;
+          this.fatalError = '';
           try {
             let code = this.randomCode();
-            let snap = await raw.db.ref(`rooms/${code}`).get();
+            let snap = await firebaseState.db.ref(`rooms/${code}`).get();
             while (snap.exists()) {
               code = this.randomCode();
-              snap = await raw.db.ref(`rooms/${code}`).get();
+              snap = await firebaseState.db.ref(`rooms/${code}`).get();
             }
-            this.roomCode = code;
-            this.playerId = 'p1';
-            this.isHost = true;
-            await raw.db.ref(`rooms/${code}`).set({
+
+            await firebaseState.db.ref(`rooms/${code}`).set({
               createdAt: firebase.database.ServerValue.TIMESTAMP,
               phase: 'lobby',
               host: 'p1',
-              players: {
-                p1: { online: true, hearts: 3, joinedAt: firebase.database.ServerValue.TIMESTAMP },
-                p2: { online: false, hearts: 3 }
-              },
               roundNumber: 0,
-              sabotage: { by: '', ts: 0 }
+              players: {
+                p1: { joined: true, online: true, hearts: 3, joinedAt: firebase.database.ServerValue.TIMESTAMP },
+                p2: { joined: false, online: false, hearts: 3 }
+              },
+              sabotage: { by: '', nonce: '', ts: 0 }
             });
+
+            this.roomCode = code;
+            this.playerId = 'p1';
+            this.isHost = true;
             this.attachRoom(code);
             this.screen = 'lobby';
+          } catch (err) {
+            this.fatalError = err?.message || 'Impossible de créer le salon.';
           } finally {
             this.loading = false;
           }
         },
         async joinRoom() {
-          if (!raw.db) return;
-          const code = (this.joinCode || '').replace(/\D/g, '').slice(0, 4);
+          if (!firebaseState.db || this.loading) return;
+          const code = this.cleanJoinCode;
           if (code.length !== 4) return;
           this.loading = true;
+          this.fatalError = '';
           try {
-            const ref = markRaw(raw.db.ref(`rooms/${code}`));
+            const ref = firebaseState.db.ref(`rooms/${code}`);
             const snap = await ref.get();
-            if (!snap.exists()) {
-              this.fatalError = 'Salon introuvable.';
-              return;
-            }
+            if (!snap.exists()) throw new Error('Salon introuvable. Vérifie le code à 4 chiffres.');
             const data = snap.val();
-            if (data.players?.p1?.online && data.players?.p2?.online) {
-              this.fatalError = 'Salon complet.';
-              return;
-            }
-            this.roomCode = code;
-            this.playerId = data.players?.p1?.online ? 'p2' : 'p1';
-            this.isHost = this.playerId === data.host;
-            await ref.child(`players/${this.playerId}`).update({
+            if (data.players?.p1?.joined && data.players?.p2?.joined) throw new Error('Salon complet.');
+
+            const pid = data.players?.p1?.joined ? 'p2' : 'p1';
+            await ref.child(`players/${pid}`).update({
+              joined: true,
               online: true,
-              hearts: data.players?.[this.playerId]?.hearts ?? 3,
+              hearts: data.players?.[pid]?.hearts ?? 3,
               joinedAt: firebase.database.ServerValue.TIMESTAMP
             });
+
+            this.roomCode = code;
+            this.playerId = pid;
+            this.isHost = pid === data.host;
             this.attachRoom(code);
             this.screen = data.phase || 'lobby';
+          } catch (err) {
+            this.fatalError = err?.message || 'Impossible de rejoindre le salon.';
           } finally {
             this.loading = false;
           }
         },
-   attachRoom(code) {
-  this.detachRoom();
+        attachRoom(code) {
+          this.detachRoom();
+          firebaseState.roomRef = firebaseState.db.ref(`rooms/${code}`);
+          firebaseState.roomListener = firebaseState.roomRef.on('value', snap => {
+            this.room = snap.val();
+          });
 
-  raw.roomRef = raw.db.ref(`rooms/${code}`);
-  raw.roomRef.on('value', snap => {
-    this.room = snap.val();
-  });
+          firebaseState.playerRef = firebaseState.db.ref(`rooms/${code}/players/${this.playerId}`);
+          firebaseState.playerRef.onDisconnect().update({
+            online: false,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
+          firebaseState.playerRef.update({
+            joined: true,
+            online: true,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
 
-  raw.connectedRef = raw.db.ref(`rooms/${code}/players/${this.playerId}/online`);
-  raw.connectedRef.onDisconnect().set(false);
-  raw.connectedRef.set(true);
-},
-detachRoom() {
-  if (raw.roomRef) raw.roomRef.off();
-  raw.roomRef = null;
-},
-markOffline() {
-  if (raw.connectedRef) raw.connectedRef.set(false);
-},
+          clearInterval(firebaseState.heartbeat);
+          firebaseState.heartbeat = setInterval(() => {
+            if (firebaseState.playerRef) {
+              firebaseState.playerRef.update({
+                online: true,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+              });
+            }
+          }, 5000);
+        },
+        detachRoom() {
+          clearInterval(firebaseState.heartbeat);
+          firebaseState.heartbeat = null;
+          if (firebaseState.roomRef && firebaseState.roomListener) {
+            firebaseState.roomRef.off('value', firebaseState.roomListener);
+          }
+          firebaseState.roomRef = null;
+          firebaseState.roomListener = null;
+        },
+        markOffline() {
+          if (firebaseState.playerRef) {
+            firebaseState.playerRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+          }
+        },
         hearts(n) {
           return '♥'.repeat(Math.max(0, n)) + '♡'.repeat(Math.max(0, 3 - n));
         },
@@ -574,38 +592,47 @@ markOffline() {
           return arr[Math.floor(Math.random() * arr.length)];
         },
         async startRound() {
-          if (!this.isHost || !this.bothPlayersOnline) return;
+          if (!this.isHost || !this.bothPlayersOnline || !firebaseState.roomRef) return;
+          this.loading = true;
           this.wordVisible = false;
-          const pair = this.pick(this.words);
-          const swap = Math.random() > .5;
-          const commonWord = swap ? pair[1] : pair[0];
-          const impostorWord = swap ? pair[0] : pair[1];
-          const duel = Math.random() < .30;
-          const useConstraint = Math.random() < .30;
-          const useSaboteur = Math.random() < .30;
-          const doubleStake = Math.random() < .12;
-          const impostorPlayer = Math.random() < .5 ? 'p1' : 'p2';
-          const roles = duel ? { p1: 'impostor', p2: 'impostor' } : {
-            p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
-            p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
-          };
-          await raw.roomRef.update({
-            phase: 'scan',
-            roundNumber: (this.room?.roundNumber || 0) + 1,
-            round: {
-              id: Date.now(),
-              mode: duel ? 'duel' : 'standard',
-              commonWord,
-              impostorWord,
-              roles,
-              constraint: useConstraint ? this.pick(this.constraints) : '',
-              sabotageObjective: useSaboteur ? this.pick(this.sabotageWords) : '',
-              doubleStake,
-              votes: {},
-              resolved: false,
-              startedAt: firebase.database.ServerValue.TIMESTAMP
-            }
-          });
+          try {
+            const pair = this.pick(this.words);
+            const swap = Math.random() > .5;
+            const commonWord = swap ? pair[1] : pair[0];
+            const impostorWord = swap ? pair[0] : pair[1];
+            const duel = Math.random() < .30;
+            const useConstraint = Math.random() < .30;
+            const useSaboteur = Math.random() < .30;
+            const doubleStake = Math.random() < .12;
+            const impostorPlayer = Math.random() < .5 ? 'p1' : 'p2';
+            const roles = duel ? { p1: 'impostor', p2: 'impostor' } : {
+              p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
+              p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
+            };
+
+            await firebaseState.roomRef.update({
+              phase: 'scan',
+              scanReady: null,
+              roundNumber: (this.room?.roundNumber || 0) + 1,
+              round: {
+                id: Date.now(),
+                mode: duel ? 'duel' : 'standard',
+                commonWord,
+                impostorWord,
+                roles,
+                constraint: useConstraint ? this.pick(this.constraints) : '',
+                sabotageObjective: useSaboteur ? this.pick(this.sabotageWords) : '',
+                doubleStake,
+                votes: {},
+                resolved: false,
+                startedAt: firebase.database.ServerValue.TIMESTAMP
+              }
+            });
+          } catch (err) {
+            this.fatalError = err?.message || 'Impossible de lancer la manche.';
+          } finally {
+            this.loading = false;
+          }
         },
         prepareScan() {
           this.wordVisible = false;
@@ -615,12 +642,12 @@ markOffline() {
         startScan() {
           this.cancelScan();
           const start = performance.now();
-          this.scanTimer = setInterval(() => {
+          this.scanTimer = setInterval(async () => {
             const elapsed = performance.now() - start;
             this.scanProgress = Math.min(100, elapsed / 3000 * 100);
             if (this.scanProgress >= 100) {
               this.cancelScan(false);
-              raw.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
+              await firebaseState.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
               this.checkScanReady();
             }
           }, 40);
@@ -631,12 +658,12 @@ markOffline() {
           if (reset && this.scanProgress < 100) this.scanProgress = 0;
         },
         async checkScanReady() {
-          if (!this.isHost) return;
+          if (!this.isHost || !firebaseState.db) return;
           setTimeout(async () => {
-            const snap = await raw.db.ref(`rooms/${this.roomCode}/scanReady`).get();
+            const snap = await firebaseState.db.ref(`rooms/${this.roomCode}/scanReady`).get();
             const ready = snap.val() || {};
-            if (ready.p1 && ready.p2) {
-              await raw.roomRef.update({ phase: 'game', scanReady: null });
+            if (ready.p1 && ready.p2 && firebaseState.roomRef) {
+              await firebaseState.roomRef.update({ phase: 'game', scanReady: null });
             }
           }, 250);
         },
@@ -654,8 +681,8 @@ markOffline() {
           this.gameTimer = null;
         },
         async sabotage() {
-          if (this.sabotageCooldown > 0 || !raw.roomRef) return;
-          await raw.roomRef.child('sabotage').set({
+          if (this.sabotageCooldown > 0 || !firebaseState.roomRef) return;
+          await firebaseState.roomRef.child('sabotage').set({
             by: this.playerId,
             ts: firebase.database.ServerValue.TIMESTAMP,
             nonce: Math.random().toString(36).slice(2)
@@ -668,7 +695,7 @@ markOffline() {
           }, 1000);
         },
         handleRemoteGlitch(sabotage) {
-          if (!sabotage?.by || sabotage.by === this.playerId) return;
+          if (!sabotage?.by || sabotage.by === this.playerId || !sabotage.nonce) return;
           if (this.lastSabotageNonce === sabotage.nonce) return;
           this.lastSabotageNonce = sabotage.nonce;
           this.localGlitch = true;
@@ -676,36 +703,42 @@ markOffline() {
           setTimeout(() => { this.localGlitch = false; }, 1800);
         },
         async goVote() {
-          if (raw.roomRef) await raw.roomRef.update({ phase: 'vote' });
+          if (firebaseState.roomRef) await firebaseState.roomRef.update({ phase: 'vote' });
         },
         async vote(choice) {
-          if (!this.round || this.hasVoted) return;
-          await raw.roomRef.child(`round/votes/${this.playerId}`).set(choice);
+          if (!this.round || this.hasVoted || !firebaseState.roomRef) return;
+          await firebaseState.roomRef.child(`round/votes/${this.playerId}`).set(choice);
         },
         async resolveVotesOnce() {
-          if (!this.isHost || this.round?.resolved) return;
-          const stake = this.round.doubleStake ? 2 : 1;
-          const updates = { 'round/resolved': true };
-          ['p1', 'p2'].forEach(pid => {
-            const oid = pid === 'p1' ? 'p2' : 'p1';
-            const guessed = this.round.votes?.[pid];
-            const truth = this.round.roles?.[oid];
-            if (guessed !== truth) {
-              const current = this.players[pid]?.hearts ?? 3;
-              updates[`players/${pid}/hearts`] = Math.max(0, current - stake);
-            }
-          });
-          await raw.roomRef.update(updates);
+          if (!this.isHost || this.round?.resolved || this.resolving || !firebaseState.roomRef) return;
+          this.resolving = true;
+          try {
+            const stake = this.round.doubleStake ? 2 : 1;
+            const updates = { 'round/resolved': true };
+            ['p1', 'p2'].forEach(pid => {
+              const oid = pid === 'p1' ? 'p2' : 'p1';
+              const guessed = this.round.votes?.[pid];
+              const truth = this.round.roles?.[oid];
+              if (guessed !== truth) {
+                const current = this.players[pid]?.hearts ?? 3;
+                updates[`players/${pid}/hearts`] = Math.max(0, current - stake);
+              }
+            });
+            await firebaseState.roomRef.update(updates);
+          } finally {
+            this.resolving = false;
+          }
         },
         async resetMatch() {
-          if (!this.isHost) return;
-          await raw.roomRef.update({
+          if (!this.isHost || !firebaseState.roomRef) return;
+          await firebaseState.roomRef.update({
             phase: 'lobby',
             round: null,
+            scanReady: null,
             roundNumber: 0,
             'players/p1/hearts': 3,
             'players/p2/hearts': 3,
-            sabotage: { by: '', ts: 0 }
+            sabotage: { by: '', nonce: '', ts: 0 }
           });
         }
       }
