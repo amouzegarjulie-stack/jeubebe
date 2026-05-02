@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BLUFF//ADN</title>
+  <title>BLUFF//MOTS</title>
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -46,8 +46,7 @@
       pointer-events: none;
       background: linear-gradient(rgba(255,255,255,.035) 50%, transparent 50%);
       background-size: 100% 4px;
-      mix-blend-mode: overlay;
-      opacity: .15;
+      opacity: .12;
       z-index: 50;
     }
     .grid-bg {
@@ -59,63 +58,22 @@
         linear-gradient(90deg, rgba(143,255,224,.035) 1px, transparent 1px);
       background-size: auto, auto, auto, 34px 34px, 34px 34px;
     }
-    .glitching { animation: glitchScreen .12s infinite; filter: hue-rotate(80deg) contrast(1.35) saturate(1.6); }
-    .glitching::after {
-      content: 'SIGNAL SABOTÉ // SIGNAL SABOTÉ // SIGNAL SABOTÉ';
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, .55);
-      color: #ff4fd8;
-      font-weight: 900;
-      font-size: clamp(22px, 7vw, 42px);
-      text-align: center;
-      z-index: 100;
-      text-shadow: 3px 0 #8fffe0, -3px 0 #c4b5fd;
-      animation: glitchText .08s infinite;
-      padding: 24px;
-    }
-    @keyframes glitchScreen {
-      0% { transform: translate(0); }
-      25% { transform: translate(2px, -2px); }
-      50% { transform: translate(-3px, 1px); }
-      75% { transform: translate(1px, 3px); }
-      100% { transform: translate(0); }
-    }
-    @keyframes glitchText {
-      0% { clip-path: inset(0 0 85% 0); }
-      25% { clip-path: inset(18% 0 45% 0); }
-      50% { clip-path: inset(55% 0 12% 0); }
-      75% { clip-path: inset(5% 0 70% 0); }
-      100% { clip-path: inset(0 0 0 0); }
-    }
-    .pulse-ring { animation: pulseRing 1.2s infinite ease-out; }
-    @keyframes pulseRing {
-      0% { transform: scale(.72); opacity: .9; }
-      70% { transform: scale(1.25); opacity: .12; }
-      100% { transform: scale(1.35); opacity: 0; }
-    }
-    .dna-spin { animation: dnaSpin 1.8s linear infinite; }
-    @keyframes dnaSpin { to { transform: rotate(360deg); } }
-    .win-pop { animation: winPop .75s cubic-bezier(.2,1.8,.2,1); }
-    @keyframes winPop {
-      0% { transform: scale(.7); opacity: 0; }
-      65% { transform: scale(1.08); opacity: 1; }
-      100% { transform: scale(1); }
-    }
     .safe-bottom { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+    .pop { animation: pop .55s cubic-bezier(.2,1.5,.2,1); }
+    @keyframes pop {
+      0% { transform: scale(.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 
 <body class="scanline">
-  <div id="app" :class="['min-h-screen grid-bg text-mint font-mono overflow-hidden', localGlitch ? 'glitching' : '']">
+  <div id="app" class="min-h-screen grid-bg text-mint font-mono overflow-hidden">
     <main class="max-w-md mx-auto min-h-screen px-4 pt-5 safe-bottom flex flex-col">
       <header class="flex items-center justify-between mb-4">
         <div>
-          <h1 class="text-2xl font-black tracking-[.22em] text-mint drop-shadow">BLUFF//ADN</h1>
-          <p class="text-xs text-lavender/70 tracking-widest">PROTOCOLE DISTANT 2 JOUEURS</p>
+          <h1 class="text-2xl font-black tracking-[.18em] text-mint drop-shadow">BLUFF//MOTS</h1>
+          <p class="text-xs text-lavender/70 tracking-widest">BLUFF À DISTANCE 2 JOUEURS</p>
         </div>
         <div class="text-right text-xs">
           <p :class="connected ? 'text-mint' : 'text-danger'">● {{ connected ? 'ONLINE' : 'OFFLINE' }}</p>
@@ -124,15 +82,18 @@
       </header>
 
       <section v-if="fatalError" class="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-danger shadow-pink mb-4">
-        <p class="font-black">ERREUR SYSTÈME</p>
+        <p class="font-black">ERREUR</p>
         <p class="text-sm mt-1 whitespace-pre-line">{{ fatalError }}</p>
       </section>
 
+      <!-- ÉCRAN 1 : accueil -->
       <section v-if="screen === 'home'" class="flex-1 flex flex-col justify-center gap-4">
         <div class="rounded-3xl border border-mint/25 bg-panel/80 p-5 shadow-neon backdrop-blur">
-          <p class="text-pink text-xs tracking-[.3em] mb-2">ACCÈS TERMINAL</p>
-          <h2 class="text-3xl font-black text-white mb-2">Créer ou rejoindre un salon</h2>
-          <p class="text-sm text-lavender/75">Code à 4 chiffres. Deux joueurs maximum. Synchronisé via Firebase.</p>
+          <p class="text-pink text-xs tracking-[.3em] mb-2">TERMINAL</p>
+          <h2 class="text-3xl font-black text-white mb-2">Créer ou rejoindre</h2>
+          <p class="text-sm text-lavender/75">
+            Chaque manche donne un mot à chacun. Les mots peuvent être identiques ou différents. Il faut discuter, bluffer et deviner la situation.
+          </p>
         </div>
 
         <button @click="createRoom" :disabled="loading || !connected" class="w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition disabled:opacity-40">
@@ -149,6 +110,7 @@
         </div>
       </section>
 
+      <!-- ÉCRAN 2 : lobby -->
       <section v-if="screen === 'lobby'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-lavender/25 bg-panel/80 p-5 shadow-lav">
           <p class="text-xs text-pink tracking-[.3em]">LOBBY</p>
@@ -166,55 +128,33 @@
           </div>
         </div>
 
-        <button v-if="isHost" @click="startRound" :disabled="!bothPlayersOnline || loading"
+        <div class="rounded-2xl border border-lavender/25 bg-panel/70 p-4 text-sm text-lavender/80">
+          <p class="font-black text-white mb-2">RÈGLE SIMPLE</p>
+          <p>Vous parlez de votre mot sans le dire. À la fin, chacun vote : “même mot” ou “mots différents”.</p>
+          <p class="mt-2 text-pink">Attention : même si ton mot est le bon, tu ne sais jamais si l'autre a le même.</p>
+        </div>
+
+        <button v-if="isHost" @click="startRound" :disabled="!bothPlayersReady || loading"
                 class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition disabled:opacity-35">
-          {{ bothPlayersOnline ? 'LANCER LA MANCHE' : 'EN ATTENTE DU JOUEUR 2' }}
+          {{ bothPlayersReady ? 'LANCER LA MANCHE' : 'EN ATTENTE DU JOUEUR 2' }}
         </button>
         <p v-else class="mt-auto text-center text-sm text-lavender/70">En attente du lancement par l'hôte...</p>
       </section>
 
-      <section v-if="screen === 'scan'" class="flex-1 flex flex-col justify-center gap-6 select-none">
-        <div class="text-center">
-          <p class="text-pink text-xs tracking-[.35em]">PHASE DE SCAN ADN</p>
-          <h2 class="mt-2 text-3xl font-black text-white">Maintiens la pression</h2>
-          <p class="mt-2 text-sm text-lavender/75">Ne relâche pas avant la fin de l'analyse.</p>
-        </div>
-
-        <button @pointerdown="startScan" @pointerup="cancelScan" @pointerleave="cancelScan" @pointercancel="cancelScan"
-                class="relative mx-auto h-56 w-56 rounded-full border border-mint/40 bg-panel/80 shadow-neon active:scale-95 transition overflow-hidden">
-          <span class="absolute inset-6 rounded-full border border-pink/30 pulse-ring"></span>
-          <span class="absolute inset-10 rounded-full border border-lavender/30 pulse-ring" style="animation-delay:.22s"></span>
-          <span class="absolute inset-16 rounded-full border border-mint/40 dna-spin"></span>
-          <span class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-5xl">◉</span>
-            <span class="mt-2 text-xs tracking-[.25em] text-lavender">SCAN</span>
-          </span>
-        </button>
-
-        <div class="rounded-2xl border border-mint/20 bg-panel/70 p-4">
-          <div class="flex justify-between text-xs mb-2">
-            <span>Analyse ADN en cours...</span>
-            <span>{{ Math.floor(scanProgress) }}%</span>
-          </div>
-          <div class="h-3 rounded-full bg-void overflow-hidden border border-mint/20">
-            <div class="h-full bg-mint shadow-neon transition-all duration-75" :style="{ width: scanProgress + '%' }"></div>
-          </div>
-        </div>
-      </section>
-
+      <!-- ÉCRAN 3 : jeu -->
       <section v-if="screen === 'game'" class="flex-1 flex flex-col gap-4">
         <div v-if="round?.doubleStake" class="rounded-2xl border border-amber/60 bg-amber/10 p-3 text-amber text-center font-black shadow-neon">
-          MANCHE CRITIQUE : ENJEU x2 CŒURS
+          MANCHE CRITIQUE : ERREUR = -2 CŒURS
         </div>
 
         <div class="rounded-3xl border border-mint/25 bg-panel/80 p-5 shadow-neon">
-          <p class="text-xs text-pink tracking-[.3em]">DOSSIER CONFIDENTIEL</p>
-          <h2 class="mt-2 text-2xl font-black text-white">{{ roleLabel }}</h2>
-          <p class="mt-2 text-sm text-lavender/75">{{ modeText }}</p>
+          <p class="text-xs text-pink tracking-[.3em]">STATUT PRIVÉ</p>
+          <h2 class="mt-2 text-2xl font-black text-white">{{ privateStatus }}</h2>
+          <p class="mt-2 text-sm text-lavender/75">{{ privateHelp }}</p>
         </div>
 
         <div class="rounded-3xl border border-lavender/25 bg-void/80 p-5 text-center shadow-lav">
-          <p class="text-xs text-lavender tracking-widest">MOT ATTRIBUÉ</p>
+          <p class="text-xs text-lavender tracking-widest">TON MOT</p>
           <div class="mt-3 min-h-[86px] flex items-center justify-center rounded-2xl border border-mint/20 bg-panel/60 px-3">
             <p class="text-4xl font-black text-white tracking-wide break-words">{{ wordVisible ? myWord : '██████' }}</p>
           </div>
@@ -223,27 +163,19 @@
           </button>
         </div>
 
-        <div v-if="mySabotageObjective" class="rounded-2xl border border-pink/40 bg-pink/10 p-4 shadow-pink">
-          <p class="text-xs tracking-widest text-pink">OBJECTIF SABOTEUR</p>
-          <p class="mt-1 text-sm text-white">Fais prononcer à ta victime :</p>
-          <p class="text-2xl font-black text-pink mt-1">{{ mySabotageObjective }}</p>
-        </div>
-
         <div v-if="round?.constraint" class="rounded-2xl border border-lavender/40 bg-lavender/10 p-4">
-          <p class="text-xs tracking-widest text-lavender">CONTRAINTE</p>
+          <p class="text-xs tracking-widest text-lavender">CONTRAINTE DE MANCHE</p>
           <p class="text-white font-bold mt-1">{{ round.constraint }}</p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-2xl border border-mint/20 bg-panel/70 p-4 text-center">
-            <p class="text-xs text-lavender">TIMER</p>
-            <p class="text-3xl font-black text-white">{{ formattedTime }}</p>
-          </div>
-          <button @click="sabotage" :disabled="sabotageCooldown > 0"
-                  class="rounded-2xl border border-pink/70 bg-pink/10 p-4 text-center shadow-pink active:scale-[.98] transition disabled:opacity-35">
-            <p class="text-xs text-lavender">ATTAQUE</p>
-            <p class="text-xl font-black text-pink">{{ sabotageCooldown > 0 ? sabotageCooldown + 's' : 'SABOTAGE' }}</p>
-          </button>
+        <div class="rounded-2xl border border-mint/20 bg-panel/70 p-4 text-center">
+          <p class="text-xs text-lavender">TIMER DISCUSSION</p>
+          <p class="text-4xl font-black text-white">{{ formattedTime }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-pink/30 bg-pink/10 p-4 text-sm text-white">
+          <p class="font-black text-pink mb-1">À FAIRE</p>
+          <p>Donnez des indices vagues. Ne dites jamais votre mot. Essayez de savoir si vous avez le même mot ou non.</p>
         </div>
 
         <button @click="goVote" class="mt-auto w-full rounded-2xl bg-lavender text-void font-black py-4 shadow-lav active:scale-[.98] transition">
@@ -251,21 +183,22 @@
         </button>
       </section>
 
+      <!-- ÉCRAN 4 : vote -->
       <section v-if="screen === 'vote'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-pink/25 bg-panel/80 p-5 shadow-pink">
           <p class="text-xs text-pink tracking-[.3em]">VOTE FINAL</p>
-          <h2 class="mt-2 text-2xl font-black text-white">Qui est l'autre joueur ?</h2>
+          <h2 class="mt-2 text-2xl font-black text-white">Vous aviez quoi ?</h2>
           <p class="mt-2 text-sm text-lavender/75">Une erreur coûte {{ round?.doubleStake ? '2 cœurs' : '1 cœur' }}.</p>
         </div>
 
         <div v-if="!hasVoted" class="grid gap-3">
-          <button @click="vote('civil')" class="rounded-2xl border border-mint/60 bg-mint/10 p-4 text-left active:scale-[.98] transition">
-            <p class="font-black text-mint">L'autre est CLEAN</p>
-            <p class="text-sm text-lavender/75">Il avait le bon mot.</p>
+          <button @click="vote('same')" class="rounded-2xl border border-mint/60 bg-mint/10 p-4 text-left active:scale-[.98] transition">
+            <p class="font-black text-mint">ON AVAIT LE MÊME MOT</p>
+            <p class="text-sm text-lavender/75">Je pense qu'il n'y avait pas d'imposteur.</p>
           </button>
-          <button @click="vote('impostor')" class="rounded-2xl border border-pink/60 bg-pink/10 p-4 text-left active:scale-[.98] transition">
-            <p class="font-black text-pink">L'autre est IMPOSTEUR</p>
-            <p class="text-sm text-lavender/75">Il bluffait.</p>
+          <button @click="vote('different')" class="rounded-2xl border border-pink/60 bg-pink/10 p-4 text-left active:scale-[.98] transition">
+            <p class="font-black text-pink">ON AVAIT DES MOTS DIFFÉRENTS</p>
+            <p class="text-sm text-lavender/75">Je pense qu'il y avait un imposteur.</p>
           </button>
         </div>
 
@@ -274,16 +207,16 @@
           <p class="text-sm text-lavender/75 mt-1">En attente de l'adversaire...</p>
         </div>
 
-        <div v-else class="rounded-3xl border border-mint/30 bg-panel/80 p-5 shadow-neon win-pop">
+        <div v-else class="rounded-3xl border border-mint/30 bg-panel/80 p-5 shadow-neon pop">
           <p class="text-xs text-lavender tracking-[.3em]">RÉVÉLATION</p>
           <h3 class="mt-2 text-3xl font-black" :class="roundResult.iLost ? 'text-danger' : 'text-mint'">
-            {{ roundResult.iLost ? 'DÉFAITE PARTIELLE' : 'VICTOIRE DE MANCHE' }}
+            {{ roundResult.iLost ? 'MAUVAIS VOTE' : 'BON VOTE' }}
           </h3>
           <div class="mt-4 space-y-2 text-sm text-white">
-            <p>Ton rôle : <b :class="myRole === 'impostor' ? 'text-pink' : 'text-mint'">{{ myRole === 'impostor' ? 'IMPOSTEUR' : 'CLEAN' }}</b></p>
-            <p>Rôle adverse : <b :class="opponentRole === 'impostor' ? 'text-pink' : 'text-mint'">{{ opponentRole === 'impostor' ? 'IMPOSTEUR' : 'CLEAN' }}</b></p>
-            <p>Mot commun : <b class="text-mint">{{ round.commonWord }}</b></p>
-            <p>Mot imposteur : <b class="text-pink">{{ round.impostorWord }}</b></p>
+            <p>Ton mot : <b class="text-mint">{{ myWord }}</b></p>
+            <p>Mot adverse : <b class="text-pink">{{ opponentWord }}</b></p>
+            <p>Vérité : <b :class="round.truth === 'same' ? 'text-mint' : 'text-pink'">{{ round.truth === 'same' ? 'MÊME MOT' : 'MOTS DIFFÉRENTS' }}</b></p>
+            <p v-if="round.truth === 'different'">Imposteur : <b class="text-amber">{{ round.impostor === playerId ? 'TOI' : 'ADVERSAIRE' }}</b></p>
           </div>
           <div class="mt-5 grid grid-cols-2 gap-3 text-center">
             <div class="rounded-2xl border border-mint/20 bg-void/70 p-3">
@@ -318,7 +251,7 @@
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
 
-    const firebaseState = {
+    const fb = {
       db: null,
       roomRef: null,
       playerRef: null,
@@ -343,14 +276,8 @@
           players: {},
           round: null,
           wordVisible: false,
-          scanProgress: 0,
-          scanTimer: null,
-          timeLeft: 180,
+          timeLeft: 150,
           gameTimer: null,
-          localGlitch: false,
-          sabotageCooldown: 0,
-          cooldownTimer: null,
-          lastSabotageNonce: '',
           resolving: false,
           words: [
             ['Avion', 'Hélicoptère'], ['Grotte', 'Tunnel'], ['Robot', 'Cyborg'], ['Lune', 'Mars'], ['Pirate', 'Corsaire'],
@@ -361,53 +288,41 @@
             ['Casino', 'Arcade'], ['Ninja', 'Samouraï'], ['Fusée', 'Navette'], ['Labyrinthe', 'Dédale'], ['Coffre', 'Crypte']
           ],
           constraints: [
-            'Chante tes indices.',
-            'Utilise uniquement des adjectifs.',
-            'Parle comme un robot.',
-            'Interdiction d’utiliser la lettre A dans tes indices.',
-            'Donne tes indices en trois mots maximum.',
-            'Commence chaque indice par “signal”.',
-            'Fais semblant d’être très sûr de toi.',
-            'Utilise une métaphore à chaque indice.'
-          ],
-          sabotageWords: ['protocole', 'signal', 'mensonge', 'trace', 'preuve', 'ombre', 'clé', 'système', 'virus', 'secret']
+            'Donnez uniquement des indices très courts.',
+            'Pas le droit de dire une couleur.',
+            'Parlez comme si vous étiez sûrs de vous.',
+            'Utilisez seulement des adjectifs pendant 30 secondes.',
+            'Chaque indice doit être indirect.',
+            'Interdiction de poser une question directe.'
+          ]
         };
       },
       computed: {
         cleanJoinCode() {
           return String(this.joinCode || '').replace(/\D/g, '').slice(0, 4);
         },
-        bothPlayersOnline() {
+        bothPlayersReady() {
           return this.playerExists('p1') && this.playerExists('p2');
         },
         opponentId() {
           return this.playerId === 'p1' ? 'p2' : 'p1';
         },
-        myRole() {
-          return this.round?.roles?.[this.playerId] || '';
-        },
-        opponentRole() {
-          return this.round?.roles?.[this.opponentId] || '';
-        },
-        roleLabel() {
-          if (this.myRole === 'impostor') return 'TU ES L’IMPOSTEUR';
-          if (this.myRole === 'civil') return 'TU ES CLEAN';
-          return 'RÔLE INCONNU';
-        },
         myWord() {
-          if (!this.round) return '';
-          return this.myRole === 'impostor' ? this.round.impostorWord : this.round.commonWord;
+          return this.round?.words?.[this.playerId] || '';
         },
-        mySabotageObjective() {
-          return this.myRole === 'impostor' ? (this.round?.sabotageObjective || '') : '';
+        opponentWord() {
+          return this.round?.words?.[this.opponentId] || '';
         },
-        modeText() {
+        privateStatus() {
           if (!this.round) return '';
-          const items = [];
-          if (this.round.mode === 'duel') items.push('Mode rare : Duel de Bluff. Les deux dossiers sont corrompus.');
-          if (this.round.constraint) items.push('Indice sous contrainte actif.');
-          if (this.round.sabotageObjective) items.push('Objectif saboteur actif.');
-          return items.length ? items.join(' ') : 'Mode standard. Observe, mens, déduis.';
+          if (this.round.truth === 'same') return 'TU AS UN MOT VALIDE';
+          return this.round.impostor === this.playerId ? 'TU AS LE MOT DIFFÉRENT' : 'TU AS LE MOT VALIDE';
+        },
+        privateHelp() {
+          if (!this.round) return '';
+          if (this.round.truth === 'same') return 'Vous avez peut-être le même mot. Mais tu ne peux pas en être sûr avant la révélation.';
+          if (this.round.impostor === this.playerId) return 'Ton mot est différent. Bluffe pour faire croire que tout est normal.';
+          return 'Ton mot est le mot principal. Mais tu ne sais pas si l’autre a le même ou un mot différent.';
         },
         formattedTime() {
           const m = String(Math.floor(this.timeLeft / 60)).padStart(2, '0');
@@ -422,7 +337,7 @@
         },
         roundResult() {
           if (!this.bothVoted || !this.round) return { iLost: false };
-          return { iLost: this.round.votes[this.playerId] !== this.opponentRole };
+          return { iLost: this.round.votes[this.playerId] !== this.round.truth };
         },
         gameOver() {
           return (this.players.p1?.hearts ?? 1) <= 0 || (this.players.p2?.hearts ?? 1) <= 0;
@@ -437,11 +352,9 @@
             this.round = val.round || null;
             if (val.phase && this.screen !== val.phase) {
               this.screen = val.phase;
-              if (val.phase === 'scan') this.prepareScan();
               if (val.phase === 'game') this.prepareGame();
               if (val.phase === 'vote') this.stopGameTimer();
             }
-            this.handleRemoteGlitch(val.sabotage);
             if (this.bothVoted) this.resolveVotesOnce();
           }
         }
@@ -458,12 +371,12 @@
         initFirebase() {
           try {
             if (!firebaseConfig.databaseURL) {
-              this.fatalError = 'Remplis firebaseConfig avec tes clés Firebase avant de lancer le jeu.';
+              this.fatalError = 'Remplis firebaseConfig avec tes clés Firebase.';
               return;
             }
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            firebaseState.db = firebase.database();
-            firebaseState.db.ref('.info/connected').on('value', snap => {
+            fb.db = firebase.database();
+            fb.db.ref('.info/connected').on('value', snap => {
               this.connected = !!snap.val();
             });
           } catch (err) {
@@ -473,22 +386,27 @@
         playerExists(pid) {
           return !!this.players?.[pid]?.joined;
         },
+        hearts(n) {
+          return '♥'.repeat(Math.max(0, n)) + '♡'.repeat(Math.max(0, 3 - n));
+        },
+        pick(arr) {
+          return arr[Math.floor(Math.random() * arr.length)];
+        },
         randomCode() {
           return String(Math.floor(1000 + Math.random() * 9000));
         },
         async createRoom() {
-          if (!firebaseState.db || this.loading) return;
+          if (!fb.db || this.loading) return;
           this.loading = true;
           this.fatalError = '';
           try {
             let code = this.randomCode();
-            let snap = await firebaseState.db.ref(`rooms/${code}`).get();
+            let snap = await fb.db.ref(`rooms/${code}`).get();
             while (snap.exists()) {
               code = this.randomCode();
-              snap = await firebaseState.db.ref(`rooms/${code}`).get();
+              snap = await fb.db.ref(`rooms/${code}`).get();
             }
-
-            await firebaseState.db.ref(`rooms/${code}`).set({
+            await fb.db.ref(`rooms/${code}`).set({
               createdAt: firebase.database.ServerValue.TIMESTAMP,
               phase: 'lobby',
               host: 'p1',
@@ -496,10 +414,8 @@
               players: {
                 p1: { joined: true, online: true, hearts: 3, joinedAt: firebase.database.ServerValue.TIMESTAMP },
                 p2: { joined: false, online: false, hearts: 3 }
-              },
-              sabotage: { by: '', nonce: '', ts: 0 }
+              }
             });
-
             this.roomCode = code;
             this.playerId = 'p1';
             this.isHost = true;
@@ -512,18 +428,17 @@
           }
         },
         async joinRoom() {
-          if (!firebaseState.db || this.loading) return;
+          if (!fb.db || this.loading) return;
           const code = this.cleanJoinCode;
           if (code.length !== 4) return;
           this.loading = true;
           this.fatalError = '';
           try {
-            const ref = firebaseState.db.ref(`rooms/${code}`);
+            const ref = fb.db.ref(`rooms/${code}`);
             const snap = await ref.get();
-            if (!snap.exists()) throw new Error('Salon introuvable. Vérifie le code à 4 chiffres.');
+            if (!snap.exists()) throw new Error('Salon introuvable. Vérifie le code.');
             const data = snap.val();
             if (data.players?.p1?.joined && data.players?.p2?.joined) throw new Error('Salon complet.');
-
             const pid = data.players?.p1?.joined ? 'p2' : 'p1';
             await ref.child(`players/${pid}`).update({
               joined: true,
@@ -531,7 +446,6 @@
               hearts: data.players?.[pid]?.hearts ?? 3,
               joinedAt: firebase.database.ServerValue.TIMESTAMP
             });
-
             this.roomCode = code;
             this.playerId = pid;
             this.isHost = pid === data.host;
@@ -545,83 +459,55 @@
         },
         attachRoom(code) {
           this.detachRoom();
-          firebaseState.roomRef = firebaseState.db.ref(`rooms/${code}`);
-          firebaseState.roomListener = firebaseState.roomRef.on('value', snap => {
+          fb.roomRef = fb.db.ref(`rooms/${code}`);
+          fb.roomListener = fb.roomRef.on('value', snap => {
             this.room = snap.val();
           });
-
-          firebaseState.playerRef = firebaseState.db.ref(`rooms/${code}/players/${this.playerId}`);
-          firebaseState.playerRef.onDisconnect().update({
-            online: false,
-            lastSeen: firebase.database.ServerValue.TIMESTAMP
-          });
-          firebaseState.playerRef.update({
-            joined: true,
-            online: true,
-            lastSeen: firebase.database.ServerValue.TIMESTAMP
-          });
-
-          clearInterval(firebaseState.heartbeat);
-          firebaseState.heartbeat = setInterval(() => {
-            if (firebaseState.playerRef) {
-              firebaseState.playerRef.update({
-                online: true,
-                lastSeen: firebase.database.ServerValue.TIMESTAMP
-              });
-            }
+          fb.playerRef = fb.db.ref(`rooms/${code}/players/${this.playerId}`);
+          fb.playerRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+          fb.playerRef.update({ joined: true, online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+          clearInterval(fb.heartbeat);
+          fb.heartbeat = setInterval(() => {
+            if (fb.playerRef) fb.playerRef.update({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP });
           }, 5000);
         },
         detachRoom() {
-          clearInterval(firebaseState.heartbeat);
-          firebaseState.heartbeat = null;
-          if (firebaseState.roomRef && firebaseState.roomListener) {
-            firebaseState.roomRef.off('value', firebaseState.roomListener);
-          }
-          firebaseState.roomRef = null;
-          firebaseState.roomListener = null;
+          clearInterval(fb.heartbeat);
+          fb.heartbeat = null;
+          if (fb.roomRef && fb.roomListener) fb.roomRef.off('value', fb.roomListener);
+          fb.roomRef = null;
+          fb.roomListener = null;
         },
         markOffline() {
-          if (firebaseState.playerRef) {
-            firebaseState.playerRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-          }
-        },
-        hearts(n) {
-          return '♥'.repeat(Math.max(0, n)) + '♡'.repeat(Math.max(0, 3 - n));
-        },
-        pick(arr) {
-          return arr[Math.floor(Math.random() * arr.length)];
+          if (fb.playerRef) fb.playerRef.update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
         },
         async startRound() {
-          if (!this.isHost || !this.bothPlayersOnline || !firebaseState.roomRef) return;
+          if (!this.isHost || !this.bothPlayersReady || !fb.roomRef) return;
           this.loading = true;
           this.wordVisible = false;
           try {
             const pair = this.pick(this.words);
-            const swap = Math.random() > .5;
-            const commonWord = swap ? pair[1] : pair[0];
-            const impostorWord = swap ? pair[0] : pair[1];
-            const duel = Math.random() < .30;
-            const useConstraint = Math.random() < .30;
-            const useSaboteur = Math.random() < .30;
-            const doubleStake = Math.random() < .12;
-            const impostorPlayer = Math.random() < .5 ? 'p1' : 'p2';
-            const roles = duel ? { p1: 'impostor', p2: 'impostor' } : {
-              p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
-              p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
+            const same = Math.random() < 0.5;
+            const impostor = Math.random() < 0.5 ? 'p1' : 'p2';
+            const mainWord = pair[0];
+            const diffWord = pair[1];
+            const words = same ? { p1: mainWord, p2: mainWord } : {
+              p1: impostor === 'p1' ? diffWord : mainWord,
+              p2: impostor === 'p2' ? diffWord : mainWord
             };
-
-            await firebaseState.roomRef.update({
-              phase: 'scan',
-              scanReady: null,
+            const useConstraint = Math.random() < 0.25;
+            const doubleStake = Math.random() < 0.12;
+            await fb.roomRef.update({
+              phase: 'game',
               roundNumber: (this.room?.roundNumber || 0) + 1,
               round: {
                 id: Date.now(),
-                mode: duel ? 'duel' : 'standard',
-                commonWord,
-                impostorWord,
-                roles,
+                truth: same ? 'same' : 'different',
+                mainWord,
+                diffWord: same ? '' : diffWord,
+                impostor: same ? '' : impostor,
+                words,
                 constraint: useConstraint ? this.pick(this.constraints) : '',
-                sabotageObjective: useSaboteur ? this.pick(this.sabotageWords) : '',
                 doubleStake,
                 votes: {},
                 resolved: false,
@@ -634,42 +520,9 @@
             this.loading = false;
           }
         },
-        prepareScan() {
-          this.wordVisible = false;
-          this.scanProgress = 0;
-          this.stopGameTimer();
-        },
-        startScan() {
-          this.cancelScan();
-          const start = performance.now();
-          this.scanTimer = setInterval(async () => {
-            const elapsed = performance.now() - start;
-            this.scanProgress = Math.min(100, elapsed / 3000 * 100);
-            if (this.scanProgress >= 100) {
-              this.cancelScan(false);
-              await firebaseState.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
-              this.checkScanReady();
-            }
-          }, 40);
-        },
-        cancelScan(reset = true) {
-          if (this.scanTimer) clearInterval(this.scanTimer);
-          this.scanTimer = null;
-          if (reset && this.scanProgress < 100) this.scanProgress = 0;
-        },
-        async checkScanReady() {
-          if (!this.isHost || !firebaseState.db) return;
-          setTimeout(async () => {
-            const snap = await firebaseState.db.ref(`rooms/${this.roomCode}/scanReady`).get();
-            const ready = snap.val() || {};
-            if (ready.p1 && ready.p2 && firebaseState.roomRef) {
-              await firebaseState.roomRef.update({ phase: 'game', scanReady: null });
-            }
-          }, 250);
-        },
         prepareGame() {
           this.wordVisible = false;
-          this.timeLeft = 180;
+          this.timeLeft = 150;
           this.stopGameTimer();
           this.gameTimer = setInterval(() => {
             this.timeLeft = Math.max(0, this.timeLeft - 1);
@@ -680,65 +533,38 @@
           if (this.gameTimer) clearInterval(this.gameTimer);
           this.gameTimer = null;
         },
-        async sabotage() {
-          if (this.sabotageCooldown > 0 || !firebaseState.roomRef) return;
-          await firebaseState.roomRef.child('sabotage').set({
-            by: this.playerId,
-            ts: firebase.database.ServerValue.TIMESTAMP,
-            nonce: Math.random().toString(36).slice(2)
-          });
-          this.sabotageCooldown = 20;
-          clearInterval(this.cooldownTimer);
-          this.cooldownTimer = setInterval(() => {
-            this.sabotageCooldown -= 1;
-            if (this.sabotageCooldown <= 0) clearInterval(this.cooldownTimer);
-          }, 1000);
-        },
-        handleRemoteGlitch(sabotage) {
-          if (!sabotage?.by || sabotage.by === this.playerId || !sabotage.nonce) return;
-          if (this.lastSabotageNonce === sabotage.nonce) return;
-          this.lastSabotageNonce = sabotage.nonce;
-          this.localGlitch = true;
-          if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
-          setTimeout(() => { this.localGlitch = false; }, 1800);
-        },
         async goVote() {
-          if (firebaseState.roomRef) await firebaseState.roomRef.update({ phase: 'vote' });
+          if (fb.roomRef) await fb.roomRef.update({ phase: 'vote' });
         },
         async vote(choice) {
-          if (!this.round || this.hasVoted || !firebaseState.roomRef) return;
-          await firebaseState.roomRef.child(`round/votes/${this.playerId}`).set(choice);
+          if (!this.round || this.hasVoted || !fb.roomRef) return;
+          await fb.roomRef.child(`round/votes/${this.playerId}`).set(choice);
         },
         async resolveVotesOnce() {
-          if (!this.isHost || this.round?.resolved || this.resolving || !firebaseState.roomRef) return;
+          if (!this.isHost || this.round?.resolved || this.resolving || !fb.roomRef) return;
           this.resolving = true;
           try {
             const stake = this.round.doubleStake ? 2 : 1;
             const updates = { 'round/resolved': true };
             ['p1', 'p2'].forEach(pid => {
-              const oid = pid === 'p1' ? 'p2' : 'p1';
-              const guessed = this.round.votes?.[pid];
-              const truth = this.round.roles?.[oid];
-              if (guessed !== truth) {
+              if (this.round.votes?.[pid] !== this.round.truth) {
                 const current = this.players[pid]?.hearts ?? 3;
                 updates[`players/${pid}/hearts`] = Math.max(0, current - stake);
               }
             });
-            await firebaseState.roomRef.update(updates);
+            await fb.roomRef.update(updates);
           } finally {
             this.resolving = false;
           }
         },
         async resetMatch() {
-          if (!this.isHost || !firebaseState.roomRef) return;
-          await firebaseState.roomRef.update({
+          if (!this.isHost || !fb.roomRef) return;
+          await fb.roomRef.update({
             phase: 'lobby',
             round: null,
-            scanReady: null,
             roundNumber: 0,
             'players/p1/hearts': 3,
-            'players/p2/hearts': 3,
-            sabotage: { by: '', nonce: '', ts: 0 }
+            'players/p2/hearts': 3
           });
         }
       }
