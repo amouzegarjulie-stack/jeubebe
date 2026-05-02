@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Wavelength Mobile</title>
+  <title>Longueur d'Onde</title>
+
   <style>
     :root {
       --bg: #1a1a2e;
-      --panel: rgba(255,255,255,.08);
-      --panel-2: rgba(255,255,255,.13);
+      --card: rgba(255,255,255,.09);
+      --card2: rgba(255,255,255,.14);
       --text: #f8f7ff;
       --muted: rgba(248,247,255,.68);
       --line: rgba(255,255,255,.18);
@@ -16,9 +17,8 @@
       --orange: #ff9f68;
       --red: #ff4d6d;
       --cyan: #7bdff2;
-      --green: #b2f7ef;
+      --mint: #b2f7ef;
       --shadow: 0 18px 50px rgba(0,0,0,.32);
-      --radius: 28px;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -29,15 +29,16 @@
       min-height: 100svh;
       color: var(--text);
       background:
-        radial-gradient(circle at 30% 0%, rgba(123,223,242,.18), transparent 32%),
-        radial-gradient(circle at 70% 10%, rgba(255,77,109,.16), transparent 26%),
+        radial-gradient(circle at 28% 0%, rgba(123,223,242,.18), transparent 32%),
+        radial-gradient(circle at 74% 8%, rgba(255,77,109,.16), transparent 28%),
         var(--bg);
       display: grid;
       place-items: center;
       overflow-x: hidden;
     }
 
-    button, input { font: inherit; }
+    button, input, select { font: inherit; }
+    button { touch-action: manipulation; }
 
     .app {
       width: min(100%, 430px);
@@ -55,9 +56,10 @@
       padding: 4px 2px 0;
     }
 
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-    .brand h1 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
-    .brand small { color: var(--muted); font-weight: 600; }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: 23px; letter-spacing: -.04em; }
+    h2 { font-size: 24px; letter-spacing: -.05em; }
+    small { color: var(--muted); font-weight: 700; }
 
     .icon-btn {
       width: 46px;
@@ -65,24 +67,48 @@
       border: 0;
       border-radius: 50%;
       color: var(--text);
-      background: var(--panel);
+      background: var(--card);
       display: grid;
       place-items: center;
       cursor: pointer;
       box-shadow: inset 0 0 0 1px var(--line);
+      position: relative;
+      z-index: 5;
     }
 
     .card {
       background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
       border: 1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: 28px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(18px);
     }
 
-    .join-card { padding: 18px; display: grid; gap: 12px; }
-    .row { display: flex; gap: 10px; align-items: center; }
-    .row > * { flex: 1; }
+    .view { padding: 18px; display: grid; gap: 14px; }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 18px;
+      min-height: 50px;
+      font-weight: 900;
+      letter-spacing: -.02em;
+      color: #16162a;
+      background: linear-gradient(135deg, var(--mint), var(--cyan));
+      cursor: pointer;
+      box-shadow: 0 14px 28px rgba(123,223,242,.2);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.1);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .btn.warning { background: linear-gradient(135deg, var(--yellow), var(--orange)); }
+    .btn.danger { background: linear-gradient(135deg, var(--red), var(--orange)); color: white; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     input, select {
       width: 100%;
@@ -95,35 +121,19 @@
       border-bottom: 1px solid rgba(255,255,255,.2);
     }
 
+    option { color: #111; }
     input::placeholder { color: rgba(248,247,255,.42); }
 
-    .btn {
-      border: 0;
-      border-radius: 999px;
-      padding: 14px 18px;
-      min-height: 48px;
-      font-weight: 800;
-      letter-spacing: -.02em;
-      color: #16162a;
-      background: linear-gradient(135deg, var(--green), var(--cyan));
-      cursor: pointer;
-      box-shadow: 0 14px 28px rgba(123,223,242,.2);
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
     }
 
-    .btn.secondary {
-      color: var(--text);
-      background: rgba(255,255,255,.1);
-      box-shadow: inset 0 0 0 1px var(--line);
-    }
+    .error { color: var(--yellow); font-size: 13px; text-align: center; line-height: 1.45; }
 
-    .btn.warning { background: linear-gradient(135deg, var(--yellow), var(--orange)); }
-
-    .game-card {
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-      overflow: hidden;
-    }
+    .game-card { padding: 16px; display: grid; gap: 12px; overflow: hidden; }
 
     .status {
       display: flex;
@@ -131,7 +141,7 @@
       align-items: center;
       color: var(--muted);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .pill {
@@ -163,28 +173,24 @@
       stroke-width: 3.2;
       stroke-linecap: round;
       filter: drop-shadow(0 4px 5px rgba(0,0,0,.45));
-      transition: stroke .2s;
     }
 
     .needle.locked { stroke: rgba(248,247,255,.58); }
-
     .hub { fill: #ff4d6d; filter: drop-shadow(0 5px 10px rgba(0,0,0,.35)); }
 
     .cover {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: linear-gradient(180deg, rgba(26,26,46,.96), rgba(26,26,46,.76) 72%, transparent);
-      clip-path: polygon(0 0, 100% 0, 100% 66%, 0 66%);
+      background: linear-gradient(180deg, rgba(26,26,46,.98), rgba(26,26,46,.78) 72%, transparent);
+      clip-path: polygon(0 0, 100% 0, 100% 68%, 0 68%);
       transform-origin: top center;
       transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .8s;
       border-radius: 26px 26px 12px 12px;
+      z-index: 2;
     }
 
-    .cover.open {
-      transform: translateY(-72%) rotateX(20deg);
-      opacity: .08;
-    }
+    .cover.open { transform: translateY(-72%) rotateX(20deg); opacity: .08; }
 
     .clue-card {
       padding: 14px;
@@ -201,7 +207,7 @@
       gap: 8px;
       color: var(--muted);
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 900;
     }
 
     .spectrum span {
@@ -218,19 +224,12 @@
       place-items: center;
       text-align: center;
       font-size: 22px;
-      font-weight: 900;
+      font-weight: 950;
       letter-spacing: -.04em;
     }
 
     .controls { display: grid; gap: 10px; }
-
-    .hint {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-      text-align: center;
-    }
+    .master-grid { display: grid; gap: 10px; }
 
     .score-strip {
       display: grid;
@@ -243,13 +242,13 @@
       border-radius: 14px;
       display: grid;
       place-items: center;
-      font-weight: 900;
+      font-weight: 950;
       background: rgba(255,255,255,.08);
       color: var(--muted);
       border: 1px solid var(--line);
     }
 
-    .score-box.done { color: #16162a; background: var(--green); }
+    .score-box.done { color: #16162a; background: var(--mint); }
 
     .modal {
       position: fixed;
@@ -263,15 +262,8 @@
     }
 
     .modal.show { display: grid; }
+    .modal-card { width: min(100%, 390px); padding: 18px; display: grid; gap: 14px; }
 
-    .modal-card {
-      width: min(100%, 390px);
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .modal-card h2 { margin: 0; letter-spacing: -.04em; }
     .final {
       text-align: center;
       padding: 24px 18px;
@@ -282,7 +274,6 @@
 
     .final.show { display: grid; }
     .final .big { font-size: 56px; font-weight: 950; letter-spacing: -.08em; }
-    .final h2 { margin: 0; font-size: 26px; letter-spacing: -.05em; }
 
     @keyframes pop {
       from { opacity: 0; transform: scale(.92) translateY(14px); }
@@ -292,23 +283,40 @@
     .hidden { display: none !important; }
   </style>
 </head>
+
 <body>
   <main class="app">
     <header>
-      <div class="brand">
+      <div>
         <h1>Longueur d'Onde</h1>
-        <small id="roomLabel">Salle</small>
+        <small id="roomLabel">Accueil</small>
       </div>
-      <button class="icon-btn" id="settingsBtn" aria-label="Paramètres">⚙️</button>
+      <button type="button" class="icon-btn" id="settingsBtn" aria-label="Paramètres">⚙️</button>
     </header>
 
-    <section class="join-card card" id="joinView">
-      <input id="roomInput" placeholder="Code de salle, ex : 123" />
-      <div class="row">
-        <button class="btn" id="joinMaster">Maître</button>
-        <button class="btn secondary" id="joinGuesser">Devin</button>
-      </div>
-      <p class="hint">Partage le même lien avec ton partenaire. Les rôles s'inversent automatiquement pendant 5 manches.</p>
+    <section class="view card" id="homeView">
+      <h2>Créer ou rejoindre</h2>
+      <button type="button" class="btn" id="createRoomBtn">Créer une salle</button>
+      <button type="button" class="btn secondary" id="showJoinBtn">Rejoindre une salle</button>
+      <p class="hint">Celui qui crée devient Maître sur la manche 1. Celui qui rejoint devient Devin.</p>
+      <p class="error" id="connectionState"></p>
+    </section>
+
+    <section class="view card hidden" id="joinView">
+      <h2>Code de salle</h2>
+      <input id="roomInput" autocomplete="off" autocapitalize="characters" placeholder="Exemple : 482913" />
+      <button type="button" class="btn" id="joinRoomBtn">Rejoindre</button>
+      <button type="button" class="btn secondary" id="backHomeBtn">Retour</button>
+      <p class="hint">Entre le code affiché sur le téléphone du Maître.</p>
+      <p class="error" id="joinError"></p>
+    </section>
+
+    <section class="view card hidden" id="lobbyView">
+      <h2>Salle créée</h2>
+      <p class="hint">Donne ce code au deuxième téléphone :</p>
+      <div class="clue" id="bigCode">000000</div>
+      <button type="button" class="btn" id="startAsMasterBtn">Entrer comme Maître</button>
+      <button type="button" class="btn secondary" id="copyLinkBtn">Copier le lien</button>
     </section>
 
     <section class="game-card card hidden" id="gameView">
@@ -320,11 +328,11 @@
 
       <div class="wheel-wrap" id="wheelWrap">
         <svg viewBox="-115 -115 230 130" aria-label="Roue Wavelength">
-          <path id="dialBg" d="" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)" stroke-width="2" />
+          <path id="dialBg" d="" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)" stroke-width="2"></path>
           <g id="targetZones"></g>
           <g id="ticks"></g>
-          <line id="needle" class="needle" x1="0" y1="0" x2="0" y2="-94" />
-          <circle class="hub" cx="0" cy="0" r="13" />
+          <line id="needle" class="needle" x1="0" y1="0" x2="0" y2="-94"></line>
+          <circle class="hub" cx="0" cy="0" r="13"></circle>
         </svg>
         <div class="cover" id="cover"></div>
       </div>
@@ -338,18 +346,18 @@
       </div>
 
       <div class="controls">
-        <div id="masterControls">
+        <div id="masterControls" class="master-grid">
           <input id="leftInput" placeholder="Opposé gauche" />
           <input id="rightInput" placeholder="Opposé droit" />
           <input id="clueInput" placeholder="Ton indice" />
-          <button class="btn" id="sendClue">Valider l'indice</button>
+          <button type="button" class="btn" id="sendClue">Valider l'indice</button>
         </div>
 
         <div id="guesserControls">
-          <button class="btn warning" id="lockGuess">Valider mon aiguille</button>
+          <button type="button" class="btn warning" id="lockGuess">Valider mon aiguille</button>
         </div>
 
-        <button class="btn secondary hidden" id="nextRound">Manche suivante</button>
+        <button type="button" class="btn secondary hidden" id="nextRound">Manche suivante</button>
         <p class="hint" id="gameHint"></p>
       </div>
 
@@ -359,7 +367,7 @@
     <section class="final card" id="finalView">
       <div class="big" id="finalScore">0</div>
       <h2 id="finalText">Résultat</h2>
-      <button class="btn" id="newGame">Nouvelle partie</button>
+      <button type="button" class="btn" id="newGame">Nouvelle partie</button>
     </section>
   </main>
 
@@ -371,27 +379,27 @@
         <option value="manual">Mode Manuel</option>
       </select>
       <p class="hint">Auto choisit les opposés dans une liste interne. Manuel laisse le Maître écrire ses opposés.</p>
-      <button class="btn" id="closeSettings">OK</button>
+      <button type="button" class="btn" id="closeSettings">OK</button>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
 
-    /* Remplace cette configuration par celle de ton projet Firebase. */
-    const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+  <script>
+    /*
+      Colle ta vraie config Firebase ici.
+      Realtime Database doit être activé dans Firebase.
+    */
+const firebaseConfig = {
+  apiKey: "TON_API_KEY",
+  authDomain: "TON_PROJET.firebaseapp.com",
+  databaseURL: "https://TON_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "TON_PROJET",
+  storageBucket: "TON_PROJET.appspot.com",
+  messagingSenderId: "TON_SENDER_ID",
+  appId: "TON_APP_ID"
 };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
 
     const pairs = [
       ["Froid", "Chaud"], ["Silencieux", "Bruyant"], ["Film d'horreur", "Comédie"],
@@ -400,28 +408,150 @@
       ["Calme", "Énergique"], ["Moche", "Magnifique"], ["Introverti", "Extraverti"]
     ];
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
+
+    const els = {
+      homeView: $("homeView"), joinView: $("joinView"), lobbyView: $("lobbyView"),
+      gameView: $("gameView"), finalView: $("finalView"), roomInput: $("roomInput"),
+      roomLabel: $("roomLabel"), roleLabel: $("roleLabel"), roundLabel: $("roundLabel"),
+      totalLabel: $("totalLabel"), targetZones: $("targetZones"), ticks: $("ticks"),
+      dialBg: $("dialBg"), needle: $("needle"), cover: $("cover"), wheelWrap: $("wheelWrap"),
+      clueText: $("clueText"), masterControls: $("masterControls"), guesserControls: $("guesserControls"),
+      clueInput: $("clueInput"), leftInput: $("leftInput"), rightInput: $("rightInput"),
+      leftWord: $("leftWord"), rightWord: $("rightWord"), sendClue: $("sendClue"),
+      lockGuess: $("lockGuess"), nextRound: $("nextRound"), gameHint: $("gameHint"),
+      scoreStrip: $("scoreStrip"), finalScore: $("finalScore"), finalText: $("finalText"),
+      newGame: $("newGame"), settingsModal: $("settingsModal"), settingsBtn: $("settingsBtn"),
+      closeSettings: $("closeSettings"), modeSelect: $("modeSelect"), connectionState: $("connectionState"),
+      joinError: $("joinError"), createRoomBtn: $("createRoomBtn"), showJoinBtn: $("showJoinBtn"),
+      joinRoomBtn: $("joinRoomBtn"), backHomeBtn: $("backHomeBtn"), bigCode: $("bigCode"),
+      startAsMasterBtn: $("startAsMasterBtn"), copyLinkBtn: $("copyLinkBtn")
+    };
+
     const state = {
       room: new URLSearchParams(location.search).get("room") || "",
       role: null,
       data: null,
+      db: null,
+      roomListener: null,
       dragging: false,
       lastSend: 0
     };
 
-    const els = {
-      joinView: $("joinView"), gameView: $("gameView"), finalView: $("finalView"),
-      roomInput: $("roomInput"), roomLabel: $("roomLabel"), roleLabel: $("roleLabel"),
-      roundLabel: $("roundLabel"), totalLabel: $("totalLabel"), targetZones: $("targetZones"),
-      ticks: $("ticks"), dialBg: $("dialBg"), needle: $("needle"), cover: $("cover"),
-      wheelWrap: $("wheelWrap"), clueText: $("clueText"), masterControls: $("masterControls"),
-      guesserControls: $("guesserControls"), clueInput: $("clueInput"), leftInput: $("leftInput"),
-      rightInput: $("rightInput"), leftWord: $("leftWord"), rightWord: $("rightWord"),
-      sendClue: $("sendClue"), lockGuess: $("lockGuess"), nextRound: $("nextRound"),
-      gameHint: $("gameHint"), scoreStrip: $("scoreStrip"), finalScore: $("finalScore"),
-      finalText: $("finalText"), newGame: $("newGame"), settingsModal: $("settingsModal"),
-      settingsBtn: $("settingsBtn"), closeSettings: $("closeSettings"), modeSelect: $("modeSelect")
-    };
+    function show(view) {
+      [els.homeView, els.joinView, els.lobbyView, els.gameView, els.finalView].forEach(v => v.classList.add("hidden"));
+      view.classList.remove("hidden");
+      if (view === els.finalView) view.classList.add("show");
+      else els.finalView.classList.remove("show");
+    }
+
+    function configLooksValid() {
+      return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("COLLE") && firebaseConfig.projectId && !firebaseConfig.projectId.includes("TON_PROJET");
+    }
+
+    function initFirebase() {
+      if (!configLooksValid()) {
+        els.connectionState.textContent = "Colle ta config Firebase dans le code avant de jouer à deux téléphones.";
+        return false;
+      }
+
+      try {
+        firebase.initializeApp(firebaseConfig);
+        state.db = firebase.database();
+        els.connectionState.textContent = "Firebase connecté.";
+        return true;
+      } catch (err) {
+        console.error(err);
+        els.connectionState.textContent = "Firebase ne démarre pas. Vérifie la config et databaseURL.";
+        return false;
+      }
+    }
+
+    function roomRef() {
+      return state.db.ref("wavelengthRooms/" + state.room);
+    }
+
+    function codeRoom() {
+      return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    function randomTarget() { return Math.round(8 + Math.random() * 164); }
+    function randomPair() { return pairs[Math.floor(Math.random() * pairs.length)]; }
+
+    function initialRoomData() {
+      const p = randomPair();
+      return {
+        round: 1,
+        total: 0,
+        phase: "clue",
+        mode: "auto",
+        targetValue: randomTarget(),
+        guessValue: 90,
+        clue: "",
+        left: p[0],
+        right: p[1],
+        scores: [],
+        lastScore: 0,
+        createdAt: Date.now()
+      };
+    }
+
+    async function createRoom() {
+      if (!state.db) {
+        els.connectionState.textContent = "Firebase n'est pas connecté. Vérifie ta config.";
+        return;
+      }
+
+      state.room = codeRoom();
+      state.role = "master";
+      await roomRef().set(initialRoomData());
+      history.replaceState(null, "", "?room=" + encodeURIComponent(state.room));
+      els.bigCode.textContent = state.room;
+      els.roomLabel.textContent = "Salle " + state.room;
+      show(els.lobbyView);
+    }
+
+    async function joinRoom() {
+      if (!state.db) {
+        els.joinError.textContent = "Firebase n'est pas connecté. Vérifie ta config.";
+        return;
+      }
+
+      const code = els.roomInput.value.trim().toUpperCase();
+      if (!code) {
+        els.joinError.textContent = "Entre le code de salle.";
+        return;
+      }
+
+      state.room = code;
+      const snap = await roomRef().once("value");
+      if (!snap.exists()) {
+        els.joinError.textContent = "Salle introuvable.";
+        return;
+      }
+
+      state.role = "guesser";
+      history.replaceState(null, "", "?room=" + encodeURIComponent(state.room));
+      startGame();
+    }
+
+    function startGame() {
+      els.roomLabel.textContent = "Salle " + state.room;
+
+      if (state.roomListener) state.roomListener.off();
+      state.roomListener = roomRef();
+      state.roomListener.on("value", snap => {
+        state.data = snap.val();
+        if (state.data) render();
+      });
+
+      show(els.gameView);
+    }
+
+    async function patch(data) {
+      if (!state.db || !state.room) return;
+      await roomRef().update(data);
+    }
 
     function polar(angle, r = 100) {
       const rad = (angle - 180) * Math.PI / 180;
@@ -432,12 +562,6 @@
       const a = polar(start, outer), b = polar(end, outer), c = polar(end, inner), d = polar(start, inner);
       const large = end - start > 180 ? 1 : 0;
       return `M ${a.x} ${a.y} A ${outer} ${outer} 0 ${large} 1 ${b.x} ${b.y} L ${c.x} ${c.y} A ${inner} ${inner} 0 ${large} 0 ${d.x} ${d.y} Z`;
-    }
-
-    function setNeedle(angle) {
-      const p = polar(angle, 94);
-      els.needle.setAttribute("x2", p.x);
-      els.needle.setAttribute("y2", p.y);
     }
 
     function drawBase() {
@@ -456,11 +580,11 @@
 
     function drawTarget(target) {
       const zones = [
-        { w: 12, color: "var(--yellow)", pts: 2 },
-        { w: 10, color: "var(--orange)", pts: 3 },
-        { w: 8, color: "var(--red)", pts: 4 },
-        { w: 10, color: "var(--orange)", pts: 3 },
-        { w: 12, color: "var(--yellow)", pts: 2 }
+        { w: 12, color: "var(--yellow)" },
+        { w: 10, color: "var(--orange)" },
+        { w: 8, color: "var(--red)" },
+        { w: 10, color: "var(--orange)" },
+        { w: 12, color: "var(--yellow)" }
       ];
       let cursor = target - 26;
       els.targetZones.innerHTML = "";
@@ -477,6 +601,12 @@
       });
     }
 
+    function setNeedle(angle) {
+      const p = polar(angle, 94);
+      els.needle.setAttribute("x2", p.x);
+      els.needle.setAttribute("y2", p.y);
+    }
+
     function score(target, guess) {
       const diff = Math.abs(target - guess);
       if (diff <= 4) return 4;
@@ -485,91 +615,10 @@
       return 0;
     }
 
-    function randomTarget() { return Math.round(8 + Math.random() * 164); }
-    function randomPair() { return pairs[Math.floor(Math.random() * pairs.length)]; }
-    function roomRef() { return ref(db, `wavelengthRooms/${state.room}`); }
-
-    async function createOrJoin(role) {
-      state.room = els.roomInput.value.trim() || state.room || Math.random().toString(36).slice(2, 7).toUpperCase();
-      state.role = role;
-      history.replaceState(null, "", `?room=${encodeURIComponent(state.room)}`);
-      els.roomLabel.textContent = `Salle ${state.room}`;
-      const snap = await get(roomRef());
-      if (!snap.exists()) await initRoom();
-      subscribe();
-      els.joinView.classList.add("hidden");
-      els.gameView.classList.remove("hidden");
-    }
-
-    async function initRoom() {
-      const [left, right] = randomPair();
-      await set(roomRef(), {
-        round: 1,
-        total: 0,
-        phase: "clue",
-        mode: "auto",
-        targetValue: randomTarget(),
-        guessValue: 90,
-        clue: "",
-        left,
-        right,
-        scores: [],
-        masterStarts: "master"
-      });
-    }
-
-    function subscribe() {
-      onValue(roomRef(), snap => {
-        state.data = snap.val();
-        if (!state.data) return;
-        render();
-      });
-    }
-
     function isCurrentMaster() {
+      if (!state.data) return false;
       const odd = (state.data.round || 1) % 2 === 1;
       return (odd && state.role === "master") || (!odd && state.role === "guesser");
-    }
-
-    function render() {
-      const d = state.data;
-      const master = isCurrentMaster();
-      const final = d.phase === "final";
-      els.gameView.classList.toggle("hidden", final);
-      els.finalView.classList.toggle("show", final);
-
-      if (final) {
-        els.finalScore.textContent = d.total || 0;
-        els.finalText.textContent = (d.total || 0) > 15 ? "Vous êtes très compatibles ! ✨" : "Continuez à vous entraîner !";
-        return;
-      }
-
-      drawTarget(d.targetValue || 90);
-      setNeedle(d.guessValue ?? 90);
-      els.needle.classList.toggle("locked", !master && d.phase !== "guess");
-      els.roleLabel.textContent = master ? "Maître" : "Devin";
-      els.roundLabel.textContent = `Manche ${d.round}/5`;
-      els.totalLabel.textContent = `${d.total || 0} pts`;
-      els.leftWord.textContent = d.left || "";
-      els.rightWord.textContent = d.right || "";
-      els.clueText.textContent = d.clue || (master ? "Écris un indice" : "En attente de l'indice");
-      els.modeSelect.value = d.mode || "auto";
-
-      const reveal = d.phase === "reveal";
-      const hideTarget = !master && !reveal;
-      els.cover.classList.toggle("open", !hideTarget);
-      els.masterControls.classList.toggle("hidden", !master || d.phase !== "clue");
-      els.guesserControls.classList.toggle("hidden", master || d.phase !== "guess");
-      els.nextRound.classList.toggle("hidden", !reveal);
-      els.gameHint.textContent = reveal
-        ? `Score de la manche : ${d.lastScore || 0} pt${(d.lastScore || 0) > 1 ? "s" : ""}.`
-        : master
-          ? (d.phase === "guess" ? "Observe l'aiguille du Devin en direct." : "Place ton indice sur le spectre.")
-          : (d.phase === "guess" ? "Déplace l'aiguille, puis valide." : "La cible est masquée pour toi.");
-
-      els.leftInput.value = d.left || "";
-      els.rightInput.value = d.right || "";
-      renderScores(d.scores || []);
     }
 
     function renderScores(scores) {
@@ -582,6 +631,53 @@
       }
     }
 
+    function render() {
+      const d = state.data;
+      if (!d) return;
+
+      if (d.phase === "final") {
+        els.finalScore.textContent = d.total || 0;
+        els.finalText.textContent = (d.total || 0) > 15 ? "Vous êtes très compatibles ! ✨" : "Continuez à vous entraîner !";
+        show(els.finalView);
+        return;
+      }
+
+      show(els.gameView);
+
+      const master = isCurrentMaster();
+      drawTarget(d.targetValue || 90);
+      setNeedle(d.guessValue ?? 90);
+
+      els.roleLabel.textContent = master ? "Maître" : "Devin";
+      els.roundLabel.textContent = "Manche " + d.round + "/5";
+      els.totalLabel.textContent = (d.total || 0) + " pts";
+      els.leftWord.textContent = d.left || "";
+      els.rightWord.textContent = d.right || "";
+      els.clueText.textContent = d.clue || (master ? "Écris un indice" : "En attente de l'indice");
+      els.modeSelect.value = d.mode || "auto";
+
+      const reveal = d.phase === "reveal";
+      const hideTarget = !master && !reveal;
+      els.cover.classList.toggle("open", !hideTarget);
+
+      els.masterControls.classList.toggle("hidden", !master || d.phase !== "clue");
+      els.guesserControls.classList.toggle("hidden", master || d.phase !== "guess");
+      els.nextRound.classList.toggle("hidden", !reveal);
+
+      els.leftInput.disabled = (d.mode || "auto") === "auto";
+      els.rightInput.disabled = (d.mode || "auto") === "auto";
+      els.leftInput.value = d.left || "";
+      els.rightInput.value = d.right || "";
+
+      els.gameHint.textContent = reveal
+        ? "Score de la manche : " + (d.lastScore || 0) + " point" + ((d.lastScore || 0) > 1 ? "s" : "") + "."
+        : master
+          ? (d.phase === "guess" ? "Observe l'aiguille du Devin en direct. Tu ne peux pas la toucher." : "Écris un indice, puis valide.")
+          : (d.phase === "guess" ? "Déplace l'aiguille sur la roue, puis valide." : "Attends l'indice du Maître.");
+
+      renderScores(d.scores || []);
+    }
+
     function angleFromPointer(e) {
       const rect = els.wheelWrap.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
@@ -589,74 +685,99 @@
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
       let angle = Math.atan2(dy, dx) * 180 / Math.PI + 180;
-      angle = Math.max(0, Math.min(180, angle));
-      return Math.round(angle);
+      return Math.round(Math.max(0, Math.min(180, angle)));
     }
 
-    async function sendGuess(angle, force = false) {
+    async function sendGuess(angle, force) {
       const now = performance.now();
       if (!force && now - state.lastSend < 50) return;
       state.lastSend = now;
       setNeedle(angle);
-      await update(roomRef(), { guessValue: angle });
+      await patch({ guessValue: angle });
     }
 
-    els.joinMaster.onclick = () => createOrJoin("master");
-    els.joinGuesser.onclick = () => createOrJoin("guesser");
+    els.createRoomBtn.addEventListener("click", createRoom);
+    els.showJoinBtn.addEventListener("click", () => {
+      els.joinError.textContent = "";
+      show(els.joinView);
+    });
+    els.backHomeBtn.addEventListener("click", () => show(els.homeView));
+    els.joinRoomBtn.addEventListener("click", joinRoom);
+    els.startAsMasterBtn.addEventListener("click", startGame);
 
-    els.sendClue.onclick = async () => {
+    els.copyLinkBtn.addEventListener("click", async () => {
+      const url = location.origin + location.pathname + "?room=" + encodeURIComponent(state.room);
+      try {
+        await navigator.clipboard.writeText(url);
+        els.copyLinkBtn.textContent = "Lien copié";
+      } catch {
+        els.copyLinkBtn.textContent = "Code : " + state.room;
+      }
+    });
+
+    els.settingsBtn.addEventListener("click", () => els.settingsModal.classList.add("show"));
+
+    els.closeSettings.addEventListener("click", async () => {
+      els.settingsModal.classList.remove("show");
+      if (state.data) await patch({ mode: els.modeSelect.value });
+    });
+
+    els.sendClue.addEventListener("click", async () => {
       const d = state.data;
-      const manual = (d.mode || "auto") === "manual";
-      const chosen = manual ? [els.leftInput.value.trim(), els.rightInput.value.trim()] : [d.left, d.right];
+      if (!d) return;
       const clue = els.clueInput.value.trim();
-      if (!clue) return;
-      await update(roomRef(), {
-        left: chosen[0] || d.left,
-        right: chosen[1] || d.right,
+      if (!clue) {
+        els.gameHint.textContent = "Écris d'abord un indice.";
+        return;
+      }
+      const manual = (d.mode || "auto") === "manual";
+      await patch({
+        left: manual ? (els.leftInput.value.trim() || d.left) : d.left,
+        right: manual ? (els.rightInput.value.trim() || d.right) : d.right,
         clue,
         phase: "guess",
         guessValue: 90
       });
       els.clueInput.value = "";
-    };
+    });
 
-    els.lockGuess.onclick = async () => {
+    els.lockGuess.addEventListener("click", async () => {
       const d = state.data;
+      if (!d) return;
       const s = score(d.targetValue, d.guessValue ?? 90);
-      const scores = [...(d.scores || []), s];
-      await update(roomRef(), {
+      await patch({
         phase: "reveal",
         lastScore: s,
         total: (d.total || 0) + s,
-        scores
+        scores: [...(d.scores || []), s]
       });
-    };
+    });
 
-    els.nextRound.onclick = async () => {
+    els.nextRound.addEventListener("click", async () => {
       const d = state.data;
+      if (!d) return;
       if (d.round >= 5) {
-        await update(roomRef(), { phase: "final" });
+        await patch({ phase: "final" });
         return;
       }
-      const [left, right] = (d.mode || "auto") === "auto" ? randomPair() : [d.left, d.right];
-      await update(roomRef(), {
+      const p = (d.mode || "auto") === "auto" ? randomPair() : [d.left, d.right];
+      await patch({
         round: d.round + 1,
         phase: "clue",
         targetValue: randomTarget(),
         guessValue: 90,
         clue: "",
-        left,
-        right,
+        left: p[0],
+        right: p[1],
         lastScore: 0
       });
-    };
+    });
 
-    els.newGame.onclick = initRoom;
-    els.settingsBtn.onclick = () => els.settingsModal.classList.add("show");
-    els.closeSettings.onclick = async () => {
-      els.settingsModal.classList.remove("show");
-      if (state.data) await update(roomRef(), { mode: els.modeSelect.value });
-    };
+    els.newGame.addEventListener("click", async () => {
+      if (!state.room) return;
+      await roomRef().set(initialRoomData());
+      startGame();
+    });
 
     els.wheelWrap.addEventListener("pointerdown", e => {
       if (!state.data || isCurrentMaster() || state.data.phase !== "guess") return;
@@ -667,7 +788,7 @@
 
     els.wheelWrap.addEventListener("pointermove", e => {
       if (!state.dragging) return;
-      sendGuess(angleFromPointer(e));
+      sendGuess(angleFromPointer(e), false);
     });
 
     window.addEventListener("pointerup", e => {
@@ -678,7 +799,16 @@
 
     drawBase();
     setNeedle(90);
-    if (state.room) els.roomInput.value = state.room;
+
+    initFirebase();
+
+    if (state.room) {
+      els.roomInput.value = state.room;
+      show(els.joinView);
+      els.roomLabel.textContent = "Salle " + state.room;
+    } else {
+      show(els.homeView);
+    }
   </script>
 </body>
 </html>
