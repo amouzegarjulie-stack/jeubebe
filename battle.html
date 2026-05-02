@@ -6,10 +6,8 @@
   <meta name="theme-color" content="#f8c8dc" />
   <title>Bataille Online</title>
 
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Police moderne -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -17,21 +15,31 @@
   <style>
     :root {
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --card-w: clamp(58px, 18vw, 82px);
+      --card-w: clamp(54px, 16vw, 76px);
       --card-h: calc(var(--card-w) * 1.42);
     }
 
-    * { -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+    }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       background:
         radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .9), transparent 24%),
         radial-gradient(circle at 85% 10%, rgba(196, 181, 253, .55), transparent 24%),
         radial-gradient(circle at 50% 90%, rgba(125, 211, 252, .45), transparent 30%),
         linear-gradient(135deg, #ffe4ec 0%, #e0f2fe 48%, #f5d0fe 100%);
+      background-attachment: fixed;
     }
 
     .glass {
@@ -58,8 +66,9 @@
       place-items: center;
       position: relative;
       transform-origin: center;
-      animation: popCard .28s ease-out both;
+      animation: popCard .22s ease-out both;
       user-select: none;
+      flex: none;
     }
 
     .playing-card.red { color: #e11d48; }
@@ -70,13 +79,13 @@
       content: attr(data-corner);
       position: absolute;
       font-weight: 900;
-      font-size: 11px;
+      font-size: 10px;
       line-height: 1.05;
       white-space: pre;
     }
 
-    .playing-card::before { top: 8px; left: 8px; }
-    .playing-card::after { bottom: 8px; right: 8px; transform: rotate(180deg); }
+    .playing-card::before { top: 7px; left: 7px; }
+    .playing-card::after { bottom: 7px; right: 7px; transform: rotate(180deg); }
 
     .card-back {
       background:
@@ -90,8 +99,8 @@
     .card-back::after { content: ''; }
 
     @keyframes popCard {
-      from { opacity: 0; transform: translateY(16px) scale(.9) rotate(-2deg); }
-      to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+      from { opacity: 0; transform: translateY(10px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .pulse-wait { animation: pulseWait 1.2s ease-in-out infinite; }
@@ -108,15 +117,21 @@
       cursor: not-allowed;
       transform: none !important;
     }
+
+    @media (max-height: 720px) {
+      :root { --card-w: clamp(46px, 14vw, 64px); }
+      .compact-gap { gap: .6rem; }
+      .compact-pad { padding: .75rem; }
+      .battle-zone { min-height: 150px; }
+    }
   </style>
 </head>
 
 <body class="text-slate-800">
-  <main class="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden px-4 pb-[calc(16px+var(--safe-bottom))] pt-4">
+  <main class="relative mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[calc(86px+var(--safe-bottom))] pt-4">
 
-    <!-- ÉCRAN ACCUEIL -->
-    <section id="homeScreen" class="screen active min-h-full flex-col justify-center gap-4">
-      <div class="glass rounded-[2rem] p-6">
+    <section id="homeScreen" class="screen active min-h-dvh flex-col justify-center gap-4 py-4">
+      <div class="glass rounded-[2rem] p-6 compact-pad">
         <div class="mb-6 text-center">
           <div class="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-[1.7rem] bg-gradient-to-br from-fuchsia-400 to-sky-400 text-4xl shadow-xl">🃏</div>
           <h1 class="text-4xl font-black tracking-tight text-slate-900">Bataille</h1>
@@ -143,7 +158,7 @@
         <p id="homeError" class="mt-4 min-h-5 text-center text-sm font-bold text-rose-600"></p>
       </div>
 
-      <div class="glass rounded-[1.6rem] p-4">
+      <div class="glass rounded-[1.6rem] p-4 compact-pad">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="font-black">Classement</h2>
           <button id="refreshRankBtn" class="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-600">↻</button>
@@ -152,9 +167,8 @@
       </div>
     </section>
 
-    <!-- ÉCRAN SALON / JEU -->
-    <section id="gameScreen" class="screen min-h-full flex-col justify-between gap-3">
-      <header class="glass rounded-[1.6rem] px-4 py-3">
+    <section id="gameScreen" class="screen flex-col gap-3 compact-gap py-2">
+      <header class="glass rounded-[1.6rem] px-4 py-3 compact-pad">
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="text-xs font-black uppercase tracking-wide text-slate-500">Salon</p>
@@ -165,7 +179,7 @@
         <p id="statusText" class="mt-2 text-sm font-bold text-slate-600">Initialisation...</p>
       </header>
 
-      <section class="glass rounded-[1.8rem] p-4">
+      <section class="glass rounded-[1.8rem] p-4 compact-pad">
         <div class="mb-3 flex items-center justify-between gap-3">
           <div>
             <p id="opponentName" class="font-black">Adversaire</p>
@@ -174,11 +188,11 @@
           <div id="opponentReady" class="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-500">En attente</div>
         </div>
 
-        <div class="grid min-h-[250px] place-items-center rounded-[1.6rem] bg-white/35 p-3">
+        <div class="battle-zone grid min-h-[180px] place-items-center rounded-[1.6rem] bg-white/35 p-3">
           <div class="w-full">
             <p id="roundMessage" class="mb-3 text-center text-sm font-black text-slate-700">Prépare-toi...</p>
-            <div id="battleStack" class="mb-3 flex min-h-[105px] flex-wrap items-center justify-center gap-2"></div>
-            <div class="flex items-center justify-center gap-5">
+            <div id="battleStack" class="mb-3 flex min-h-[52px] flex-wrap items-center justify-center gap-2"></div>
+            <div class="flex items-center justify-center gap-4">
               <div>
                 <p class="mb-1 text-center text-[10px] font-black uppercase text-slate-500">Adversaire</p>
                 <div id="opponentCardSlot" class="grid place-items-center"></div>
@@ -193,7 +207,7 @@
         </div>
       </section>
 
-      <section class="glass rounded-[1.8rem] p-4">
+      <section class="glass rounded-[1.8rem] p-4 compact-pad">
         <div class="mb-3 flex items-center justify-between">
           <div>
             <p id="myName" class="font-black">Toi</p>
@@ -202,7 +216,7 @@
           <div id="turnBadge" class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">Attente</div>
         </div>
 
-        <div class="mb-4 flex items-center justify-center gap-[-10px]">
+        <div class="mb-4 flex items-center justify-center">
           <div class="playing-card card-back -mr-5 rotate-[-8deg]"></div>
           <div class="playing-card card-back z-10"></div>
           <div class="playing-card card-back -ml-5 rotate-[8deg]"></div>
@@ -214,8 +228,7 @@
       </section>
     </section>
 
-    <!-- MODALE RÈGLES -->
-    <button id="rulesBtn" class="absolute bottom-[calc(12px+var(--safe-bottom))] right-4 grid h-11 w-11 place-items-center rounded-full bg-white/70 text-lg font-black text-slate-600 shadow-lg backdrop-blur active:scale-95">i</button>
+    <button id="rulesBtn" class="fixed bottom-[calc(12px+var(--safe-bottom))] right-4 z-40 grid h-11 w-11 place-items-center rounded-full bg-white/75 text-lg font-black text-slate-600 shadow-lg backdrop-blur active:scale-95">i</button>
 
     <div id="rulesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/35 p-4 backdrop-blur-sm">
       <div class="glass max-w-sm rounded-[2rem] p-5">
@@ -234,22 +247,6 @@
   </main>
 
   <script type="module">
-    /************************************************************
-     * FIREBASE CONFIGURATION
-     * ----------------------------------------------------------
-     * 1) Crée un projet Firebase.
-     * 2) Active Realtime Database.
-     * 3) Remplace les valeurs ci-dessous par ta config.
-     * 4) Pour tester vite, tu peux mettre des règles temporaires :
-     *    {
-     *      "rules": {
-     *        ".read": true,
-     *        ".write": true
-     *      }
-     *    }
-     *    À sécuriser avant toute mise en production.
-     ************************************************************/
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
       getDatabase,
@@ -258,27 +255,21 @@
       set,
       update,
       onValue,
-      off,
-      runTransaction,
-      serverTimestamp
+      runTransaction
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-   const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
-    /************************************************************
-     * ÉTAT LOCAL
-     ************************************************************/
 
     const state = {
       roomId: null,
@@ -292,16 +283,23 @@
 
     const suits = ['♠', '♥', '♦', '♣'];
     const ranks = [
-      { label: '2', value: 2 }, { label: '3', value: 3 }, { label: '4', value: 4 }, { label: '5', value: 5 },
-      { label: '6', value: 6 }, { label: '7', value: 7 }, { label: '8', value: 8 }, { label: '9', value: 9 },
-      { label: '10', value: 10 }, { label: 'J', value: 11 }, { label: 'Q', value: 12 }, { label: 'K', value: 13 }, { label: 'A', value: 14 }
+      { label: '2', value: 2 },
+      { label: '3', value: 3 },
+      { label: '4', value: 4 },
+      { label: '5', value: 5 },
+      { label: '6', value: 6 },
+      { label: '7', value: 7 },
+      { label: '8', value: 8 },
+      { label: '9', value: 9 },
+      { label: '10', value: 10 },
+      { label: 'J', value: 11 },
+      { label: 'Q', value: 12 },
+      { label: 'K', value: 13 },
+      { label: 'A', value: 14 }
     ];
 
-    /************************************************************
-     * SÉLECTEURS
-     ************************************************************/
-
     const $ = (id) => document.getElementById(id);
+
     const homeScreen = $('homeScreen');
     const gameScreen = $('gameScreen');
     const pseudoInput = $('pseudoInput');
@@ -329,10 +327,6 @@
     const rulesModal = $('rulesModal');
     const closeRulesBtn = $('closeRulesBtn');
 
-    /************************************************************
-     * ÉVÉNEMENTS UI
-     ************************************************************/
-
     createRoomBtn.addEventListener('click', createRoom);
     joinRoomBtn.addEventListener('click', joinRoom);
     refreshRankBtn.addEventListener('click', loadRanking);
@@ -341,72 +335,117 @@
     playBtn.addEventListener('click', playMyCard);
     rulesBtn.addEventListener('click', () => rulesModal.classList.replace('hidden', 'flex'));
     closeRulesBtn.addEventListener('click', () => rulesModal.classList.replace('flex', 'hidden'));
-    roomInput.addEventListener('input', () => roomInput.value = roomInput.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+    rulesModal.addEventListener('click', (event) => {
+      if (event.target === rulesModal) rulesModal.classList.replace('flex', 'hidden');
+    });
+    roomInput.addEventListener('input', () => {
+      roomInput.value = roomInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    const savedPseudo = localStorage.getItem('bataillePseudo');
+    if (savedPseudo) pseudoInput.value = savedPseudo;
 
     loadRanking();
-
-    /************************************************************
-     * SALONS
-     ************************************************************/
 
     async function createRoom() {
       const pseudo = getPseudoOrWarn();
       if (!pseudo) return;
 
-      const roomId = makeRoomId();
-      const deck = shuffle(createDeck());
-      const p1Deck = deck.slice(0, 26);
-      const p2Deck = deck.slice(26);
+      setButtonsLoading(true);
+      showHomeError('');
 
-      const room = {
-        id: roomId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        status: 'waiting',
-        hostPlayerId: state.playerId,
-        turnNumber: 0,
-        phase: 'waitingOpponent',
-        winner: null,
-        pot: [],
-        visible: { p1: null, p2: null },
-        pending: { p1: false, p2: false },
-        players: {
-          p1: { id: state.playerId, pseudo, deck: p1Deck, wins: 0, connectedAt: Date.now() },
-          p2: { id: null, pseudo: null, deck: p2Deck, wins: 0, connectedAt: null }
-        },
-        lastMessage: `${pseudo} attend un adversaire.`
-      };
+      try {
+        const roomId = await makeUniqueRoomId();
+        const deck = shuffle(createDeck());
+        const p1Deck = deck.slice(0, 26);
+        const p2Deck = deck.slice(26);
 
-      await set(ref(db, `rooms/${roomId}`), room);
-      enterRoom(roomId, 'p1', pseudo);
+        const room = {
+          id: roomId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          status: 'waiting',
+          hostPlayerId: state.playerId,
+          turnNumber: 0,
+          winner: null,
+          pot: [],
+          visible: { p1: null, p2: null },
+          pending: { p1: false, p2: false },
+          players: {
+            p1: { id: state.playerId, pseudo, deck: p1Deck, connectedAt: Date.now() },
+            p2: { id: null, pseudo: null, deck: p2Deck, connectedAt: null }
+          },
+          lastMessage: `${pseudo} attend un adversaire.`
+        };
+
+        await set(ref(db, `rooms/${roomId}`), room);
+        enterRoom(roomId, 'p1', pseudo);
+      } catch (error) {
+        console.error(error);
+        showHomeError('Impossible de créer le salon. Vérifie les règles Firebase.');
+      } finally {
+        setButtonsLoading(false);
+      }
     }
 
     async function joinRoom() {
       const pseudo = getPseudoOrWarn();
       const roomId = roomInput.value.trim().toUpperCase();
+
       if (!pseudo) return;
-      if (!roomId || roomId.length < 4) return showHomeError('Entre un ID de salon valide.');
+      if (!roomId || roomId.length < 4) {
+        showHomeError('Entre un ID de salon valide.');
+        return;
+      }
 
-      const roomSnap = await get(ref(db, `rooms/${roomId}`));
-      if (!roomSnap.exists()) return showHomeError('Salon introuvable.');
+      setButtonsLoading(true);
+      showHomeError('');
 
-      const room = roomSnap.val();
-      if (room.players?.p1?.id === state.playerId) return enterRoom(roomId, 'p1', pseudo);
-      if (room.players?.p2?.id === state.playerId) return enterRoom(roomId, 'p2', pseudo);
-      if (room.players?.p2?.id) return showHomeError('Ce salon est déjà complet.');
-      if (room.status === 'finished') return showHomeError('Cette partie est terminée.');
+      try {
+        const roomSnap = await get(ref(db, `rooms/${roomId}`));
+        if (!roomSnap.exists()) {
+          showHomeError('Salon introuvable.');
+          return;
+        }
 
-      await update(ref(db, `rooms/${roomId}`), {
-        status: 'playing',
-        phase: 'ready',
-        updatedAt: Date.now(),
-        lastMessage: `${pseudo} a rejoint. La partie peut commencer.`,
-        'players/p2/id': state.playerId,
-        'players/p2/pseudo': pseudo,
-        'players/p2/connectedAt': Date.now()
-      });
+        const room = roomSnap.val();
 
-      enterRoom(roomId, 'p2', pseudo);
+        if (room.players?.p1?.id === state.playerId) {
+          enterRoom(roomId, 'p1', pseudo);
+          return;
+        }
+
+        if (room.players?.p2?.id === state.playerId) {
+          enterRoom(roomId, 'p2', pseudo);
+          return;
+        }
+
+        if (room.players?.p2?.id) {
+          showHomeError('Ce salon est déjà complet.');
+          return;
+        }
+
+        if (room.status === 'finished' || room.status === 'abandoned') {
+          showHomeError('Cette partie est terminée.');
+          return;
+        }
+
+        await update(ref(db, `rooms/${roomId}`), {
+          status: 'playing',
+          updatedAt: Date.now(),
+          lastMessage: `${pseudo} a rejoint. La partie peut commencer.`,
+          'players/p2/id': state.playerId,
+          'players/p2/pseudo': pseudo,
+          'players/p2/connectedAt': Date.now()
+        });
+
+        enterRoom(roomId, 'p2', pseudo);
+      } catch (error) {
+        console.error(error);
+        showHomeError('Impossible de rejoindre. Vérifie Firebase et l’ID du salon.');
+      } finally {
+        setButtonsLoading(false);
+      }
     }
 
     function enterRoom(roomId, playerKey, pseudo) {
@@ -420,32 +459,41 @@
       copyRoomBtn.textContent = roomId;
       myName.textContent = pseudo;
       homeError.textContent = '';
+      window.scrollTo({ top: 0, behavior: 'instant' });
 
       if (state.roomUnsub) state.roomUnsub();
+
       const roomRef = ref(db, `rooms/${roomId}`);
-      const listener = onValue(roomRef, (snap) => {
+      state.roomUnsub = onValue(roomRef, (snap) => {
         if (!snap.exists()) {
           resetToHome('Le salon a été supprimé.');
           return;
         }
+
         state.room = snap.val();
         renderGame();
+      }, (error) => {
+        console.error(error);
+        resetToHome('Connexion au salon impossible. Vérifie Firebase.');
       });
-      state.roomUnsub = () => off(roomRef, 'value', listener);
     }
 
     async function leaveRoom() {
-      if (state.roomId && state.playerKey) {
-        await update(ref(db, `rooms/${state.roomId}`), {
-          [`players/${state.playerKey}/id`]: null,
-          [`players/${state.playerKey}/pseudo`]: null,
-          status: 'abandoned',
-          phase: 'finished',
-          lastMessage: `${state.pseudo} a quitté la partie.`,
-          updatedAt: Date.now()
-        });
+      try {
+        if (state.roomId && state.playerKey) {
+          await update(ref(db, `rooms/${state.roomId}`), {
+            [`players/${state.playerKey}/id`]: null,
+            [`players/${state.playerKey}/pseudo`]: null,
+            status: 'abandoned',
+            lastMessage: `${state.pseudo} a quitté la partie.`,
+            updatedAt: Date.now()
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        resetToHome('');
       }
-      resetToHome('');
     }
 
     function resetToHome(message) {
@@ -454,57 +502,68 @@
       state.roomId = null;
       state.playerKey = null;
       state.room = null;
+      state.localLock = false;
+      playBtn.disabled = false;
       gameScreen.classList.remove('active');
       homeScreen.classList.add('active');
       showHomeError(message || '');
       loadRanking();
     }
 
-    /************************************************************
-     * LOGIQUE DE JEU
-     ************************************************************/
-
     async function playMyCard() {
       if (!state.room || !state.playerKey || state.localLock) return;
+
       const room = state.room;
+      const myDeckLength = room.players?.[state.playerKey]?.deck?.length || 0;
+
       if (room.status !== 'playing') return;
       if (room.pending?.[state.playerKey]) return;
       if (!room.players?.p1?.id || !room.players?.p2?.id) return;
-      if (!room.players[state.playerKey].deck?.length) return;
+      if (myDeckLength <= 0) return;
 
       state.localLock = true;
       playBtn.disabled = true;
 
-      const roomRef = ref(db, `rooms/${state.roomId}`);
-      await runTransaction(roomRef, (current) => {
-        if (!current || current.status !== 'playing') return current;
-        if (current.pending?.[state.playerKey]) return current;
+      try {
+        const roomRef = ref(db, `rooms/${state.roomId}`);
 
-        const player = current.players[state.playerKey];
-        if (!player || !player.deck || player.deck.length === 0) return current;
+        await runTransaction(roomRef, (current) => {
+          if (!current || current.status !== 'playing') return current;
+          if (!current.players?.p1?.id || !current.players?.p2?.id) return current;
+          if (current.pending?.[state.playerKey]) return current;
 
-        const card = player.deck.shift();
-        current.players[state.playerKey].deck = player.deck;
-        current.visible[state.playerKey] = card;
-        current.pending[state.playerKey] = true;
-        current.updatedAt = Date.now();
-        current.lastMessage = `${player.pseudo} a joué.`;
+          const player = current.players[state.playerKey];
+          if (!player?.deck?.length) return current;
 
-        return current;
-      });
+          const card = player.deck.shift();
+          current.players[state.playerKey].deck = player.deck;
+          current.visible[state.playerKey] = card;
+          current.pending[state.playerKey] = true;
+          current.updatedAt = Date.now();
+          current.lastMessage = `${player.pseudo} a joué.`;
 
-      await maybeResolveRound();
-      state.localLock = false;
+          return current;
+        });
+
+        await maybeResolveRound();
+      } catch (error) {
+        console.error(error);
+        statusText.textContent = 'Erreur pendant le tour. Vérifie Firebase.';
+      } finally {
+        state.localLock = false;
+        if (state.room) renderGame();
+      }
     }
 
     async function maybeResolveRound() {
       const roomRef = ref(db, `rooms/${state.roomId}`);
+
       await runTransaction(roomRef, (room) => {
         if (!room || room.status !== 'playing') return room;
         if (!room.pending?.p1 || !room.pending?.p2) return room;
 
-        const p1Card = room.visible.p1;
-        const p2Card = room.visible.p2;
+        const p1Card = room.visible?.p1;
+        const p2Card = room.visible?.p2;
         if (!p1Card || !p2Card) return room;
 
         room.turnNumber = (room.turnNumber || 0) + 1;
@@ -521,40 +580,61 @@
         room.visible = { p1: null, p2: null };
         room.pending = { p1: false, p2: false };
         room.updatedAt = Date.now();
+
         checkGameOver(room);
         return room;
       });
     }
 
     function resolveBattle(room) {
-      const p1 = room.players.p1;
-      const p2 = room.players.p2;
+      let safety = 0;
 
-      const p1Hidden = p1.deck.shift() || null;
-      const p2Hidden = p2.deck.shift() || null;
-      const p1Visible = p1.deck.shift() || null;
-      const p2Visible = p2.deck.shift() || null;
+      while (safety < 20) {
+        safety++;
 
-      if (p1Hidden) room.pot.push({ ...p1Hidden, hidden: true });
-      if (p2Hidden) room.pot.push({ ...p2Hidden, hidden: true });
+        const p1 = room.players.p1;
+        const p2 = room.players.p2;
 
-      if (!p1Visible && !p2Visible) {
-        room.lastMessage = 'Bataille impossible : égalité finale.';
-        return;
+        const p1Hidden = p1.deck.shift() || null;
+        const p2Hidden = p2.deck.shift() || null;
+        const p1Visible = p1.deck.shift() || null;
+        const p2Visible = p2.deck.shift() || null;
+
+        if (p1Hidden) room.pot.push({ ...p1Hidden, hidden: true });
+        if (p2Hidden) room.pot.push({ ...p2Hidden, hidden: true });
+
+        if (!p1Visible && !p2Visible) {
+          room.lastMessage = 'Bataille impossible : égalité finale.';
+          return;
+        }
+
+        if (!p1Visible) {
+          awardPot(room, 'p2', `${p1.pseudo} ne peut plus continuer la bataille.`);
+          return;
+        }
+
+        if (!p2Visible) {
+          awardPot(room, 'p1', `${p2.pseudo} ne peut plus continuer la bataille.`);
+          return;
+        }
+
+        room.pot.push(p1Visible, p2Visible);
+        room.battlePreview = { p1: p1Visible, p2: p2Visible };
+
+        if (p1Visible.value > p2Visible.value) {
+          awardPot(room, 'p1', `Bataille ! ${p1.pseudo} remporte la pile.`);
+          return;
+        }
+
+        if (p2Visible.value > p1Visible.value) {
+          awardPot(room, 'p2', `Bataille ! ${p2.pseudo} remporte la pile.`);
+          return;
+        }
+
+        room.lastMessage = 'Double bataille ! On continue.';
       }
-      if (!p1Visible) return awardPot(room, 'p2', `${p1.pseudo} ne peut plus continuer la bataille.`);
-      if (!p2Visible) return awardPot(room, 'p1', `${p2.pseudo} ne peut plus continuer la bataille.`);
 
-      room.pot.push(p1Visible, p2Visible);
-      room.battlePreview = { p1: p1Visible, p2: p2Visible };
-
-      if (p1Visible.value > p2Visible.value) {
-        awardPot(room, 'p1', `Bataille ! ${p1.pseudo} remporte la pile.`);
-      } else if (p2Visible.value > p1Visible.value) {
-        awardPot(room, 'p2', `Bataille ! ${p2.pseudo} remporte la pile.`);
-      } else {
-        room.lastMessage = 'Double bataille ! La pile reste au centre.';
-      }
+      room.lastMessage = 'Bataille trop longue, la pile reste au centre.';
     }
 
     function awardPot(room, winnerKey, message) {
@@ -576,7 +656,6 @@
       if (!winnerKey) return;
 
       room.status = 'finished';
-      room.phase = 'finished';
       room.winner = winnerKey;
       room.lastMessage = `🏆 ${room.players[winnerKey].pseudo} remporte la partie !`;
       room.rankingPending = room.players[winnerKey].pseudo;
@@ -588,34 +667,39 @@
       if (state.playerKey !== room.winner) return;
 
       const pseudo = room.rankingPending;
-      await runTransaction(ref(db, `ranking/${slugify(pseudo)}`), (current) => {
-        const base = current || { pseudo, wins: 0, updatedAt: 0 };
-        base.pseudo = pseudo;
-        base.wins = (base.wins || 0) + 1;
-        base.updatedAt = Date.now();
-        return base;
-      });
-      await update(ref(db, `rooms/${state.roomId}`), { rankingPending: null });
-      loadRanking();
-    }
 
-    /************************************************************
-     * RENDER
-     ************************************************************/
+      try {
+        await runTransaction(ref(db, `ranking/${slugify(pseudo)}`), (current) => {
+          const base = current || { pseudo, wins: 0, updatedAt: 0 };
+          base.pseudo = pseudo;
+          base.wins = (base.wins || 0) + 1;
+          base.updatedAt = Date.now();
+          return base;
+        });
+
+        await update(ref(db, `rooms/${state.roomId}`), { rankingPending: null });
+        loadRanking();
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
     function renderGame() {
       const room = state.room;
-      const my = room.players[state.playerKey];
-      const otherKey = state.playerKey === 'p1' ? 'p2' : 'p1';
-      const other = room.players[otherKey];
+      if (!room || !state.playerKey) return;
 
-      copyRoomBtn.textContent = room.id;
+      const my = room.players?.[state.playerKey];
+      const otherKey = state.playerKey === 'p1' ? 'p2' : 'p1';
+      const other = room.players?.[otherKey];
+
+      copyRoomBtn.textContent = room.id || state.roomId;
       myName.textContent = my?.pseudo || 'Toi';
       opponentName.textContent = other?.pseudo || 'En attente...';
       myCount.textContent = my?.deck?.length || 0;
       opponentCount.textContent = other?.deck?.length || 0;
 
       const roomReady = !!room.players?.p1?.id && !!room.players?.p2?.id;
+
       opponentReady.textContent = roomReady ? 'Connecté' : 'En attente';
       opponentReady.className = roomReady
         ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700'
@@ -632,13 +716,17 @@
       const otherHasPlayed = !!room.pending?.[otherKey];
       const canPlay = room.status === 'playing' && roomReady && !iHavePlayed && (my?.deck?.length || 0) > 0;
 
-      playBtn.disabled = !canPlay;
+      playBtn.disabled = !canPlay || state.localLock;
+
       if (!roomReady) {
         turnBadge.textContent = 'Salon ouvert';
         playBtn.textContent = 'En attente d’un joueur';
       } else if (room.status === 'finished') {
         turnBadge.textContent = 'Terminé';
         playBtn.textContent = room.winner === state.playerKey ? 'Victoire !' : 'Défaite';
+      } else if (room.status === 'abandoned') {
+        turnBadge.textContent = 'Abandon';
+        playBtn.textContent = 'Partie quittée';
       } else if (iHavePlayed && !otherHasPlayed) {
         turnBadge.textContent = 'Attente';
         playBtn.textContent = 'L’autre joueur doit jouer';
@@ -655,17 +743,20 @@
 
     function renderCard(container, card) {
       container.innerHTML = '';
+
       if (!card) {
         const empty = document.createElement('div');
         empty.className = 'playing-card card-back opacity-30';
         container.appendChild(empty);
         return;
       }
+
       container.appendChild(cardEl(card));
     }
 
     function renderBattleStack(room) {
       battleStack.innerHTML = '';
+
       const pot = room.pot || [];
       const preview = room.battlePreview;
 
@@ -679,8 +770,9 @@
 
       pot.slice(-8).forEach((card) => {
         const el = card.hidden ? backEl() : cardEl(card);
-        el.style.width = '42px';
-        el.style.height = '60px';
+        el.style.width = '38px';
+        el.style.height = '54px';
+        el.style.borderRadius = '10px';
         battleStack.appendChild(el);
       });
     }
@@ -690,7 +782,12 @@
       const isRed = card.suit === '♥' || card.suit === '♦';
       el.className = `playing-card ${isRed ? 'red' : 'black'}`;
       el.dataset.corner = `${card.label}\n${card.suit}`;
-      el.innerHTML = `<div class="text-center"><div class="text-2xl font-black leading-none">${card.label}</div><div class="text-3xl leading-none">${card.suit}</div></div>`;
+      el.innerHTML = `
+        <div class="text-center">
+          <div class="text-2xl font-black leading-none">${escapeHtml(card.label)}</div>
+          <div class="text-3xl leading-none">${escapeHtml(card.suit)}</div>
+        </div>
+      `;
       return el;
     }
 
@@ -700,32 +797,30 @@
       return el;
     }
 
-    /************************************************************
-     * CLASSEMENT
-     ************************************************************/
-
     async function loadRanking() {
       rankingList.innerHTML = '<li class="rounded-2xl bg-white/60 px-3 py-2 font-bold text-slate-500">Chargement...</li>';
-      const snap = await get(ref(db, 'ranking'));
-      const data = snap.exists() ? Object.values(snap.val()) : [];
-      const top = data.sort((a, b) => (b.wins || 0) - (a.wins || 0)).slice(0, 5);
 
-      if (!top.length) {
-        rankingList.innerHTML = '<li class="rounded-2xl bg-white/60 px-3 py-2 font-bold text-slate-500">Aucune victoire pour le moment.</li>';
-        return;
+      try {
+        const snap = await get(ref(db, 'ranking'));
+        const data = snap.exists() ? Object.values(snap.val()) : [];
+        const top = data.sort((a, b) => (b.wins || 0) - (a.wins || 0)).slice(0, 5);
+
+        if (!top.length) {
+          rankingList.innerHTML = '<li class="rounded-2xl bg-white/60 px-3 py-2 font-bold text-slate-500">Aucune victoire pour le moment.</li>';
+          return;
+        }
+
+        rankingList.innerHTML = top.map((player, index) => `
+          <li class="flex items-center justify-between rounded-2xl bg-white/65 px-3 py-2 font-bold">
+            <span>${index + 1}. ${escapeHtml(player.pseudo)}</span>
+            <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-700">${player.wins || 0}</span>
+          </li>
+        `).join('');
+      } catch (error) {
+        console.error(error);
+        rankingList.innerHTML = '<li class="rounded-2xl bg-white/60 px-3 py-2 font-bold text-rose-500">Classement indisponible.</li>';
       }
-
-      rankingList.innerHTML = top.map((player, index) => `
-        <li class="flex items-center justify-between rounded-2xl bg-white/65 px-3 py-2 font-bold">
-          <span>${index + 1}. ${escapeHtml(player.pseudo)}</span>
-          <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-700">${player.wins || 0}</span>
-        </li>
-      `).join('');
     }
-
-    /************************************************************
-     * OUTILS
-     ************************************************************/
 
     function createDeck() {
       return suits.flatMap((suit) => ranks.map((rank) => ({
@@ -745,28 +840,35 @@
       return copy;
     }
 
-    function makeRoomId() {
-      return Math.random().toString(36).slice(2, 8).toUpperCase();
+    async function makeUniqueRoomId() {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const id = Math.random().toString(36).slice(2, 8).toUpperCase();
+        const snap = await get(ref(db, `rooms/${id}`));
+        if (!snap.exists()) return id;
+      }
+      return crypto.randomUUID().slice(0, 6).toUpperCase();
     }
 
     function getOrCreateDeviceId() {
       const key = 'batailleDeviceId';
       let id = localStorage.getItem(key);
+
       if (!id) {
         id = crypto.randomUUID();
         localStorage.setItem(key, id);
       }
+
       return id;
     }
 
     function getPseudoOrWarn() {
-      const stored = localStorage.getItem('bataillePseudo') || '';
-      if (!pseudoInput.value && stored) pseudoInput.value = stored;
       const pseudo = pseudoInput.value.trim().slice(0, 18);
+
       if (!pseudo) {
         showHomeError('Choisis un pseudo pour continuer.');
         return '';
       }
+
       return pseudo;
     }
 
@@ -774,8 +876,15 @@
       homeError.textContent = message;
     }
 
+    function setButtonsLoading(isLoading) {
+      createRoomBtn.disabled = isLoading;
+      joinRoomBtn.disabled = isLoading;
+      createRoomBtn.textContent = isLoading ? 'Chargement...' : 'Créer un salon';
+    }
+
     async function copyRoomId() {
       if (!state.roomId) return;
+
       try {
         await navigator.clipboard.writeText(state.roomId);
         statusText.textContent = 'ID du salon copié.';
@@ -785,12 +894,21 @@
     }
 
     function slugify(value) {
-      return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '_').slice(0, 32) || 'joueur';
+      return value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '_')
+        .slice(0, 32) || 'joueur';
     }
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>'"]/g, (char) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
       }[char]));
     }
   </script>
