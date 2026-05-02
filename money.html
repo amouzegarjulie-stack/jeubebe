@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Le Compte de la Discorde</title>
 
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Police moderne -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      color-scheme: dark;
-    }
+    :root { color-scheme: dark; }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -36,13 +32,9 @@
       -webkit-backdrop-filter: blur(22px);
     }
 
-    .soft-glow {
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.18);
-    }
+    .soft-glow { box-shadow: 0 0 40px rgba(56, 189, 248, 0.18); }
 
-    .score-pop {
-      animation: scorePop 0.7s ease;
-    }
+    .score-pop { animation: scorePop 0.7s ease; }
 
     @keyframes scorePop {
       0% { transform: scale(1); color: #e2e8f0; }
@@ -50,31 +42,17 @@
       100% { transform: scale(1); color: #e2e8f0; }
     }
 
-    .floaty {
-      animation: floaty 5s ease-in-out infinite;
-    }
+    .floaty { animation: floaty 5s ease-in-out infinite; }
 
     @keyframes floaty {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
     }
 
-    .avatar-one {
-      background: linear-gradient(135deg, #38bdf8, #2563eb);
-    }
-
-    .avatar-two {
-      background: linear-gradient(135deg, #f472b6, #9333ea);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #fb7185, #ef4444);
-    }
-
+    .avatar-one { background: linear-gradient(135deg, #38bdf8, #2563eb); }
+    .avatar-two { background: linear-gradient(135deg, #f472b6, #9333ea); }
+    .btn-primary { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
+    .btn-danger { background: linear-gradient(135deg, #fb7185, #ef4444); }
     .btn-neutral {
       background: rgba(30, 41, 59, 0.85);
       border: 1px solid rgba(148, 163, 184, 0.2);
@@ -86,17 +64,6 @@
   <div id="app" class="min-h-screen flex flex-col"></div>
 
   <script type="module">
-    /**********************************************************************
-     * Le Compte de la Discorde
-     * Prototype multijoueur temps réel dans un seul fichier HTML.
-     *
-     * À faire avant de lancer :
-     * 1. Créer un projet Firebase.
-     * 2. Activer Realtime Database.
-     * 3. Remplir la constante firebaseConfig ci-dessous.
-     * 4. Adapter les règles de sécurité avant toute mise en production.
-     **********************************************************************/
-
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
     import {
       getDatabase,
@@ -109,40 +76,141 @@
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
-    // Configuration Firebase à remplir.
-  const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
-    // Questions volontairement difficiles, gênantes ou moralement ambiguës.
-    const QUESTIONS = [
-      { amount: 1000, action: 'lire à voix haute le dernier message privé embarrassant que tu as envoyé' },
-      { amount: 1500, action: 'laisser ton adversaire publier une story avec une photo ridicule de toi pendant 24 heures' },
-      { amount: 2000, action: 'avouer à un proche un mensonge que tu as gardé pour éviter une dispute' },
-      { amount: 2500, action: 'donner ton téléphone déverrouillé à ton adversaire pendant trois minutes' },
-      { amount: 3000, action: 'appeler ton patron et lui dire une vérité que tu n’as jamais osé dire' },
-      { amount: 3500, action: 'révéler le surnom le plus honteux que tu as donné à quelqu’un dans son dos' },
-      { amount: 4000, action: 'envoyer “il faut qu’on parle” à une personne importante sans contexte' },
-      { amount: 4500, action: 'laisser ton adversaire choisir ton prochain statut WhatsApp pendant une semaine' },
-      { amount: 5000, action: 'montrer ton historique de recherche récent à ton adversaire' },
-      { amount: 6000, action: 'confesser devant l’autre joueur une jalousie ou une rancune que tu caches encore' }
-    ];
-
+    const GAME_PARTS = 10;
+    const ROUNDS_PER_PART = 10;
+    const TOTAL_ROUNDS = GAME_PARTS * ROUNDS_PER_PART;
     const MAX_PLAYERS = 2;
-    const TOTAL_ROUNDS = QUESTIONS.length;
     const BONUS_ON_DOUBLE_REFUSAL = 500;
 
-    // Firebase ne peut pas démarrer tant que la configuration est vide.
-    // On garde donc ces variables en let et on les initialise seulement après vérification.
+    const QUESTION_BANK = [
+      { amount: 1000, action: "lire à voix haute le dernier message privé embarrassant que tu as envoyé" },
+      { amount: 1500, action: "laisser ton adversaire publier une story avec une photo ridicule de toi pendant 24 heures" },
+      { amount: 2000, action: "avouer à un proche un mensonge que tu as gardé pour éviter une dispute" },
+      { amount: 2500, action: "donner ton téléphone déverrouillé à ton adversaire pendant trois minutes" },
+      { amount: 3000, action: "appeler ton patron et lui dire une vérité que tu n’as jamais osé dire" },
+      { amount: 3500, action: "révéler le surnom le plus honteux que tu as donné à quelqu’un dans son dos" },
+      { amount: 4000, action: "envoyer “il faut qu’on parle” à une personne importante sans contexte" },
+      { amount: 4500, action: "laisser ton adversaire choisir ton prochain statut WhatsApp pendant une semaine" },
+      { amount: 5000, action: "montrer ton historique de recherche récent à ton adversaire" },
+      { amount: 6000, action: "confesser devant l’autre joueur une jalousie ou une rancune que tu caches encore" },
+      { amount: 1000, action: "montrer la dernière photo supprimée récemment de ta galerie" },
+      { amount: 1500, action: "envoyer un vocal ridicule de dix secondes à une personne choisie par ton adversaire" },
+      { amount: 2000, action: "dire à voix haute une chose que tu fais semblant d’aimer" },
+      { amount: 2500, action: "révéler une dépense récente que tu regrettes" },
+      { amount: 3000, action: "laisser ton adversaire regarder tes trois dernières conversations pendant une minute" },
+      { amount: 3500, action: "avouer une fois où tu as fait semblant de ne pas voir un message" },
+      { amount: 4000, action: "envoyer un compliment très exagéré à quelqu’un sans expliquer pourquoi" },
+      { amount: 4500, action: "laisser l’autre joueur choisir ta photo de profil pendant 48 heures" },
+      { amount: 5000, action: "appeler quelqu’un et lui dire que tu dois lui avouer quelque chose, puis raccrocher" },
+      { amount: 6000, action: "révéler une pensée mesquine que tu as déjà eue à propos d’un proche" },
+      { amount: 1000, action: "montrer la dernière note écrite dans ton téléphone" },
+      { amount: 1500, action: "lire ton dernier message envoyé sans donner le contexte" },
+      { amount: 2000, action: "dire quelle personne tu ghosterais si tu pouvais le faire sans conséquence" },
+      { amount: 2500, action: "révéler une chose que tu as déjà cachée pour éviter une dispute" },
+      { amount: 3000, action: "laisser ton adversaire écrire une phrase dans ton statut pendant 24 heures" },
+      { amount: 3500, action: "dire le prénom d’une personne qui t’a déjà fait douter de ton couple ou d’une amitié" },
+      { amount: 4000, action: "envoyer “j’ai rêvé de toi” à une personne choisie par ton adversaire" },
+      { amount: 4500, action: "montrer les trois derniers profils consultés sur un réseau social" },
+      { amount: 5000, action: "révéler une chose que tu as déjà dite derrière le dos de quelqu’un ici" },
+      { amount: 6000, action: "avouer une peur honteuse que tu caches souvent" },
+      { amount: 1000, action: "laisser ton adversaire choisir un surnom pour toi jusqu’à la fin de la partie" },
+      { amount: 1500, action: "publier une phrase gênante choisie par ton adversaire en story privée" },
+      { amount: 2000, action: "montrer ton temps d’écran de la semaine" },
+      { amount: 2500, action: "révéler la dernière excuse bidon que tu as utilisée" },
+      { amount: 3000, action: "envoyer un emoji cœur à une personne choisie par ton adversaire" },
+      { amount: 3500, action: "dire quelle personne tu trouves la plus susceptible dans ton entourage" },
+      { amount: 4000, action: "laisser l’autre joueur lire ton dernier échange avec un membre de ta famille" },
+      { amount: 4500, action: "dire une vérité que tu n’as jamais dite à ton adversaire" },
+      { amount: 5000, action: "montrer une recherche Google récente dont tu n’es pas fier" },
+      { amount: 6000, action: "avouer une fois où tu as menti pour avoir l’air plus intéressant" },
+      { amount: 1000, action: "imiter quelqu’un de votre entourage pendant trente secondes" },
+      { amount: 1500, action: "révéler le dernier message que tu as ignoré volontairement" },
+      { amount: 2000, action: "dire quelle personne te met le plus mal à l’aise en ce moment" },
+      { amount: 2500, action: "raconter une honte récente sans minimiser les faits" },
+      { amount: 3000, action: "laisser ton adversaire envoyer “tu me manques” à quelqu’un de ton choix" },
+      { amount: 3500, action: "avouer une chose que tu envies chez ton adversaire" },
+      { amount: 4000, action: "révéler le dernier mensonge que tu as dit aujourd’hui ou cette semaine" },
+      { amount: 4500, action: "montrer la dernière conversation épinglée ou favorite de ton téléphone" },
+      { amount: 5000, action: "dire quelle relation tu penses avoir négligée dernièrement" },
+      { amount: 6000, action: "avouer une chose que tu refuses souvent d’admettre" },
+      { amount: 1000, action: "dire le truc le plus immature que tu fais encore" },
+      { amount: 1500, action: "révéler une notification que tu espères recevoir" },
+      { amount: 2000, action: "montrer ton dernier brouillon de message non envoyé" },
+      { amount: 2500, action: "dire quelle critique te toucherait le plus" },
+      { amount: 3000, action: "envoyer une phrase romantique très gênante à quelqu’un choisi par ton adversaire" },
+      { amount: 3500, action: "avouer une fois où tu as été hypocrite" },
+      { amount: 4000, action: "laisser ton adversaire choisir une personne à qui tu dois faire un compliment sincère" },
+      { amount: 4500, action: "révéler une chose que tu as déjà regretté d’avoir achetée" },
+      { amount: 5000, action: "montrer une photo de toi que tu n’aimes pas" },
+      { amount: 6000, action: "dire une vérité qui pourrait créer un froid pendant quelques minutes" },
+      { amount: 1000, action: "dire quel message tu aimerais effacer de ta vie" },
+      { amount: 1500, action: "raconter le dernier moment où tu t’es senti ridicule" },
+      { amount: 2000, action: "révéler la dernière chose que tu as stalkée en ligne" },
+      { amount: 2500, action: "dire à qui tu réponds le plus vite et pourquoi" },
+      { amount: 3000, action: "laisser ton adversaire choisir ton fond d’écran pendant une journée" },
+      { amount: 3500, action: "avouer une chose que tu fais quand personne ne regarde" },
+      { amount: 4000, action: "dire quelle personne tu aimerais impressionner" },
+      { amount: 4500, action: "montrer les cinq derniers emojis utilisés" },
+      { amount: 5000, action: "révéler une ancienne conversation qui te ferait honte aujourd’hui" },
+      { amount: 6000, action: "dire ce que tu penses vraiment d’une décision récente de ton adversaire" },
+      { amount: 1000, action: "dire le défaut que tu caches le mieux" },
+      { amount: 1500, action: "révéler la dernière fois où tu as exagéré une histoire" },
+      { amount: 2000, action: "montrer ton dernier screenshot" },
+      { amount: 2500, action: "dire quelle personne te fatigue le plus ces temps" },
+      { amount: 3000, action: "envoyer “je dois t’avouer un truc” à quelqu’un choisi par ton adversaire" },
+      { amount: 3500, action: "avouer une chose que tu as faite uniquement pour être validé" },
+      { amount: 4000, action: "révéler une critique que tu as déjà pensée sur ton adversaire" },
+      { amount: 4500, action: "laisser l’autre joueur lire ton dernier message vocal envoyé ou reçu" },
+      { amount: 5000, action: "dire quelle personne tu trouves plus drôle que ton adversaire" },
+      { amount: 6000, action: "avouer une vérité que tu préfères normalement garder floue" },
+      { amount: 1000, action: "dire une chose que tu repousses depuis trop longtemps" },
+      { amount: 1500, action: "révéler une habitude dont tu as un peu honte" },
+      { amount: 2000, action: "montrer la dernière application ouverte sur ton téléphone" },
+      { amount: 2500, action: "dire ce que tu changerais chez toi si personne ne le savait" },
+      { amount: 3000, action: "laisser ton adversaire choisir une phrase que tu devras dire très sérieusement" },
+      { amount: 3500, action: "avouer une fois où tu as été jaloux du bonheur de quelqu’un" },
+      { amount: 4000, action: "révéler une chose que tu as déjà cachée à ta famille" },
+      { amount: 4500, action: "montrer ton dernier achat en ligne ou panier sauvegardé" },
+      { amount: 5000, action: "dire quelle personne tu aurais dû remercier mais tu ne l’as pas fait" },
+      { amount: 6000, action: "avouer une pensée que tu as déjà regrettée aussitôt" },
+      { amount: 1000, action: "dire une chose que ton adversaire fait mieux que toi" },
+      { amount: 1500, action: "révéler le dernier compliment qui t’a vraiment touché" },
+      { amount: 2000, action: "montrer une note ou liste qui traîne dans ton téléphone" },
+      { amount: 2500, action: "dire quelle personne tu évites sans l’assumer" },
+      { amount: 3000, action: "laisser ton adversaire choisir un message à envoyer à toi-même dans un an" },
+      { amount: 3500, action: "avouer un moment où tu as été injuste avec quelqu’un" },
+      { amount: 4000, action: "révéler une opinion que tu n’oses pas dire dans ton groupe" },
+      { amount: 4500, action: "montrer la dernière personne que tu as cherchée dans tes contacts" },
+      { amount: 5000, action: "dire une chose que tu aimerais que ton adversaire comprenne enfin" },
+      { amount: 6000, action: "avouer la question de ce jeu qui t’a fait le plus peur jusqu’ici" }
+    ];
+
     let firebaseApp = null;
     let db = null;
     let rootRef = null;
+
+    const $app = document.querySelector('#app');
+
+    const local = {
+      playerId: localStorage.getItem('lcd_player_id') || crypto.randomUUID(),
+      pseudo: localStorage.getItem('lcd_pseudo') || '',
+      roomId: new URLSearchParams(location.search).get('room') || '',
+      room: null,
+      unsubscribe: null,
+      lastScores: {}
+    };
+
+    localStorage.setItem('lcd_player_id', local.playerId);
 
     function isFirebaseConfigured() {
       return Boolean(
@@ -164,24 +232,6 @@
       return true;
     }
 
-    const $app = document.querySelector('#app');
-
-    // État local du client.
-    const local = {
-      playerId: localStorage.getItem('lcd_player_id') || crypto.randomUUID(),
-      pseudo: localStorage.getItem('lcd_pseudo') || '',
-      roomId: new URLSearchParams(location.search).get('room') || '',
-      room: null,
-      unsubscribe: null,
-      lastScores: {}
-    };
-
-    localStorage.setItem('lcd_player_id', local.playerId);
-
-    /**********************************************************************
-     * Helpers généraux
-     **********************************************************************/
-
     function formatCHF(value) {
       return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
@@ -190,11 +240,44 @@
       }).format(value || 0);
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function sanitizePseudo(name) {
       return String(name || '')
         .trim()
         .replace(/[<>]/g, '')
         .slice(0, 18) || 'Anonyme';
+    }
+
+    function shuffleArray(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildQuestionDeck() {
+      const deck = [];
+      while (deck.length < TOTAL_ROUNDS) {
+        deck.push(...shuffleArray(QUESTION_BANK));
+      }
+      return deck.slice(0, TOTAL_ROUNDS);
+    }
+
+    function getQuestionDeck(room = local.room) {
+      if (Array.isArray(room?.questionDeck) && room.questionDeck.length >= TOTAL_ROUNDS) {
+        return room.questionDeck;
+      }
+      return QUESTION_BANK;
     }
 
     function getPlayers(room = local.room) {
@@ -213,8 +296,17 @@
       return room?.currentRound || 0;
     }
 
+    function currentPartNumber(room = local.room) {
+      return Math.floor(currentRoundIndex(room) / ROUNDS_PER_PART) + 1;
+    }
+
+    function currentRoundInPart(room = local.room) {
+      return (currentRoundIndex(room) % ROUNDS_PER_PART) + 1;
+    }
+
     function currentQuestion(room = local.room) {
-      return QUESTIONS[currentRoundIndex(room)] || QUESTIONS[QUESTIONS.length - 1];
+      const deck = getQuestionDeck(room);
+      return deck[currentRoundIndex(room)] || deck[deck.length - 1];
     }
 
     function currentAmount(room = local.room) {
@@ -237,10 +329,6 @@
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 1900);
     }
-
-    /**********************************************************************
-     * Gestion des rooms
-     **********************************************************************/
 
     async function createNamedRoom(pseudo) {
       local.pseudo = sanitizePseudo(pseudo);
@@ -271,7 +359,6 @@
       local.pseudo = sanitizePseudo(pseudo);
       localStorage.setItem('lcd_pseudo', local.pseudo);
 
-      // Si une room est présente dans l'URL, on tente de la rejoindre directement.
       if (!initFirebaseIfReady()) {
         renderFirebaseMissing();
         return;
@@ -282,7 +369,6 @@
         return;
       }
 
-      // Recherche d'une room en attente. Le second joueur rejoint automatiquement.
       const snapshot = await get(rootRef);
       const rooms = snapshot.exists() ? snapshot.val() : {};
       const waitingRoom = Object.entries(rooms).find(([, room]) => {
@@ -296,7 +382,6 @@
         return;
       }
 
-      // Aucune room disponible : le joueur crée une nouvelle partie.
       const newRoomRef = push(rootRef);
       local.roomId = newRoomRef.key;
       await set(newRoomRef, createInitialRoom(local.pseudo));
@@ -309,6 +394,10 @@
         status: 'waiting',
         currentRound: 0,
         bonus: 0,
+        totalRounds: TOTAL_ROUNDS,
+        gameParts: GAME_PARTS,
+        roundsPerPart: ROUNDS_PER_PART,
+        questionDeck: buildQuestionDeck(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         players: {
@@ -382,10 +471,6 @@
       });
     }
 
-    /**********************************************************************
-     * Actions de jeu
-     **********************************************************************/
-
     async function vote(accepted) {
       const round = currentRoundIndex();
       await update(ref(db, roomPath()), {
@@ -429,6 +514,9 @@
 
       await update(ref(db, roomPath()), {
         [`rounds/${round}/resolved`]: true,
+        [`rounds/${round}/partNumber`]: currentPartNumber(room),
+        [`rounds/${round}/roundInPart`]: currentRoundInPart(room),
+        [`rounds/${round}/question`]: currentQuestion(room),
         [`rounds/${round}/amount`]: amount,
         [`rounds/${round}/gains`]: gains,
         [`rounds/${round}/choices`]: votes,
@@ -483,6 +571,10 @@
         status: players.length >= MAX_PLAYERS ? 'playing' : 'waiting',
         currentRound: 0,
         bonus: 0,
+        totalRounds: TOTAL_ROUNDS,
+        gameParts: GAME_PARTS,
+        roundsPerPart: ROUNDS_PER_PART,
+        questionDeck: buildQuestionDeck(),
         rounds: null,
         updatedAt: serverTimestamp()
       };
@@ -494,10 +586,6 @@
 
       await update(ref(db, roomPath()), patch);
     }
-
-    /**********************************************************************
-     * Rendu UI
-     **********************************************************************/
 
     function render() {
       if (!local.room) {
@@ -559,7 +647,7 @@
           </div>
           <div class="min-w-0 ${alignment.includes('right') ? 'text-right' : ''}">
             <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Joueur ${slot}</p>
-            <p class="font-bold truncate">${player?.pseudo || 'En attente'}</p>
+            <p class="font-bold truncate">${escapeHtml(player?.pseudo || 'En attente')}</p>
             <p class="text-lg font-black text-slate-200 ${popClass}" data-score>${formatCHF(score)}</p>
           </div>
         </div>
@@ -572,7 +660,7 @@
           <section class="w-full max-w-xl glass rounded-[2rem] p-8 md:p-10 soft-glow text-center floaty">
             <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-4">Jeu de duel moral</p>
             <h1 class="text-4xl md:text-6xl font-black leading-tight mb-4">Le Compte de la Discorde</h1>
-            <p class="text-slate-300 mb-8">Deux joueurs, dix dilemmes, un seul pactole. Crée un salon ou rejoins celui de ton adversaire.</p>
+            <p class="text-slate-300 mb-8">Deux joueurs, 10 parties, 100 dilemmes, un pactole qui peut devenir énorme.</p>
 
             <form id="roomForm" class="space-y-4 text-left">
               <label class="block text-sm font-bold text-slate-300">Pseudo</label>
@@ -581,7 +669,7 @@
                 class="w-full rounded-2xl bg-slate-950/70 border border-slate-700 px-5 py-4 outline-none focus:ring-2 focus:ring-cyan-400"
                 placeholder="Ton pseudo"
                 maxlength="18"
-                value="${local.pseudo}"
+                value="${escapeHtml(local.pseudo)}"
                 required
               />
 
@@ -601,7 +689,7 @@
                     id="roomCodeInput"
                     class="flex-1 rounded-2xl bg-slate-950/70 border border-slate-700 px-5 py-4 outline-none focus:ring-2 focus:ring-cyan-400 uppercase"
                     placeholder="Ex: ABC123"
-                    value="${local.roomId || ''}"
+                    value="${escapeHtml(local.roomId || '')}"
                   />
                   <button id="joinCodeBtn" type="button" class="btn-primary rounded-2xl px-5 py-4 font-black hover:scale-[1.02] active:scale-[0.98] transition">
                     OK
@@ -610,7 +698,7 @@
               </div>
             </form>
 
-            <p class="text-xs text-slate-500 mt-6">Conseil : le joueur 1 crée un salon, copie le code affiché, puis le joueur 2 entre ce code.</p>
+            <p class="text-xs text-slate-500 mt-6">Le joueur 1 crée un salon, copie le code, puis le joueur 2 entre ce code.</p>
           </section>
         </main>
       `;
@@ -660,9 +748,9 @@
           <div class="grid md:grid-cols-2 gap-3">
             <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4">
               <p class="text-xs uppercase tracking-[0.25em] text-slate-500 mb-2">Code salon</p>
-              <p class="text-3xl font-black tracking-widest">${local.roomId}</p>
+              <p class="text-3xl font-black tracking-widest">${escapeHtml(local.roomId)}</p>
             </div>
-            <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4 text-sm break-all text-slate-300">${location.href}</div>
+            <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4 text-sm break-all text-slate-300">${escapeHtml(location.href)}</div>
           </div>
           <button id="copyLink" class="btn-neutral rounded-2xl px-5 py-3 font-bold hover:bg-slate-700 transition">Copier le lien</button>
         </div>
@@ -678,15 +766,21 @@
       const votes = room.rounds?.[round]?.votes || {};
       const hasVoted = Object.prototype.hasOwnProperty.call(votes, local.playerId);
       const opponent = getOpponent(room);
+      const progress = Math.round(((round + 1) / TOTAL_ROUNDS) * 100);
 
       $app.innerHTML = baseLayout(`
         <div class="space-y-8 text-center">
           <div>
-            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Round ${round + 1} / ${TOTAL_ROUNDS}</p>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">
+              Partie ${currentPartNumber(room)} / ${GAME_PARTS} · Round ${currentRoundInPart(room)} / ${ROUNDS_PER_PART}
+            </p>
+            <div class="w-full h-3 rounded-full bg-slate-950/70 border border-slate-700 overflow-hidden mb-5">
+              <div class="h-full btn-primary" style="width: ${progress}%"></div>
+            </div>
             <div class="inline-flex items-center gap-2 rounded-full bg-slate-950/60 border border-slate-700 px-4 py-2 text-sm text-slate-300 mb-5">
               Montant en jeu : <strong class="text-cyan-200">${formatCHF(amount)}</strong>
             </div>
-            <h2 class="text-3xl md:text-5xl font-black leading-tight">Pour ${formatCHF(amount)}, acceptes-tu de ${question.action} ?</h2>
+            <h2 class="text-3xl md:text-5xl font-black leading-tight">Pour ${formatCHF(amount)}, acceptes-tu de ${escapeHtml(question.action)} ?</h2>
           </div>
 
           ${hasVoted ? `
@@ -695,7 +789,7 @@
                 <span class="text-2xl">...</span>
               </div>
               <h3 class="text-2xl font-black mb-2">L'adversaire réfléchit...</h3>
-              <p class="text-slate-400">Ton choix est verrouillé et masqué jusqu'à ce que ${opponent?.pseudo || 'l’autre joueur'} réponde.</p>
+              <p class="text-slate-400">Ton choix est verrouillé et masqué jusqu'à ce que ${escapeHtml(opponent?.pseudo || 'l’autre joueur')} réponde.</p>
             </div>
           ` : `
             <div class="grid md:grid-cols-2 gap-4">
@@ -731,7 +825,9 @@
       $app.innerHTML = baseLayout(`
         <div class="space-y-8 text-center">
           <div>
-            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Résultat du round ${round + 1}</p>
+            <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">
+              Résultat · Partie ${currentPartNumber(room)} / ${GAME_PARTS} · Round ${currentRoundInPart(room)} / ${ROUNDS_PER_PART}
+            </p>
             <h2 class="text-3xl md:text-5xl font-black">Les cartes sont retournées</h2>
           </div>
 
@@ -762,7 +858,7 @@
             <div class="w-12 h-12 rounded-2xl ${player?.slot === 1 ? 'avatar-one' : 'avatar-two'} grid place-items-center font-black">${player?.slot || '?'}</div>
             <div>
               <p class="text-xs uppercase tracking-[0.25em] text-slate-500">${isMe ? 'Toi' : 'Adversaire'}</p>
-              <h3 class="font-black text-xl">${player?.pseudo || 'Joueur'}</h3>
+              <h3 class="font-black text-xl">${escapeHtml(player?.pseudo || 'Joueur')}</h3>
             </div>
           </div>
           <div class="rounded-2xl ${choice ? 'bg-cyan-400/10 border-cyan-300/20' : 'bg-rose-400/10 border-rose-300/20'} border p-4">
@@ -781,14 +877,17 @@
       const loser = players[1];
       const isDraw = winner && loser && winner.score === loser.score;
       const rounds = local.room.rounds || {};
+      const deck = getQuestionDeck(local.room);
 
       const rows = Array.from({ length: TOTAL_ROUNDS }, (_, index) => {
         const result = rounds[index] || {};
+        const question = result.question || deck[index] || QUESTION_BANK[index % QUESTION_BANK.length];
         return `
-          <tr class="border-t border-slate-800">
-            <td class="py-3 pr-3 text-slate-400">${index + 1}</td>
-            <td class="py-3 pr-3">${formatCHF(result.amount || QUESTIONS[index].amount)}</td>
-            <td class="py-3 pr-3 text-slate-300">${summarizeRound(result)}</td>
+          <tr class="border-t border-slate-800 align-top">
+            <td class="py-3 px-4 text-slate-400">${index + 1}</td>
+            <td class="py-3 px-4 text-slate-400">P${Math.floor(index / ROUNDS_PER_PART) + 1}</td>
+            <td class="py-3 px-4">${formatCHF(result.amount || question.amount)}</td>
+            <td class="py-3 px-4 text-slate-300">${escapeHtml(summarizeRound(result))}</td>
           </tr>
         `;
       }).join('');
@@ -797,15 +896,16 @@
         <div class="space-y-8 text-center">
           <div>
             <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Verdict final</p>
-            <h2 class="text-4xl md:text-6xl font-black">${isDraw ? 'Égalité parfaite' : `${winner?.pseudo || 'Joueur'} gagne`}</h2>
-            <p class="text-slate-300 mt-3">Score final : ${players.map(player => `${player.pseudo} ${formatCHF(player.score)}`).join(' contre ')}</p>
+            <h2 class="text-4xl md:text-6xl font-black">${isDraw ? 'Égalité parfaite' : `${escapeHtml(winner?.pseudo || 'Joueur')} gagne`}</h2>
+            <p class="text-slate-300 mt-3">Score final : ${players.map(player => `${escapeHtml(player.pseudo)} ${formatCHF(player.score)}`).join(' contre ')}</p>
           </div>
 
-          <div class="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950/50 text-left">
+          <div class="max-h-[430px] overflow-auto rounded-3xl border border-slate-700 bg-slate-950/50 text-left">
             <table class="w-full text-sm">
-              <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wide text-xs">
+              <thead class="sticky top-0 bg-slate-900 text-slate-400 uppercase tracking-wide text-xs">
                 <tr>
                   <th class="py-3 px-4">#</th>
+                  <th class="py-3 px-4">Partie</th>
                   <th class="py-3 px-4">Montant</th>
                   <th class="py-3 px-4">Résumé</th>
                 </tr>
@@ -815,7 +915,7 @@
           </div>
 
           <button id="restartBtn" class="btn-primary rounded-2xl px-8 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
-            Relancer une partie
+            Relancer une partie complète
           </button>
         </div>
       `);
@@ -840,7 +940,7 @@
             <div class="mx-auto mb-5 w-14 h-14 rounded-2xl bg-cyan-400/15 grid place-items-center animate-pulse">
               <span class="text-2xl">...</span>
             </div>
-            <h1 class="text-2xl font-black">${message}</h1>
+            <h1 class="text-2xl font-black">${escapeHtml(message)}</h1>
           </section>
         </main>
       `;
@@ -853,16 +953,8 @@
             <p class="text-rose-300 uppercase tracking-[0.3em] text-xs font-bold mb-4">Configuration requise</p>
             <h1 class="text-3xl md:text-5xl font-black mb-4">Firebase n'est pas encore configuré</h1>
             <p class="text-slate-300 mb-6">
-              L'écran vide venait du fait que le script essayait d'initialiser Firebase avec une configuration vide.
               Remplis la constante <code class="text-cyan-200">firebaseConfig</code>, puis recharge le fichier.
             </p>
-            <div class="rounded-2xl bg-slate-950/70 border border-slate-700 p-5 text-sm text-slate-300 space-y-2">
-              <p>Dans Firebase Console :</p>
-              <p>1. Crée un projet.</p>
-              <p>2. Ajoute une application Web.</p>
-              <p>3. Active Realtime Database.</p>
-              <p>4. Copie la config Web dans <code class="text-cyan-200">firebaseConfig</code>.</p>
-            </div>
             <button id="backHomeBtn" class="mt-6 btn-neutral rounded-2xl px-5 py-3 font-bold hover:bg-slate-700 transition">Retour</button>
           </section>
         </main>
@@ -887,7 +979,6 @@
       });
     }
 
-    // Démarrage de l'application.
     renderHome();
   </script>
 </body>
