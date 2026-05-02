@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wavelength Français</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      color: #f8fafc;
+      background:
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 35%),
+        radial-gradient(circle at bottom, rgba(168, 85, 247, 0.14), transparent 40%),
+        linear-gradient(180deg, #020617, #0f172a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(#ffffff55 1px, transparent 1px),
+        radial-gradient(#ffffff33 1px, transparent 1px);
+      background-size: 38px 38px, 70px 70px;
+      opacity: 0.22;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 520px);
+      margin: 0 auto;
+      padding: 18px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 0.85rem;
+    }
+
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(16px);
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.35s ease both;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 8px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(2, 6, 23, 0.58);
+      color: #f8fafc;
+      border-radius: 18px;
+      padding: 14px 15px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 20px;
+      padding: 15px 16px;
+      color: #020617;
+      background: linear-gradient(135deg, #38bdf8, #a78bfa);
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    button.danger {
+      background: rgba(248, 113, 113, 0.18);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .top-actions button {
+      padding: 11px 12px;
+      font-size: 0.86rem;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .meta div {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #cbd5e1;
+      font-size: 0.88rem;
+    }
+
+    .meta strong {
+      display: block;
+      color: #fff;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+
+    .words {
+      text-align: center;
+      margin: 12px 0;
+      color: #e2e8f0;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.55 / 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin: 6px 0 16px;
+      touch-action: none;
+      user-select: none;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .needle {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 5px;
+      height: 44%;
+      background: #fff;
+      border-radius: 999px;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(0deg);
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.55);
+      z-index: 3;
+    }
+
+    .needle::after {
+      content: "";
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      transform: translateX(-50%);
+    }
+
+    .target {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 78%;
+      height: 78%;
+      border-radius: 999px 999px 0 0;
+      transform-origin: bottom center;
+      pointer-events: none;
+      opacity: 0.45;
+      z-index: 2;
+    }
+
+    .target.hidden {
+      display: none;
+    }
+
+    .hint-box {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #f8fafc;
+      text-align: center;
+      min-height: 50px;
+    }
+
+    .small {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .score {
+      font-size: 3rem;
+      text-align: center;
+      font-weight: 900;
+      margin: 14px 0 4px;
+      background: linear-gradient(135deg, #38bdf8, #f0abfc);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 8px;
+      height: 14px;
+      top: -20px;
+      animation: fall 2.8s linear forwards;
+      z-index: 20;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(110vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 15px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Wavelength</h1>
+        <div class="small">Version française mobile</div>
+      </div>
+
+      <div class="top-actions">
+        <button class="secondary" id="settingsBtn">Paramètres</button>
+      </div>
+    </header>
+
+    <section id="homeScreen" class="screen active card">
+      <h2>Créer ou rejoindre</h2>
+
+      <label>Ton pseudo</label>
+      <input id="playerName" placeholder="Ex : Michaël" maxlength="18" />
+
+      <label>Code de partie</label>
+      <input id="roomCode" placeholder="Ex : LUNE42" maxlength="8" />
+
+      <div class="row" style="margin-top: 14px;">
+        <button id="createBtn">Créer</button>
+        <button class="secondary" id="joinBtn">Rejoindre</button>
+      </div>
+
+      <p class="small">
+        Ouvre le même code sur deux téléphones. Le curseur est synchronisé en direct via Firebase Realtime Database.
+      </p>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="card">
+        <div class="meta">
+          <div>Manche<strong id="roundText">1 / 5</strong></div>
+          <div>Ton rôle<strong id="roleText">...</strong></div>
+          <div>Score total<strong id="scoreText">0</strong></div>
+          <div>Partie<strong id="codeText">...</strong></div>
+        </div>
+
+        <div class="words" id="wordsText">Chargement...</div>
+
+        <div class="wheel-wrap" id="wheelWrap">
+          <svg viewBox="0 0 300 170" aria-label="Roue Wavelength">
+            <path id="seg1" />
+            <path id="seg2" />
+            <path id="seg3" />
+            <path id="seg4" />
+            <path id="seg5" />
+            <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3" />
+          </svg>
+
+          <div id="targetZone" class="target hidden"></div>
+          <div id="needle" class="needle"></div>
+        </div>
+
+        <div id="masterPanel">
+          <label>Indice du Maître</label>
+          <input id="clueInput" placeholder="Écris un indice court" maxlength="40" />
+          <button id="sendClueBtn" style="margin-top: 12px;">Envoyer l’indice</button>
+          <p class="small">La zone cible transparente est visible uniquement pour le Maître.</p>
+        </div>
+
+        <div id="guessPanel">
+          <div class="hint-box">
+            <span class="small">Indice reçu</span>
+            <div id="clueText">En attente...</div>
+          </div>
+          <p class="small">Déplace le curseur pour viser la pensée du Maître.</p>
+        </div>
+
+        <button id="revealBtn" style="margin-top: 12px;">Valider la manche</button>
+      </div>
+    </section>
+
+    <section id="endScreen" class="screen card">
+      <h2>Fin de partie</h2>
+      <div class="score" id="finalScore">0</div>
+      <h3 id="finalMessage" style="text-align:center;">...</h3>
+      <button id="restartBtn">Nouvelle partie</button>
+    </section>
+  </main>
+
+  <div id="settingsModal" class="modal">
+    <div class="card" style="width:min(100%, 480px);">
+      <h2>Paramètres</h2>
+
+      <label>Mode des mots</label>
+      <select id="modeSelect">
+        <option value="auto">Automatique</option>
+        <option value="manual">Manuel</option>
+      </select>
+
+      <div id="manualFields">
+        <label>Mot de gauche</label>
+        <input id="leftWordInput" placeholder="Ex : Calme" />
+
+        <label>Mot de droite</label>
+        <input id="rightWordInput" placeholder="Ex : Bruyant" />
+      </div>
+
+      <div class="divider"></div>
+
+      <button id="saveSettingsBtn">Enregistrer</button>
+      <button class="secondary" id="closeSettingsBtn" style="margin-top: 10px;">Fermer</button>
+      <button class="danger" id="resetBtn" style="margin-top: 10px;">Réinitialiser la partie</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      update,
+      onValue,
+      get,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    /*
+      Remplace les valeurs ci-dessous par ta configuration Firebase.
+      Active aussi Realtime Database dans la console Firebase.
+    */
+    const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MAX_ROUNDS = 5;
+
+    const themes = [
+      ["Calme", "Bruyant"],
+      ["Ancien", "Futuriste"],
+      ["Facile", "Difficile"],
+      ["Chic", "Ridicule"],
+      ["Dangereux", "Sûr"],
+      ["Naturel", "Artificiel"],
+      ["Petit plaisir", "Grand luxe"],
+      ["Sous-estimé", "Surcoté"],
+      ["Lent", "Rapide"],
+      ["Froid", "Chaud"],
+      ["Discret", "Tape-à-l’œil"],
+      ["Classique", "Original"],
+      ["Réel", "Imaginaire"],
+      ["Mignon", "Terrifiant"],
+      ["Bon marché", "Hors de prix"],
+      ["Sérieux", "Drôle"],
+      ["Propre", "Sale"],
+      ["Simple", "Complexe"],
+      ["Rassurant", "Inquiétant"],
+      ["Solitaire", "Social"]
+    ];
+
+    const state = {
+      room: null,
+      playerId: localStorage.getItem("wavelength_player_id") || crypto.randomUUID(),
+      playerName: "",
+      game: null
+    };
+
+    localStorage.setItem("wavelength_player_id", state.playerId);
+
+    const $ = (id) => document.getElementById(id);
+
+    const screens = {
+      home: $("homeScreen"),
+      game: $("gameScreen"),
+      end: $("endScreen")
+    };
+
+    const elements = {
+      playerName: $("playerName"),
+      roomCode: $("roomCode"),
+      createBtn: $("createBtn"),
+      joinBtn: $("joinBtn"),
+      settingsBtn: $("settingsBtn"),
+      settingsModal: $("settingsModal"),
+      closeSettingsBtn: $("closeSettingsBtn"),
+      saveSettingsBtn: $("saveSettingsBtn"),
+      resetBtn: $("resetBtn"),
+      modeSelect: $("modeSelect"),
+      manualFields: $("manualFields"),
+      leftWordInput: $("leftWordInput"),
+      rightWordInput: $("rightWordInput"),
+      roundText: $("roundText"),
+      roleText: $("roleText"),
+      scoreText: $("scoreText"),
+      codeText: $("codeText"),
+      wordsText: $("wordsText"),
+      wheelWrap: $("wheelWrap"),
+      needle: $("needle"),
+      targetZone: $("targetZone"),
+      masterPanel: $("masterPanel"),
+      guessPanel: $("guessPanel"),
+      clueInput: $("clueInput"),
+      sendClueBtn: $("sendClueBtn"),
+      clueText: $("clueText"),
+      revealBtn: $("revealBtn"),
+      finalScore: $("finalScore"),
+      finalMessage: $("finalMessage"),
+      restartBtn: $("restartBtn")
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(screen => screen.classList.remove("active"));
+      screens[name].classList.add("active");
+    }
+
+    function makeCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    }
+
+    function randomTheme() {
+      return themes[Math.floor(Math.random() * themes.length)];
+    }
+
+    function randomTargetAngle() {
+      return Math.floor(Math.random() * 161) - 80;
+    }
+
+    function getPlayers(game) {
+      return Object.entries(game.players || {}).map(([id, player]) => ({ id, ...player }));
+    }
+
+    function currentMasterId(game) {
+      const players = getPlayers(game);
+      if (players.length === 0) return null;
+      return players[(game.round - 1) % players.length]?.id;
+    }
+
+    function isMaster() {
+      return state.game && currentMasterId(state.game) === state.playerId;
+    }
+
+    function roomRef(path = "") {
+      return ref(db, `wavelengthRooms/${state.room}${path ? "/" + path : ""}`);
+    }
+
+    async function createRoom() {
+      const name = elements.playerName.value.trim() || "Joueur";
+      const code = (elements.roomCode.value.trim().toUpperCase() || makeCode()).slice(0, 8);
+      const [left, right] = randomTheme();
+
+      state.room = code;
+      state.playerName = name;
+
+      await set(roomRef(), {
+        createdAt: serverTimestamp(),
+        round: 1,
+        maxRounds: MAX_ROUNDS,
+        score: 0,
+        status: "playing",
+        mode: "auto",
+        cursorAngle: 0,
+        targetAngle: randomTargetAngle(),
+        clue: "",
+        leftWord: left,
+        rightWord: right,
+        players: {
+          [state.playerId]: {
+            name,
+            joinedAt: Date.now()
+          }
+        }
+      });
+
+      listenRoom();
+      showScreen("game");
+    }
+
+    async function joinRoom() {
+      const name = elements.playerName.value.trim() || "Joueur";
+      const code = elements.roomCode.value.trim().toUpperCase();
+
+      if (!code) {
+        alert("Entre un code de partie.");
+        return;
+      }
+
+      state.room = code;
+      state.playerName = name;
+
+      const snap = await get(roomRef());
+      if (!snap.exists()) {
+        alert("Partie introuvable.");
+        return;
+      }
+
+      await update(roomRef(`players/${state.playerId}`), {
+        name,
+        joinedAt: Date.now()
+      });
+
+      listenRoom();
+      showScreen("game");
+    }
+
+    function listenRoom() {
+      onValue(roomRef(), snap => {
+        if (!snap.exists()) return;
+
+        state.game = snap.val();
+
+        if (state.game.status === "ended") {
+          renderEnd();
+          showScreen("end");
+          return;
+        }
+
+        renderGame();
+      });
+    }
+
+    function renderGame() {
+      const game = state.game;
+      const master = isMaster();
+
+      elements.roundText.textContent = `${game.round} / ${MAX_ROUNDS}`;
+      elements.roleText.textContent = master ? "Maître" : "Devin";
+      elements.scoreText.textContent = game.score || 0;
+      elements.codeText.textContent = state.room;
+      elements.wordsText.textContent = `Gauche : ${game.leftWord} | Droite : ${game.rightWord}`;
+      elements.clueText.textContent = game.clue || "En attente...";
+      elements.clueInput.value = game.clue || "";
+
+      elements.masterPanel.style.display = master ? "block" : "none";
+      elements.guessPanel.style.display = master ? "none" : "block";
+      elements.revealBtn.style.display = master ? "block" : "none";
+
+      elements.needle.style.transform = `translateX(-50%) rotate(${game.cursorAngle || 0}deg)`;
+
+      if (master) {
+        elements.targetZone.classList.remove("hidden");
+        elements.targetZone.style.background = makeTargetGradient(game.targetAngle || 0);
+      } else {
+        elements.targetZone.classList.add("hidden");
+      }
+    }
+
+    function polarToCartesian(cx, cy, r, angle) {
+      const rad = (angle - 90) * Math.PI / 180;
+      return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad)
+      };
+    }
+
+    function arcPath(cx, cy, rOuter, rInner, startAngle, endAngle) {
+      const outerStart = polarToCartesian(cx, cy, rOuter, endAngle);
+      const outerEnd = polarToCartesian(cx, cy, rOuter, startAngle);
+      const innerStart = polarToCartesian(cx, cy, rInner, startAngle);
+      const innerEnd = polarToCartesian(cx, cy, rInner, endAngle);
+
+      const largeArc = Math.abs(endAngle - startAngle) <= 180 ? 0 : 1;
+
+      return [
+        `M ${outerStart.x} ${outerStart.y}`,
+        `A ${rOuter} ${rOuter} 0 ${largeArc} 0 ${outerEnd.x} ${outerEnd.y}`,
+        `L ${innerStart.x} ${innerStart.y}`,
+        `A ${rInner} ${rInner} 0 ${largeArc} 1 ${innerEnd.x} ${innerEnd.y}`,
+        "Z"
+      ].join(" ");
+    }
+
+    function drawSegments() {
+      const segments = [
+        { id: "seg1", from: -90, to: -54, color: "#38bdf8" },
+        { id: "seg2", from: -54, to: -18, color: "#22c55e" },
+        { id: "seg3", from: -18, to: 18, color: "#facc15" },
+        { id: "seg4", from: 18, to: 54, color: "#22c55e" },
+        { id: "seg5", from: 54, to: 90, color: "#38bdf8" }
+      ];
+
+      segments.forEach(seg => {
+        const path = $(seg.id);
+        path.setAttribute("d", arcPath(150, 150, 120, 62, seg.from, seg.to));
+        path.setAttribute("fill", seg.color);
+        path.setAttribute("opacity", "0.95");
+      });
+    }
+
+    function makeTargetGradient(angle) {
+      const center = 50 + angle / 1.8;
+      const a = Math.max(0, center - 10);
+      const b = Math.max(0, center - 4);
+      const c = Math.min(100, center + 4);
+      const d = Math.min(100, center + 10);
+
+      return `linear-gradient(90deg,
+        transparent 0%,
+        transparent ${a}%,
+        rgba(255,255,255,.18) ${a}%,
+        rgba(255,255,255,.42) ${b}%,
+        rgba(255,255,255,.68) 50%,
+        rgba(255,255,255,.42) ${c}%,
+        rgba(255,255,255,.18) ${d}%,
+        transparent ${d}%,
+        transparent 100%)`;
+    }
+
+    function angleFromPointer(event) {
+      const rect = elements.wheelWrap.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const cx = rect.width / 2;
+      const cy = rect.height;
+
+      const dx = x - cx;
+      const dy = cy - y;
+
+      let angle = Math.atan2(dx, dy) * 180 / Math.PI;
+      angle = Math.max(-90, Math.min(90, angle));
+
+      return Math.round(angle);
+    }
+
+    let dragging = false;
+    let lastSync = 0;
+
+    elements.wheelWrap.addEventListener("pointerdown", event => {
+      if (!state.game || isMaster()) return;
+      dragging = true;
+      elements.wheelWrap.setPointerCapture(event.pointerId);
+      moveCursor(event);
+    });
+
+    elements.wheelWrap.addEventListener("pointermove", event => {
+      if (!dragging) return;
+      moveCursor(event);
+    });
+
+    elements.wheelWrap.addEventListener("pointerup", () => {
+      dragging = false;
+    });
+
+    async function moveCursor(event) {
+      const angle = angleFromPointer(event);
+      elements.needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+
+      const now = Date.now();
+      if (now - lastSync < 35) return;
+      lastSync = now;
+
+      await update(roomRef(), {
+        cursorAngle: angle
+      });
+    }
+
+    function roundScore(cursor, target) {
+      const diff = Math.abs(cursor - target);
+
+      if (diff <= 4) return 4;
+      if (diff <= 12) return 3;
+      if (diff <= 24) return 2;
+      return 0;
+    }
+
+    async function sendClue() {
+      if (!state.game || !isMaster()) return;
+
+      await update(roomRef(), {
+        clue: elements.clueInput.value.trim()
+      });
+    }
+
+    async function revealRound() {
+      if (!state.game || !isMaster()) return;
+
+      const game = state.game;
+      const gained = roundScore(game.cursorAngle || 0, game.targetAngle || 0);
+      const nextScore = (game.score || 0) + gained;
+
+      if (game.round >= MAX_ROUNDS) {
+        await update(roomRef(), {
+          score: nextScore,
+          status: "ended"
+        });
+        return;
+      }
+
+      let nextLeft = game.leftWord;
+      let nextRight = game.rightWord;
+
+      if (game.mode !== "manual") {
+        [nextLeft, nextRight] = randomTheme();
+      }
+
+      await update(roomRef(), {
+        round: game.round + 1,
+        score: nextScore,
+        cursorAngle: 0,
+        targetAngle: randomTargetAngle(),
+        clue: "",
+        leftWord: nextLeft,
+        rightWord: nextRight
+      });
+    }
+
+    async function saveSettings() {
+      if (!state.room) {
+        elements.settingsModal.classList.remove("active");
+        return;
+      }
+
+      const mode = elements.modeSelect.value;
+      const payload = { mode };
+
+      if (mode === "manual") {
+        payload.leftWord = elements.leftWordInput.value.trim() || "Gauche";
+        payload.rightWord = elements.rightWordInput.value.trim() || "Droite";
+      } else {
+        const [left, right] = randomTheme();
+        payload.leftWord = left;
+        payload.rightWord = right;
+      }
+
+      await update(roomRef(), payload);
+      elements.settingsModal.classList.remove("active");
+    }
+
+    async function resetGame() {
+      if (!state.room) return;
+
+      const [left, right] = randomTheme();
+
+      await update(roomRef(), {
+        round: 1,
+        score: 0,
+        status: "playing",
+        cursorAngle: 0,
+        targetAngle: randomTargetAngle(),
+        clue: "",
+        leftWord: left,
+        rightWord: right
+      });
+
+      elements.settingsModal.classList.remove("active");
+      showScreen("game");
+    }
+
+    function renderEnd() {
+      const total = state.game.score || 0;
+      elements.finalScore.textContent = `${total} / 20`;
+      elements.finalMessage.textContent = total >= 12
+        ? "Vous êtes très compatibles !"
+        : "Retentez votre chance !";
+
+      launchConfetti();
+    }
+
+    function launchConfetti() {
+      for (let i = 0; i < 70; i++) {
+        const confetti = document.createElement("div");
+        confetti.className = "confetti";
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.background = ["#38bdf8", "#a78bfa", "#facc15", "#22c55e", "#fb7185"][Math.floor(Math.random() * 5)];
+        confetti.style.animationDelay = `${Math.random() * 0.6}s`;
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 3200);
+      }
+    }
+
+    elements.createBtn.addEventListener("click", createRoom);
+    elements.joinBtn.addEventListener("click", joinRoom);
+    elements.sendClueBtn.addEventListener("click", sendClue);
+    elements.revealBtn.addEventListener("click", revealRound);
+    elements.saveSettingsBtn.addEventListener("click", saveSettings);
+    elements.resetBtn.addEventListener("click", resetGame);
+    elements.restartBtn.addEventListener("click", resetGame);
+
+    elements.settingsBtn.addEventListener("click", () => {
+      if (state.game) {
+        elements.modeSelect.value = state.game.mode || "auto";
+        elements.leftWordInput.value = state.game.leftWord || "";
+        elements.rightWordInput.value = state.game.rightWord || "";
+      }
+      elements.settingsModal.classList.add("active");
+    });
+
+    elements.closeSettingsBtn.addEventListener("click", () => {
+      elements.settingsModal.classList.remove("active");
+    });
+
+    elements.modeSelect.addEventListener("change", () => {
+      elements.manualFields.style.display = elements.modeSelect.value === "manual" ? "block" : "none";
+    });
+
+    drawSegments();
+    elements.manualFields.style.display = "none";
+  </script>
+</body>
+</html>
