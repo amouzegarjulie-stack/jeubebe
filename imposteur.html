@@ -5,23 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>L'Imposteur · Mobile</title>
 
-  <!--
-    L'IMPOSTEUR · Jeu mobile 2 joueurs à distance
-    Stack : Vue.js 3 CDN + Tailwind CSS CDN + Firebase Realtime Database compat SDK 9
-
-    À faire avant utilisation :
-    1. Créer un projet Firebase.
-    2. Activer Realtime Database.
-    3. Coller votre firebaseConfig dans le bloc JS prévu plus bas.
-    4. Héberger ce fichier sur HTTPS ou l'ouvrir localement pour test.
-  -->
-
-  <!-- Police moderne -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS Play CDN : parfait pour prototype / fichier unique -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -62,10 +49,7 @@
     };
   </script>
 
-  <!-- Vue 3 CDN -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-
-  <!-- Firebase compat SDK 9 -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -74,9 +58,11 @@
 
     * {
       -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
     }
 
     body {
+      margin: 0;
       font-family: 'Plus Jakarta Sans', sans-serif;
       background:
         radial-gradient(circle at 12% 12%, rgba(184, 243, 220, .95), transparent 30%),
@@ -85,6 +71,12 @@
         linear-gradient(135deg, #fffafa 0%, #f7f3ff 100%);
       min-height: 100vh;
       color: #2d2438;
+    }
+
+    button,
+    input {
+      font-family: inherit;
+      pointer-events: auto;
     }
 
     .glass {
@@ -96,12 +88,18 @@
 
     .btn-press {
       transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+      cursor: pointer;
     }
 
     .btn-press:active {
       transform: scale(.97) translateY(1px);
       box-shadow: 0 6px 16px rgba(67, 56, 99, .10);
       opacity: .92;
+    }
+
+    .btn-press:disabled {
+      opacity: .55;
+      cursor: not-allowed;
     }
 
     .fade-slide-enter-active,
@@ -138,7 +136,6 @@
 <body>
   <div id="app" v-cloak class="min-h-screen px-4 py-5 flex justify-center">
     <main class="w-full max-w-md">
-      <!-- Header -->
       <header class="flex items-center justify-between mb-5">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.24em] text-purple-400">Jeu à distance</p>
@@ -147,20 +144,28 @@
         <div class="w-12 h-12 rounded-3xl bg-white/75 shadow-soft grid place-items-center text-2xl">🕵️</div>
       </header>
 
-      <!-- Erreur config -->
-      <section v-if="!firebaseReady" class="glass rounded-[2rem] p-5 shadow-soft mb-4">
+      <section v-if="fatalError" class="glass rounded-[2rem] p-5 shadow-soft mb-4">
+        <div class="flex gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-powder-100 grid place-items-center">⚠️</div>
+          <div>
+            <h2 class="font-extrabold text-lg">Erreur de démarrage</h2>
+            <p class="text-sm text-slate-600 mt-1 leading-relaxed">{{ fatalError }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section v-else-if="!firebaseReady" class="glass rounded-[2rem] p-5 shadow-soft mb-4">
         <div class="flex gap-3">
           <div class="w-11 h-11 rounded-2xl bg-powder-100 grid place-items-center">⚠️</div>
           <div>
             <h2 class="font-extrabold text-lg">Firebase non configuré</h2>
             <p class="text-sm text-slate-600 mt-1 leading-relaxed">
-              Collez votre <strong>firebaseConfig</strong> dans le bloc prévu au début du code JavaScript, puis rechargez la page.
+              Vérifie firebaseConfig, Realtime Database et les règles d'accès Firebase.
             </p>
           </div>
         </div>
       </section>
 
-      <!-- Écran accueil -->
       <transition name="fade-slide" mode="out-in">
         <section v-if="firebaseReady && screen === 'home'" key="home" class="glass rounded-[2rem] p-5 shadow-soft">
           <div class="rounded-[1.7rem] bg-gradient-to-br from-mint-100 via-white to-lavender-100 p-5 mb-5">
@@ -173,8 +178,8 @@
           <label class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 ml-1">Ton pseudo</label>
           <input v-model.trim="playerName" maxlength="16" class="mt-2 w-full rounded-3xl bg-white/80 px-5 py-4 outline-none border border-white focus:ring-4 focus:ring-lavender-100 font-bold" placeholder="Ex : Michaël" />
 
-          <button @click="createRoom" class="btn-press mt-4 w-full rounded-3xl bg-mint-300 py-4 font-extrabold shadow-soft">
-            Créer un salon
+          <button @click="createRoom" :disabled="loading" class="btn-press mt-4 w-full rounded-3xl bg-mint-300 py-4 font-extrabold shadow-soft">
+            {{ loading ? 'Création...' : 'Créer un salon' }}
           </button>
 
           <div class="flex items-center gap-3 my-5">
@@ -185,16 +190,14 @@
 
           <label class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 ml-1">Code salon</label>
           <div class="mt-2 flex gap-2">
-            <input v-model.trim="joinCode" maxlength="6" @input="joinCode = joinCode.toUpperCase()" class="flex-1 rounded-3xl bg-white/80 px-5 py-4 outline-none border border-white focus:ring-4 focus:ring-powder-100 font-extrabold tracking-[0.2em] uppercase" placeholder="ABC123" />
-            <button @click="joinRoom" class="btn-press rounded-3xl bg-lavender-300 px-5 font-extrabold shadow-soft">Go</button>
+            <input v-model.trim="joinCode" maxlength="6" @input="joinCode = joinCode.toUpperCase()" class="flex-1 min-w-0 rounded-3xl bg-white/80 px-5 py-4 outline-none border border-white focus:ring-4 focus:ring-powder-100 font-extrabold tracking-[0.2em] uppercase" placeholder="ABC123" />
+            <button @click="joinRoom" :disabled="loading" class="btn-press rounded-3xl bg-lavender-300 px-5 font-extrabold shadow-soft">Go</button>
           </div>
 
           <p v-if="toast" class="mt-4 text-sm font-bold text-powder-400">{{ toast }}</p>
         </section>
 
-        <!-- Écran salon / jeu -->
         <section v-else-if="firebaseReady && screen === 'room'" key="room" class="space-y-4">
-          <!-- Salon top card -->
           <div class="glass rounded-[2rem] p-4 shadow-soft">
             <div class="flex items-center justify-between gap-3">
               <div>
@@ -203,6 +206,7 @@
               </div>
               <button @click="leaveRoom" class="btn-press rounded-2xl bg-white/80 px-4 py-3 text-sm font-extrabold">Quitter</button>
             </div>
+
             <div class="grid grid-cols-2 gap-2 mt-4">
               <div v-for="slot in ['A','B']" :key="slot" class="rounded-3xl bg-white/70 p-3">
                 <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Joueur {{ slot }}</p>
@@ -214,7 +218,6 @@
             </div>
           </div>
 
-          <!-- Score / manche -->
           <div class="grid grid-cols-3 gap-3">
             <div class="glass rounded-3xl p-4 text-center shadow-soft">
               <p class="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">Manche</p>
@@ -230,16 +233,13 @@
             </div>
           </div>
 
-          <!-- Attente -->
           <div v-if="playerCount < 2" class="glass rounded-[2rem] p-6 text-center shadow-soft">
             <div class="mx-auto w-16 h-16 rounded-[1.7rem] bg-lavender-100 grid place-items-center text-3xl pulse-ring">📱</div>
             <h2 class="font-extrabold text-xl mt-4">En attente du deuxième joueur</h2>
             <p class="text-sm text-slate-600 mt-2">Partage le code salon : <strong>{{ roomCode }}</strong></p>
           </div>
 
-          <!-- Jeu actif -->
           <template v-else>
-            <!-- Phase teasing scanner -->
             <div v-if="!scanned" class="glass rounded-[2rem] p-6 text-center shadow-soft overflow-hidden relative">
               <div class="relative mx-auto w-28 h-28 rounded-[2rem] bg-white/80 grid place-items-center shadow-soft overflow-hidden">
                 <div class="absolute inset-x-4 h-1 rounded-full bg-mint-300 scanner-line"></div>
@@ -252,7 +252,6 @@
               </button>
             </div>
 
-            <!-- Carte mot -->
             <transition name="fade-slide" mode="out-in">
               <div v-if="scanned" class="glass rounded-[2rem] p-5 shadow-soft" key="word-card">
                 <div class="flex justify-between items-start gap-3 mb-4">
@@ -284,7 +283,6 @@
               </div>
             </transition>
 
-            <!-- Actions -->
             <div class="glass rounded-[2rem] p-4 shadow-soft">
               <div class="grid grid-cols-2 gap-2 mb-2">
                 <button @click="addPoint('A')" class="btn-press rounded-3xl bg-white/80 py-3 font-extrabold">+1 Joueur A</button>
@@ -303,33 +301,16 @@
   </div>
 
   <script>
-    /*********************************************************************
-     * 1) COLLEZ VOTRE CONFIG FIREBASE ICI
-     * Exemple :
-     * const firebaseConfig = {
-     *   apiKey: "...",
-     *   authDomain: "...",
-     *   databaseURL: "https://votre-projet-default-rtdb.europe-west1.firebasedatabase.app",
-     *   projectId: "...",
-     *   storageBucket: "...",
-     *   messagingSenderId: "...",
-     *   appId: "..."
-     * };
-     *********************************************************************/
-   const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
-    /*********************************************************************
-     * 2) DONNÉES DE JEU
-     * Les paires doivent rester proches pour que l'imposteur ait une chance.
-     *********************************************************************/
     const WORD_PAIRS = [
       ['Café', 'Chocolat chaud'], ['Plage', 'Piscine'], ['Taxi', 'Uber'], ['Pizza', 'Tarte flambée'],
       ['Cinéma', 'Théâtre'], ['Chat', 'Chien'], ['Montagne', 'Colline'], ['Train', 'Métro'],
@@ -351,9 +332,10 @@
       "Utilise le mot 'vacances' sans que ce soit trop évident."
     ];
 
-    /*********************************************************************
-     * 3) APPLICATION VUE
-     *********************************************************************/
+    function makePlayerId() {
+      return 'p_' + Math.random().toString(36).slice(2, 11);
+    }
+
     const { createApp } = Vue;
 
     createApp({
@@ -361,10 +343,11 @@
         return {
           db: null,
           roomRef: null,
-          unsubscribeRoom: null,
           firebaseReady: false,
+          fatalError: '',
+          loading: false,
           screen: 'home',
-          playerId: localStorage.getItem('imposteurPlayerId') || this.makeId(),
+          playerId: localStorage.getItem('imposteurPlayerId') || makePlayerId(),
           playerName: localStorage.getItem('imposteurPlayerName') || '',
           joinCode: '',
           roomCode: '',
@@ -450,22 +433,37 @@
       },
 
       mounted() {
-        localStorage.setItem('imposteurPlayerId', this.playerId);
-        this.firebaseReady = this.hasFirebaseConfig();
+        try {
+          localStorage.setItem('imposteurPlayerId', this.playerId);
 
-        if (this.firebaseReady) {
-          firebase.initializeApp(firebaseConfig);
+          this.firebaseReady = this.hasFirebaseConfig();
+
+          if (!this.firebaseReady) return;
+
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+
           this.db = firebase.database();
+        } catch (error) {
+          console.error('Erreur initialisation:', error);
+          this.fatalError = error.message || String(error);
+          this.firebaseReady = false;
         }
+      },
+
+      beforeUnmount() {
+        if (this.roomRef) this.roomRef.off();
       },
 
       methods: {
         hasFirebaseConfig() {
-          return Boolean(firebaseConfig.apiKey && firebaseConfig.databaseURL && firebaseConfig.projectId);
-        },
-
-        makeId() {
-          return 'p_' + Math.random().toString(36).slice(2, 11);
+          return Boolean(
+            firebaseConfig.apiKey &&
+            firebaseConfig.databaseURL &&
+            firebaseConfig.projectId &&
+            firebaseConfig.apiKey !== '...'
+          );
         },
 
         makeRoomCode() {
@@ -483,54 +481,87 @@
 
         async createRoom() {
           this.toast = '';
-          const code = this.makeRoomCode();
-          const name = this.cleanName();
-          const initialGame = this.generateRound(1, { A: 0, B: 0 });
+          this.loading = true;
 
-          await this.db.ref('rooms/' + code).set({
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            updatedAt: firebase.database.ServerValue.TIMESTAMP,
-            game: initialGame,
-            players: {
-              [this.playerId]: {
-                name,
-                slot: 'A',
-                joinedAt: firebase.database.ServerValue.TIMESTAMP,
-                online: true
+          try {
+            if (!this.db) throw new Error('Firebase Database non initialisée.');
+
+            const code = this.makeRoomCode();
+            const name = this.cleanName();
+            const initialGame = this.generateRound(1, { A: 0, B: 0 });
+
+            await this.db.ref('rooms/' + code).set({
+              createdAt: firebase.database.ServerValue.TIMESTAMP,
+              updatedAt: firebase.database.ServerValue.TIMESTAMP,
+              game: initialGame,
+              players: {
+                [this.playerId]: {
+                  name,
+                  slot: 'A',
+                  joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                  online: true
+                }
               }
-            }
-          });
+            });
 
-          this.enterRoom(code);
+            this.enterRoom(code);
+          } catch (error) {
+            console.error('Erreur création salon:', error);
+            this.flash('Erreur création : ' + this.readableFirebaseError(error));
+          } finally {
+            this.loading = false;
+          }
         },
 
         async joinRoom() {
           this.toast = '';
-          const code = (this.joinCode || '').trim().toUpperCase();
-          if (code.length < 4) return this.flash('Entre un code salon valide.');
+          this.loading = true;
 
-          const snap = await this.db.ref('rooms/' + code).once('value');
-          if (!snap.exists()) return this.flash('Salon introuvable.');
+          try {
+            if (!this.db) throw new Error('Firebase Database non initialisée.');
 
-          const room = snap.val();
-          const players = room.players || {};
-          const already = players[this.playerId];
-          const usedSlots = Object.values(players).map(p => p.slot);
-          const slot = already?.slot || (!usedSlots.includes('A') ? 'A' : !usedSlots.includes('B') ? 'B' : null);
+            const code = (this.joinCode || '').trim().toUpperCase();
+            if (code.length < 4) {
+              this.flash('Entre un code salon valide.');
+              return;
+            }
 
-          if (!slot) return this.flash('Ce salon est déjà complet.');
+            const snap = await this.db.ref('rooms/' + code).once('value');
+            if (!snap.exists()) {
+              this.flash('Salon introuvable.');
+              return;
+            }
 
-          await this.db.ref(`rooms/${code}/players/${this.playerId}`).update({
-            name: this.cleanName(),
-            slot,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP,
-            online: true
-          });
+            const room = snap.val();
+            const players = room.players || {};
+            const already = players[this.playerId];
+            const usedSlots = Object.values(players).map(player => player.slot);
+            const slot = already?.slot || (!usedSlots.includes('A') ? 'A' : !usedSlots.includes('B') ? 'B' : null);
 
-          this.enterRoom(code);
+            if (!slot) {
+              this.flash('Ce salon est déjà complet.');
+              return;
+            }
+
+            await this.db.ref(`rooms/${code}/players/${this.playerId}`).update({
+              name: this.cleanName(),
+              slot,
+              joinedAt: firebase.database.ServerValue.TIMESTAMP,
+              online: true
+            });
+
+            this.enterRoom(code);
+          } catch (error) {
+            console.error('Erreur rejoindre salon:', error);
+            this.flash('Erreur connexion : ' + this.readableFirebaseError(error));
+          } finally {
+            this.loading = false;
+          }
         },
 
         enterRoom(code) {
+          if (this.roomRef) this.roomRef.off();
+
           this.roomCode = code;
           this.screen = 'room';
           this.scanned = false;
@@ -543,16 +574,25 @@
               this.leaveRoom(false);
               this.flash('Le salon a été fermé.');
             }
+          }, error => {
+            console.error('Erreur lecture salon:', error);
+            this.flash('Erreur lecture : ' + this.readableFirebaseError(error));
           });
 
           this.db.ref(`rooms/${code}/players/${this.playerId}/online`).onDisconnect().set(false);
         },
 
-        leaveRoom(remove = true) {
-          if (this.roomRef) this.roomRef.off();
-          if (remove && this.roomCode) {
-            this.db.ref(`rooms/${this.roomCode}/players/${this.playerId}`).remove();
+        async leaveRoom(remove = true) {
+          try {
+            if (this.roomRef) this.roomRef.off();
+
+            if (remove && this.roomCode && this.db) {
+              await this.db.ref(`rooms/${this.roomCode}/players/${this.playerId}`).remove();
+            }
+          } catch (error) {
+            console.error('Erreur quitter salon:', error);
           }
+
           this.roomRef = null;
           this.room = null;
           this.roomCode = '';
@@ -562,12 +602,13 @@
         },
 
         playerBySlot(slot) {
-          return Object.values(this.players).find(p => p.slot === slot);
+          return Object.values(this.players).find(player => player.slot === slot);
         },
 
         scanFingerprint() {
           this.wordVisible = false;
           this.scanned = false;
+
           setTimeout(() => {
             this.scanned = true;
             if (navigator.vibrate) navigator.vibrate(35);
@@ -575,20 +616,37 @@
         },
 
         async newRound() {
-          const nextRound = (this.game.round || 0) + 1;
-          const score = this.game.score || { A: 0, B: 0 };
-          const nextGame = this.generateRound(nextRound, score);
-          await this.db.ref(`rooms/${this.roomCode}/game`).set(nextGame);
-          await this.db.ref(`rooms/${this.roomCode}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
-          this.scanned = false;
-          this.wordVisible = false;
+          try {
+            const nextRound = (this.game.round || 0) + 1;
+            const score = this.game.score || { A: 0, B: 0 };
+            const nextGame = this.generateRound(nextRound, score);
+
+            await this.db.ref(`rooms/${this.roomCode}/game`).set(nextGame);
+            await this.db.ref(`rooms/${this.roomCode}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
+
+            this.scanned = false;
+            this.wordVisible = false;
+          } catch (error) {
+            console.error('Erreur nouvelle manche:', error);
+            this.flash('Erreur nouvelle manche : ' + this.readableFirebaseError(error));
+          }
         },
 
         async addPoint(slot) {
-          const score = { A: this.game.score?.A || 0, B: this.game.score?.B || 0 };
-          score[slot] += 1;
-          await this.db.ref(`rooms/${this.roomCode}/game/score`).set(score);
-          if (navigator.vibrate) navigator.vibrate(20);
+          try {
+            const score = {
+              A: this.game.score?.A || 0,
+              B: this.game.score?.B || 0
+            };
+
+            score[slot] += 1;
+
+            await this.db.ref(`rooms/${this.roomCode}/game/score`).set(score);
+            if (navigator.vibrate) navigator.vibrate(20);
+          } catch (error) {
+            console.error('Erreur score:', error);
+            this.flash('Erreur score : ' + this.readableFirebaseError(error));
+          }
         },
 
         generateRound(roundNumber, score) {
@@ -597,14 +655,12 @@
           const impostorSlot = Math.random() < .5 ? 'A' : 'B';
           const compliceSlot = impostorSlot === 'A' ? 'B' : 'A';
 
-          // Tirage intelligent demandé : 70 % complices, 30 % imposteur.
-          // Puis petite chance de manche spéciale qui vient remplacer ou enrichir le tirage.
           const roll = Math.random();
           let mode = roll < .70 ? 'classic' : 'impostor';
 
           const specialRoll = Math.random();
-          if (specialRoll < .12) mode = 'mirror';       // Les deux se pensent suspects.
-          else if (specialRoll < .26) mode = 'mission'; // Défi secret ajouté.
+          if (specialRoll < .12) mode = 'mirror';
+          else if (specialRoll < .26) mode = 'mission';
 
           const game = {
             round: roundNumber,
@@ -631,12 +687,12 @@
           }
 
           if (mode === 'mission') {
-            // La mission garde le ratio global : souvent même mot, parfois mots proches.
             if (roll >= .70) {
               game.words[compliceSlot] = pair[0];
               game.words[impostorSlot] = pair[1];
               game.roles[impostorSlot] = 'impostor';
             }
+
             game.missions.A = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
             game.missions.B = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
           }
@@ -648,16 +704,31 @@
           try {
             await navigator.clipboard.writeText(this.roomCode);
             this.flash('Code copié.');
-          } catch (_) {
+          } catch (error) {
             this.flash('Code : ' + this.roomCode);
           }
         },
 
         flash(message) {
           this.toast = message;
+
           setTimeout(() => {
             if (this.toast === message) this.toast = '';
-          }, 2400);
+          }, 3500);
+        },
+
+        readableFirebaseError(error) {
+          const message = error?.message || String(error);
+
+          if (message.includes('Permission denied')) {
+            return 'permission refusée. Vérifie les règles Realtime Database.';
+          }
+
+          if (message.includes('network')) {
+            return 'problème réseau.';
+          }
+
+          return message;
         }
       }
     }).mount('#app');
