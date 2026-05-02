@@ -754,9 +754,9 @@
           playNotify("turn");
         }
 
-        if (!master && d.phase === "reveal") {
-          playNotify("reveal");
-        }
+     if (d.phase === "reveal") {
+  playNotify("reveal");
+}
       }
 
       lastPhaseSeen = phaseKey;
