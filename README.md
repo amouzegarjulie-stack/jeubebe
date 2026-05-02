@@ -6,6 +6,6 @@
 🕵️ [Imposteur](imposteur.html)  
 💲 [Money](money.html)  
 ♟️ [Echecs](echecs.html) 
-♦️ [Bataille](battle.html) 
+♦️ [Bataille](battle.html)   
 
 
