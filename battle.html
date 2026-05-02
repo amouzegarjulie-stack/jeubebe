@@ -15,7 +15,7 @@
   <style>
     :root {
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --card-w: clamp(54px, 16vw, 76px);
+      --card-w: clamp(70px, 22vw, 96px);
       --card-h: calc(var(--card-w) * 1.42);
     }
 
@@ -25,48 +25,57 @@
     }
 
     html, body {
-      min-height: 100%;
       margin: 0;
+      min-height: 100%;
     }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
       overflow-x: hidden;
-      overflow-y: auto;
       background:
         radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .9), transparent 24%),
         radial-gradient(circle at 85% 10%, rgba(196, 181, 253, .55), transparent 24%),
         radial-gradient(circle at 50% 90%, rgba(125, 211, 252, .45), transparent 30%),
         linear-gradient(135deg, #ffe4ec 0%, #e0f2fe 48%, #f5d0fe 100%);
       background-attachment: fixed;
+      color: #1e293b;
     }
 
     .glass {
-      background: rgba(255, 255, 255, 0.52);
-      border: 1px solid rgba(255, 255, 255, 0.68);
+      background: rgba(255, 255, 255, 0.54);
+      border: 1px solid rgba(255, 255, 255, 0.7);
       box-shadow: 0 24px 60px rgba(148, 163, 184, .22), inset 0 1px 0 rgba(255, 255, 255, .75);
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
     }
 
     .soft-card {
-      background: rgba(255, 255, 255, .82);
+      background: rgba(255, 255, 255, .84);
       box-shadow: 8px 8px 22px rgba(148, 163, 184, .18), -8px -8px 22px rgba(255, 255, 255, .65);
+    }
+
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none !important;
     }
 
     .playing-card {
       width: var(--card-w);
       height: var(--card-h);
-      border-radius: 14px;
+      border-radius: 16px;
       background: linear-gradient(160deg, #ffffff, #f8fafc);
-      border: 1px solid rgba(226, 232, 240, .9);
-      box-shadow: 0 14px 26px rgba(15, 23, 42, .16);
+      border: 1px solid rgba(226, 232, 240, .95);
+      box-shadow: 0 18px 30px rgba(15, 23, 42, .18);
       display: grid;
       place-items: center;
       position: relative;
       transform-origin: center;
-      animation: popCard .22s ease-out both;
+      animation: popCard .18s ease-out both;
       user-select: none;
       flex: none;
     }
@@ -79,24 +88,30 @@
       content: attr(data-corner);
       position: absolute;
       font-weight: 900;
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.05;
       white-space: pre;
     }
 
-    .playing-card::before { top: 7px; left: 7px; }
-    .playing-card::after { bottom: 7px; right: 7px; transform: rotate(180deg); }
+    .playing-card::before { top: 8px; left: 8px; }
+    .playing-card::after { bottom: 8px; right: 8px; transform: rotate(180deg); }
 
     .card-back {
       background:
         radial-gradient(circle at 30% 30%, rgba(255,255,255,.45), transparent 20%),
         repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 6px, transparent 6px 12px),
         linear-gradient(135deg, #7c3aed, #ec4899);
-      border: 2px solid rgba(255,255,255,.7);
+      border: 2px solid rgba(255,255,255,.72);
     }
 
     .card-back::before,
     .card-back::after { content: ''; }
+
+    .small-card {
+      width: 42px !important;
+      height: 60px !important;
+      border-radius: 10px !important;
+    }
 
     @keyframes popCard {
       from { opacity: 0; transform: translateY(10px) scale(.94); }
@@ -109,33 +124,20 @@
       50% { opacity: 1; transform: scale(1); }
     }
 
-    .screen { display: none; }
-    .screen.active { display: flex; }
-
-    button:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
     @media (max-height: 720px) {
-      :root { --card-w: clamp(46px, 14vw, 64px); }
-      .compact-gap { gap: .6rem; }
-      .compact-pad { padding: .75rem; }
-      .battle-zone { min-height: 150px; }
+      :root { --card-w: clamp(58px, 18vw, 76px); }
     }
   </style>
 </head>
 
-<body class="text-slate-800">
-  <main class="relative mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[calc(86px+var(--safe-bottom))] pt-4">
-
+<body>
+  <main class="mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[calc(82px+var(--safe-bottom))] pt-4">
     <section id="homeScreen" class="screen active min-h-dvh flex-col justify-center gap-4 py-4">
-      <div class="glass rounded-[2rem] p-6 compact-pad">
+      <div class="glass rounded-[2rem] p-6">
         <div class="mb-6 text-center">
           <div class="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-[1.7rem] bg-gradient-to-br from-fuchsia-400 to-sky-400 text-4xl shadow-xl">🃏</div>
           <h1 class="text-4xl font-black tracking-tight text-slate-900">Bataille</h1>
-          <p class="mt-2 text-sm font-semibold text-slate-600">Duel multijoueur en ligne</p>
+          <p class="mt-2 text-sm font-semibold text-slate-600">Jeu de cartes multijoueur</p>
         </div>
 
         <label class="mb-2 block text-sm font-bold text-slate-700">Ton pseudo</label>
@@ -158,7 +160,7 @@
         <p id="homeError" class="mt-4 min-h-5 text-center text-sm font-bold text-rose-600"></p>
       </div>
 
-      <div class="glass rounded-[1.6rem] p-4 compact-pad">
+      <div class="glass rounded-[1.6rem] p-4">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="font-black">Classement</h2>
           <button id="refreshRankBtn" class="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-600">↻</button>
@@ -167,8 +169,8 @@
       </div>
     </section>
 
-    <section id="gameScreen" class="screen flex-col gap-3 compact-gap py-2">
-      <header class="glass rounded-[1.6rem] px-4 py-3 compact-pad">
+    <section id="gameScreen" class="screen flex-col gap-3 py-2">
+      <header class="glass rounded-[1.6rem] px-4 py-3">
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="text-xs font-black uppercase tracking-wide text-slate-500">Salon</p>
@@ -179,7 +181,7 @@
         <p id="statusText" class="mt-2 text-sm font-bold text-slate-600">Initialisation...</p>
       </header>
 
-      <section class="glass rounded-[1.8rem] p-4 compact-pad">
+      <section class="glass rounded-[1.8rem] p-4">
         <div class="mb-3 flex items-center justify-between gap-3">
           <div>
             <p id="opponentName" class="font-black">Adversaire</p>
@@ -188,26 +190,30 @@
           <div id="opponentReady" class="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-500">En attente</div>
         </div>
 
-        <div class="battle-zone grid min-h-[180px] place-items-center rounded-[1.6rem] bg-white/35 p-3">
+        <div class="grid min-h-[250px] place-items-center rounded-[1.6rem] bg-white/35 p-3">
           <div class="w-full">
             <p id="roundMessage" class="mb-3 text-center text-sm font-black text-slate-700">Prépare-toi...</p>
-            <div id="battleStack" class="mb-3 flex min-h-[52px] flex-wrap items-center justify-center gap-2"></div>
-            <div class="flex items-center justify-center gap-4">
-              <div>
-                <p class="mb-1 text-center text-[10px] font-black uppercase text-slate-500">Adversaire</p>
-                <div id="opponentCardSlot" class="grid place-items-center"></div>
+
+            <div id="potStack" class="mb-4 flex min-h-[64px] flex-wrap items-center justify-center gap-2"></div>
+
+            <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+              <div class="text-center">
+                <p class="mb-1 text-[10px] font-black uppercase text-slate-500">Adversaire</p>
+                <div id="opponentCardSlot" class="grid min-h-[var(--card-h)] place-items-center"></div>
               </div>
-              <div class="grid h-10 w-10 place-items-center rounded-full bg-white/70 text-sm font-black shadow-sm">VS</div>
-              <div>
-                <p class="mb-1 text-center text-[10px] font-black uppercase text-slate-500">Toi</p>
-                <div id="myCardSlot" class="grid place-items-center"></div>
+
+              <div class="mb-8 grid h-10 w-10 place-items-center rounded-full bg-white/75 text-sm font-black shadow-sm">VS</div>
+
+              <div class="text-center">
+                <p class="mb-1 text-[10px] font-black uppercase text-slate-500">Toi</p>
+                <div id="myCardSlot" class="grid min-h-[var(--card-h)] place-items-center"></div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="glass rounded-[1.8rem] p-4 compact-pad">
+      <section class="glass rounded-[1.8rem] p-4">
         <div class="mb-3 flex items-center justify-between">
           <div>
             <p id="myName" class="font-black">Toi</p>
@@ -216,10 +222,9 @@
           <div id="turnBadge" class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">Attente</div>
         </div>
 
-        <div class="mb-4 flex items-center justify-center">
-          <div class="playing-card card-back -mr-5 rotate-[-8deg]"></div>
-          <div class="playing-card card-back z-10"></div>
-          <div class="playing-card card-back -ml-5 rotate-[8deg]"></div>
+        <div class="mb-4 flex flex-col items-center justify-center gap-2 rounded-[1.4rem] bg-white/35 p-3">
+          <p class="text-xs font-black uppercase tracking-wide text-slate-500">Ta prochaine carte</p>
+          <div id="nextCardSlot" class="grid min-h-[var(--card-h)] place-items-center"></div>
         </div>
 
         <button id="playBtn" class="w-full rounded-3xl bg-gradient-to-r from-violet-500 to-sky-500 px-5 py-5 text-lg font-black text-white shadow-xl shadow-violet-200 transition active:scale-[.98]">
@@ -237,10 +242,11 @@
           <button id="closeRulesBtn" class="grid h-9 w-9 place-items-center rounded-full bg-white/80 text-xl font-black">×</button>
         </div>
         <div class="space-y-3 text-sm font-semibold leading-relaxed text-slate-700">
-          <p>Chaque joueur reçoit 26 cartes. À chaque manche, chacun pose une carte.</p>
-          <p>La carte la plus forte gagne toutes les cartes au centre. Ordre : 2 à As.</p>
-          <p>En cas d'égalité, c'est la Bataille : une carte face cachée, puis une carte visible. Le gagnant remporte toute la pile.</p>
-          <p>Le joueur qui récupère les 52 cartes remporte la partie et gagne une victoire au classement.</p>
+          <p>Chaque joueur reçoit 26 cartes.</p>
+          <p>Chaque joueur voit sa prochaine carte, puis clique sur Jouer ma carte.</p>
+          <p>Quand les deux joueurs ont joué, la plus forte carte gagne la pile.</p>
+          <p>En cas d'égalité, bataille automatique : une carte face cachée, puis une carte visible. Le gagnant prend toute la pile.</p>
+          <p>Le joueur qui récupère toutes les cartes gagne la partie.</p>
         </div>
       </div>
     </div>
@@ -271,33 +277,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const state = {
-      roomId: null,
-      playerId: getOrCreateDeviceId(),
-      playerKey: null,
-      pseudo: '',
-      room: null,
-      roomUnsub: null,
-      localLock: false
-    };
-
-    const suits = ['♠', '♥', '♦', '♣'];
-    const ranks = [
-      { label: '2', value: 2 },
-      { label: '3', value: 3 },
-      { label: '4', value: 4 },
-      { label: '5', value: 5 },
-      { label: '6', value: 6 },
-      { label: '7', value: 7 },
-      { label: '8', value: 8 },
-      { label: '9', value: 9 },
-      { label: '10', value: 10 },
-      { label: 'J', value: 11 },
-      { label: 'Q', value: 12 },
-      { label: 'K', value: 13 },
-      { label: 'A', value: 14 }
-    ];
-
     const $ = (id) => document.getElementById(id);
 
     const homeScreen = $('homeScreen');
@@ -318,14 +297,42 @@
     const roundMessage = $('roundMessage');
     const opponentCardSlot = $('opponentCardSlot');
     const myCardSlot = $('myCardSlot');
-    const battleStack = $('battleStack');
+    const potStack = $('potStack');
     const myName = $('myName');
     const myCount = $('myCount');
     const turnBadge = $('turnBadge');
+    const nextCardSlot = $('nextCardSlot');
     const playBtn = $('playBtn');
     const rulesBtn = $('rulesBtn');
     const rulesModal = $('rulesModal');
     const closeRulesBtn = $('closeRulesBtn');
+
+    const suits = ['♠', '♥', '♦', '♣'];
+    const ranks = [
+      { label: '2', value: 2 },
+      { label: '3', value: 3 },
+      { label: '4', value: 4 },
+      { label: '5', value: 5 },
+      { label: '6', value: 6 },
+      { label: '7', value: 7 },
+      { label: '8', value: 8 },
+      { label: '9', value: 9 },
+      { label: '10', value: 10 },
+      { label: 'J', value: 11 },
+      { label: 'Q', value: 12 },
+      { label: 'K', value: 13 },
+      { label: 'A', value: 14 }
+    ];
+
+    const state = {
+      roomId: null,
+      playerId: getOrCreateDeviceId(),
+      playerKey: null,
+      pseudo: '',
+      room: null,
+      roomUnsub: null,
+      localLock: false
+    };
 
     createRoomBtn.addEventListener('click', createRoom);
     joinRoomBtn.addEventListener('click', joinRoom);
@@ -333,11 +340,13 @@
     copyRoomBtn.addEventListener('click', copyRoomId);
     leaveBtn.addEventListener('click', leaveRoom);
     playBtn.addEventListener('click', playMyCard);
+
     rulesBtn.addEventListener('click', () => rulesModal.classList.replace('hidden', 'flex'));
     closeRulesBtn.addEventListener('click', () => rulesModal.classList.replace('flex', 'hidden'));
     rulesModal.addEventListener('click', (event) => {
       if (event.target === rulesModal) rulesModal.classList.replace('flex', 'hidden');
     });
+
     roomInput.addEventListener('input', () => {
       roomInput.value = roomInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     });
@@ -357,8 +366,6 @@
       try {
         const roomId = await makeUniqueRoomId();
         const deck = shuffle(createDeck());
-        const p1Deck = deck.slice(0, 26);
-        const p2Deck = deck.slice(26);
 
         const room = {
           id: roomId,
@@ -368,21 +375,42 @@
           hostPlayerId: state.playerId,
           turnNumber: 0,
           winner: null,
+          lastMessage: `${pseudo} attend un adversaire.`,
           pot: [],
-          visible: { p1: null, p2: null },
-          pending: { p1: false, p2: false },
-          players: {
-            p1: { id: state.playerId, pseudo, deck: p1Deck, connectedAt: Date.now() },
-            p2: { id: null, pseudo: null, deck: p2Deck, connectedAt: null }
+          table: {
+            p1: null,
+            p2: null
           },
-          lastMessage: `${pseudo} attend un adversaire.`
+          played: {
+            p1: false,
+            p2: false
+          },
+          lastRound: {
+            p1: null,
+            p2: null,
+            message: ''
+          },
+          players: {
+            p1: {
+              id: state.playerId,
+              pseudo,
+              deck: deck.slice(0, 26),
+              connectedAt: Date.now()
+            },
+            p2: {
+              id: null,
+              pseudo: null,
+              deck: deck.slice(26),
+              connectedAt: null
+            }
+          }
         };
 
         await set(ref(db, `rooms/${roomId}`), room);
         enterRoom(roomId, 'p1', pseudo);
       } catch (error) {
         console.error(error);
-        showHomeError('Impossible de créer le salon. Vérifie les règles Firebase.');
+        showHomeError('Impossible de créer le salon. Vérifie Firebase.');
       } finally {
         setButtonsLoading(false);
       }
@@ -433,7 +461,7 @@
         await update(ref(db, `rooms/${roomId}`), {
           status: 'playing',
           updatedAt: Date.now(),
-          lastMessage: `${pseudo} a rejoint. La partie peut commencer.`,
+          lastMessage: `${pseudo} a rejoint. La partie commence.`,
           'players/p2/id': state.playerId,
           'players/p2/pseudo': pseudo,
           'players/p2/connectedAt': Date.now()
@@ -463,8 +491,7 @@
 
       if (state.roomUnsub) state.roomUnsub();
 
-      const roomRef = ref(db, `rooms/${roomId}`);
-      state.roomUnsub = onValue(roomRef, (snap) => {
+      state.roomUnsub = onValue(ref(db, `rooms/${roomId}`), (snap) => {
         if (!snap.exists()) {
           resetToHome('Le salon a été supprimé.');
           return;
@@ -474,52 +501,12 @@
         renderGame();
       }, (error) => {
         console.error(error);
-        resetToHome('Connexion au salon impossible. Vérifie Firebase.');
+        resetToHome('Connexion au salon impossible.');
       });
-    }
-
-    async function leaveRoom() {
-      try {
-        if (state.roomId && state.playerKey) {
-          await update(ref(db, `rooms/${state.roomId}`), {
-            [`players/${state.playerKey}/id`]: null,
-            [`players/${state.playerKey}/pseudo`]: null,
-            status: 'abandoned',
-            lastMessage: `${state.pseudo} a quitté la partie.`,
-            updatedAt: Date.now()
-          });
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        resetToHome('');
-      }
-    }
-
-    function resetToHome(message) {
-      if (state.roomUnsub) state.roomUnsub();
-      state.roomUnsub = null;
-      state.roomId = null;
-      state.playerKey = null;
-      state.room = null;
-      state.localLock = false;
-      playBtn.disabled = false;
-      gameScreen.classList.remove('active');
-      homeScreen.classList.add('active');
-      showHomeError(message || '');
-      loadRanking();
     }
 
     async function playMyCard() {
       if (!state.room || !state.playerKey || state.localLock) return;
-
-      const room = state.room;
-      const myDeckLength = room.players?.[state.playerKey]?.deck?.length || 0;
-
-      if (room.status !== 'playing') return;
-      if (room.pending?.[state.playerKey]) return;
-      if (!room.players?.p1?.id || !room.players?.p2?.id) return;
-      if (myDeckLength <= 0) return;
 
       state.localLock = true;
       playBtn.disabled = true;
@@ -527,66 +514,72 @@
       try {
         const roomRef = ref(db, `rooms/${state.roomId}`);
 
-        await runTransaction(roomRef, (current) => {
-          if (!current || current.status !== 'playing') return current;
-          if (!current.players?.p1?.id || !current.players?.p2?.id) return current;
-          if (current.pending?.[state.playerKey]) return current;
+        const result = await runTransaction(roomRef, (room) => {
+          if (!room || room.status !== 'playing') return room;
+          if (!room.players?.p1?.id || !room.players?.p2?.id) return room;
+          if (room.played?.[state.playerKey]) return room;
 
-          const player = current.players[state.playerKey];
-          if (!player?.deck?.length) return current;
+          const player = room.players[state.playerKey];
+          if (!player?.deck?.length) return room;
 
           const card = player.deck.shift();
-          current.players[state.playerKey].deck = player.deck;
-          current.visible[state.playerKey] = card;
-          current.pending[state.playerKey] = true;
-          current.updatedAt = Date.now();
-          current.lastMessage = `${player.pseudo} a joué.`;
 
-          return current;
+          room.players[state.playerKey].deck = player.deck;
+          room.table[state.playerKey] = card;
+          room.played[state.playerKey] = true;
+          room.lastRound = { p1: null, p2: null, message: '' };
+          room.lastMessage = `${player.pseudo} a posé sa carte.`;
+          room.updatedAt = Date.now();
+
+          const bothPlayed = room.played.p1 && room.played.p2 && room.table.p1 && room.table.p2;
+          if (bothPlayed) {
+            resolveRound(room);
+          }
+
+          return room;
         });
 
-        await maybeResolveRound();
+        if (!result.committed) {
+          statusText.textContent = 'Action refusée par Firebase.';
+        }
       } catch (error) {
         console.error(error);
-        statusText.textContent = 'Erreur pendant le tour. Vérifie Firebase.';
+        statusText.textContent = 'Erreur pendant le tour. Regarde la console.';
       } finally {
         state.localLock = false;
         if (state.room) renderGame();
       }
     }
 
-    async function maybeResolveRound() {
-      const roomRef = ref(db, `rooms/${state.roomId}`);
+    function resolveRound(room) {
+      const p1Card = room.table.p1;
+      const p2Card = room.table.p2;
 
-      await runTransaction(roomRef, (room) => {
-        if (!room || room.status !== 'playing') return room;
-        if (!room.pending?.p1 || !room.pending?.p2) return room;
+      room.turnNumber = (room.turnNumber || 0) + 1;
+      room.pot = [...(room.pot || []), p1Card, p2Card];
+      room.lastRound = {
+        p1: p1Card,
+        p2: p2Card,
+        message: ''
+      };
 
-        const p1Card = room.visible?.p1;
-        const p2Card = room.visible?.p2;
-        if (!p1Card || !p2Card) return room;
+      if (p1Card.value > p2Card.value) {
+        givePotTo(room, 'p1', `${room.players.p1.pseudo} gagne la manche avec ${cardName(p1Card)} contre ${cardName(p2Card)}.`);
+      } else if (p2Card.value > p1Card.value) {
+        givePotTo(room, 'p2', `${room.players.p2.pseudo} gagne la manche avec ${cardName(p2Card)} contre ${cardName(p1Card)}.`);
+      } else {
+        resolveWar(room);
+      }
 
-        room.turnNumber = (room.turnNumber || 0) + 1;
-        room.pot = [...(room.pot || []), p1Card, p2Card];
+      room.table = { p1: null, p2: null };
+      room.played = { p1: false, p2: false };
+      room.updatedAt = Date.now();
 
-        if (p1Card.value > p2Card.value) {
-          awardPot(room, 'p1', `${room.players.p1.pseudo} gagne la manche.`);
-        } else if (p2Card.value > p1Card.value) {
-          awardPot(room, 'p2', `${room.players.p2.pseudo} gagne la manche.`);
-        } else {
-          resolveBattle(room);
-        }
-
-        room.visible = { p1: null, p2: null };
-        room.pending = { p1: false, p2: false };
-        room.updatedAt = Date.now();
-
-        checkGameOver(room);
-        return room;
-      });
+      checkGameOver(room);
     }
 
-    function resolveBattle(room) {
+    function resolveWar(room) {
+      let message = `Bataille entre ${cardName(room.lastRound.p1)} et ${cardName(room.lastRound.p2)} ! `;
       let safety = 0;
 
       while (safety < 20) {
@@ -595,61 +588,75 @@
         const p1 = room.players.p1;
         const p2 = room.players.p2;
 
-        const p1Hidden = p1.deck.shift() || null;
-        const p2Hidden = p2.deck.shift() || null;
-        const p1Visible = p1.deck.shift() || null;
-        const p2Visible = p2.deck.shift() || null;
-
-        if (p1Hidden) room.pot.push({ ...p1Hidden, hidden: true });
-        if (p2Hidden) room.pot.push({ ...p2Hidden, hidden: true });
-
-        if (!p1Visible && !p2Visible) {
-          room.lastMessage = 'Bataille impossible : égalité finale.';
+        if (!p1.deck?.length && !p2.deck?.length) {
+          room.lastMessage = message + 'Plus personne ne peut jouer. La pile reste au centre.';
+          room.lastRound.message = room.lastMessage;
           return;
         }
 
-        if (!p1Visible) {
-          awardPot(room, 'p2', `${p1.pseudo} ne peut plus continuer la bataille.`);
+        if (!p1.deck?.length) {
+          givePotTo(room, 'p2', message + `${p1.pseudo} n’a plus de carte. ${p2.pseudo} gagne la bataille.`);
           return;
         }
 
-        if (!p2Visible) {
-          awardPot(room, 'p1', `${p2.pseudo} ne peut plus continuer la bataille.`);
+        if (!p2.deck?.length) {
+          givePotTo(room, 'p1', message + `${p2.pseudo} n’a plus de carte. ${p1.pseudo} gagne la bataille.`);
           return;
         }
 
+        const p1Hidden = p1.deck.shift();
+        const p2Hidden = p2.deck.shift();
+        room.pot.push({ ...p1Hidden, hidden: true }, { ...p2Hidden, hidden: true });
+
+        if (!p1.deck?.length) {
+          givePotTo(room, 'p2', message + `${p1.pseudo} pose une carte cachée mais n’a plus de carte visible. ${p2.pseudo} gagne.`);
+          return;
+        }
+
+        if (!p2.deck?.length) {
+          givePotTo(room, 'p1', message + `${p2.pseudo} pose une carte cachée mais n’a plus de carte visible. ${p1.pseudo} gagne.`);
+          return;
+        }
+
+        const p1Visible = p1.deck.shift();
+        const p2Visible = p2.deck.shift();
         room.pot.push(p1Visible, p2Visible);
-        room.battlePreview = { p1: p1Visible, p2: p2Visible };
+        room.lastRound = {
+          p1: p1Visible,
+          p2: p2Visible,
+          message: ''
+        };
 
         if (p1Visible.value > p2Visible.value) {
-          awardPot(room, 'p1', `Bataille ! ${p1.pseudo} remporte la pile.`);
+          givePotTo(room, 'p1', message + `${p1.pseudo} retourne ${cardName(p1Visible)} contre ${cardName(p2Visible)} et gagne toute la pile.`);
           return;
         }
 
         if (p2Visible.value > p1Visible.value) {
-          awardPot(room, 'p2', `Bataille ! ${p2.pseudo} remporte la pile.`);
+          givePotTo(room, 'p2', message + `${p2.pseudo} retourne ${cardName(p2Visible)} contre ${cardName(p1Visible)} et gagne toute la pile.`);
           return;
         }
 
-        room.lastMessage = 'Double bataille ! On continue.';
+        message += `Nouvelle égalité avec ${cardName(p1Visible)} et ${cardName(p2Visible)}. `;
       }
 
-      room.lastMessage = 'Bataille trop longue, la pile reste au centre.';
+      room.lastMessage = 'Bataille trop longue. La pile reste au centre.';
+      room.lastRound.message = room.lastMessage;
     }
 
-    function awardPot(room, winnerKey, message) {
-      const won = shuffle([...(room.pot || [])].map(({ hidden, ...card }) => card));
-      room.players[winnerKey].deck = [...(room.players[winnerKey].deck || []), ...won];
+    function givePotTo(room, winnerKey, message) {
+      const cleanPot = (room.pot || []).map(({ hidden, ...card }) => card);
+      room.players[winnerKey].deck = [...(room.players[winnerKey].deck || []), ...shuffle(cleanPot)];
       room.pot = [];
-      room.battlePreview = null;
       room.lastMessage = message;
+      room.lastRound.message = message;
     }
 
     function checkGameOver(room) {
       const p1Count = room.players.p1.deck?.length || 0;
       const p2Count = room.players.p2.deck?.length || 0;
-      let winnerKey = null;
 
+      let winnerKey = null;
       if (p1Count === 52 || p2Count === 0) winnerKey = 'p1';
       if (p2Count === 52 || p1Count === 0) winnerKey = 'p2';
 
@@ -691,6 +698,7 @@
       const my = room.players?.[state.playerKey];
       const otherKey = state.playerKey === 'p1' ? 'p2' : 'p1';
       const other = room.players?.[otherKey];
+      const roomReady = !!room.players?.p1?.id && !!room.players?.p2?.id;
 
       copyRoomBtn.textContent = room.id || state.roomId;
       myName.textContent = my?.pseudo || 'Toi';
@@ -698,22 +706,32 @@
       myCount.textContent = my?.deck?.length || 0;
       opponentCount.textContent = other?.deck?.length || 0;
 
-      const roomReady = !!room.players?.p1?.id && !!room.players?.p2?.id;
+      statusText.textContent = room.lastMessage || 'Partie en cours.';
+      roundMessage.textContent = room.lastMessage || 'Joue ta carte.';
 
       opponentReady.textContent = roomReady ? 'Connecté' : 'En attente';
       opponentReady.className = roomReady
         ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700'
         : 'rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-500 pulse-wait';
 
-      statusText.textContent = room.lastMessage || 'Partie en cours.';
-      roundMessage.textContent = room.lastMessage || 'Joue ta carte.';
+      const myTableCard = room.table?.[state.playerKey] || room.lastRound?.[state.playerKey];
+      const otherTableCard = room.table?.[otherKey] || room.lastRound?.[otherKey];
 
-      renderCard(myCardSlot, room.visible?.[state.playerKey]);
-      renderCard(opponentCardSlot, room.visible?.[otherKey]);
-      renderBattleStack(room);
+      renderCard(myCardSlot, myTableCard, false);
 
-      const iHavePlayed = !!room.pending?.[state.playerKey];
-      const otherHasPlayed = !!room.pending?.[otherKey];
+      if (room.table?.[otherKey]) {
+        renderCard(opponentCardSlot, room.table[otherKey], false);
+      } else if (room.lastRound?.[otherKey]) {
+        renderCard(opponentCardSlot, room.lastRound[otherKey], false);
+      } else {
+        renderCard(opponentCardSlot, null, true);
+      }
+
+      renderCard(nextCardSlot, my?.deck?.[0] || null, false);
+      renderPot(room);
+
+      const iHavePlayed = !!room.played?.[state.playerKey];
+      const otherHasPlayed = !!room.played?.[otherKey];
       const canPlay = room.status === 'playing' && roomReady && !iHavePlayed && (my?.deck?.length || 0) > 0;
 
       playBtn.disabled = !canPlay || state.localLock;
@@ -728,8 +746,8 @@
         turnBadge.textContent = 'Abandon';
         playBtn.textContent = 'Partie quittée';
       } else if (iHavePlayed && !otherHasPlayed) {
-        turnBadge.textContent = 'Attente';
-        playBtn.textContent = 'L’autre joueur doit jouer';
+        turnBadge.textContent = 'Carte posée';
+        playBtn.textContent = 'En attente de l’autre joueur';
       } else if (!iHavePlayed && otherHasPlayed) {
         turnBadge.textContent = 'À toi';
         playBtn.textContent = 'Jouer ma carte';
@@ -741,12 +759,22 @@
       registerWinIfNeeded();
     }
 
-    function renderCard(container, card) {
+    function renderCard(container, card, forceBack = false) {
       container.innerHTML = '';
+
+      if (forceBack) {
+        const back = backEl();
+        back.classList.add('opacity-60');
+        container.appendChild(back);
+        return;
+      }
 
       if (!card) {
         const empty = document.createElement('div');
-        empty.className = 'playing-card card-back opacity-30';
+        empty.className = 'grid place-items-center rounded-2xl bg-white/45 px-4 py-6 text-center text-xs font-black text-slate-400';
+        empty.style.width = 'var(--card-w)';
+        empty.style.minHeight = 'var(--card-h)';
+        empty.textContent = 'Aucune carte';
         container.appendChild(empty);
         return;
       }
@@ -754,26 +782,22 @@
       container.appendChild(cardEl(card));
     }
 
-    function renderBattleStack(room) {
-      battleStack.innerHTML = '';
+    function renderPot(room) {
+      potStack.innerHTML = '';
 
       const pot = room.pot || [];
-      const preview = room.battlePreview;
-
-      if (!pot.length && !preview) {
+      if (!pot.length) {
         const hint = document.createElement('div');
         hint.className = 'rounded-2xl bg-white/60 px-4 py-3 text-xs font-black text-slate-500';
         hint.textContent = 'Pile centrale vide';
-        battleStack.appendChild(hint);
+        potStack.appendChild(hint);
         return;
       }
 
-      pot.slice(-8).forEach((card) => {
+      pot.slice(-10).forEach((card) => {
         const el = card.hidden ? backEl() : cardEl(card);
-        el.style.width = '38px';
-        el.style.height = '54px';
-        el.style.borderRadius = '10px';
-        battleStack.appendChild(el);
+        el.classList.add('small-card');
+        potStack.appendChild(el);
       });
     }
 
@@ -795,6 +819,38 @@
       const el = document.createElement('div');
       el.className = 'playing-card card-back';
       return el;
+    }
+
+    async function leaveRoom() {
+      try {
+        if (state.roomId && state.playerKey) {
+          await update(ref(db, `rooms/${state.roomId}`), {
+            [`players/${state.playerKey}/id`]: null,
+            [`players/${state.playerKey}/pseudo`]: null,
+            status: 'abandoned',
+            lastMessage: `${state.pseudo} a quitté la partie.`,
+            updatedAt: Date.now()
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        resetToHome('');
+      }
+    }
+
+    function resetToHome(message) {
+      if (state.roomUnsub) state.roomUnsub();
+      state.roomUnsub = null;
+      state.roomId = null;
+      state.playerKey = null;
+      state.room = null;
+      state.localLock = false;
+      playBtn.disabled = false;
+      gameScreen.classList.remove('active');
+      homeScreen.classList.add('active');
+      showHomeError(message || '');
+      loadRanking();
     }
 
     async function loadRanking() {
@@ -849,18 +905,6 @@
       return crypto.randomUUID().slice(0, 6).toUpperCase();
     }
 
-    function getOrCreateDeviceId() {
-      const key = 'batailleDeviceId';
-      let id = localStorage.getItem(key);
-
-      if (!id) {
-        id = crypto.randomUUID();
-        localStorage.setItem(key, id);
-      }
-
-      return id;
-    }
-
     function getPseudoOrWarn() {
       const pseudo = pseudoInput.value.trim().slice(0, 18);
 
@@ -891,6 +935,23 @@
       } catch {
         statusText.textContent = `ID du salon : ${state.roomId}`;
       }
+    }
+
+    function getOrCreateDeviceId() {
+      const key = 'batailleDeviceId';
+      let id = localStorage.getItem(key);
+
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem(key, id);
+      }
+
+      return id;
+    }
+
+    function cardName(card) {
+      if (!card) return 'aucune carte';
+      return `${card.label}${card.suit}`;
     }
 
     function slugify(value) {
