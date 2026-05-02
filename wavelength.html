@@ -178,6 +178,14 @@
     .needle.locked { stroke: rgba(248,247,255,.58); }
     .hub { fill: #ff4d6d; filter: drop-shadow(0 5px 10px rgba(0,0,0,.35)); }
 
+    #targetZones {
+      transition: opacity .25s ease;
+    }
+
+    #targetZones.hidden-target {
+      opacity: 0;
+    }
+
     .cover {
       position: absolute;
       inset: 0;
@@ -391,7 +399,7 @@
       Colle ta vraie config Firebase ici.
       Realtime Database doit être activé dans Firebase.
     */
-const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -475,7 +483,11 @@ const firebaseConfig = {
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    function randomTarget() { return Math.round(8 + Math.random() * 164); }
+    function randomTarget() {
+      /* Centre de la cible entre 28° et 152° pour que les 5 zones restent visibles.
+         La cible change à chaque nouvelle salle et à chaque manche. */
+      return Math.round(28 + Math.random() * 124);
+    }
     function randomPair() { return pairs[Math.floor(Math.random() * pairs.length)]; }
 
     function initialRoomData() {
@@ -658,6 +670,10 @@ const firebaseConfig = {
 
       const reveal = d.phase === "reveal";
       const hideTarget = !master && !reveal;
+
+      /* Le Devin ne doit jamais voir l'échelle jaune/orange/rouge avant le reveal.
+         On masque donc réellement le SVG, pas seulement avec le volet visuel. */
+      els.targetZones.classList.toggle("hidden-target", hideTarget);
       els.cover.classList.toggle("open", !hideTarget);
 
       els.masterControls.classList.toggle("hidden", !master || d.phase !== "clue");
@@ -761,10 +777,14 @@ const firebaseConfig = {
         return;
       }
       const p = (d.mode || "auto") === "auto" ? randomPair() : [d.left, d.right];
+      let nextTarget = randomTarget();
+      if (Math.abs(nextTarget - (d.targetValue || 90)) < 25) {
+        nextTarget = nextTarget < 90 ? nextTarget + 45 : nextTarget - 45;
+      }
       await patch({
         round: d.round + 1,
         phase: "clue",
-        targetValue: randomTarget(),
+        targetValue: nextTarget,
         guessValue: 90,
         clue: "",
         left: p[0],
