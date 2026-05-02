@@ -277,6 +277,10 @@
       const text = String(error?.message || error || 'Erreur inconnue');
       if (text.includes('PERMISSION_DENIED')) return 'Permission refusée par Realtime Database. Modifiez les règles de test.';
       if (text.includes('Firebase ne répond pas')) return text;
+      if (text.includes('Partie introuvable')) return text;
+      if (text.includes('déjà commencé')) return text;
+      if (text.includes('déjà complète')) return text;
+      if (text.includes('vient peut-être')) return text;
       return `Erreur Firebase : ${text}`;
     }
 
@@ -455,22 +459,53 @@
 
       setState({ loading: true });
       try {
+        const snap = await withTimeout(
+          get(gameRef(id)),
+          10000,
+          'Firebase ne répond pas. Vérifiez Realtime Database et ses règles.'
+        );
+
+        if (!snap.exists()) throw new Error('Partie introuvable. Vérifiez le Game ID exact.');
+
+        const existingGame = snap.val();
+        if (existingGame.status !== 'lobby') {
+          throw new Error('Cette partie a déjà commencé ou est terminée. Créez une nouvelle partie.');
+        }
+        if (!Array.isArray(existingGame.players) || existingGame.players.length !== 1) {
+          throw new Error('Cette partie est déjà complète ou invalide.');
+        }
+
         const playerId = uid('player');
         const result = await withTimeout(runTransaction(gameRef(id), game => {
-          if (!game) return;
-          if (game.status !== 'lobby') return;
-          if (!Array.isArray(game.players) || game.players.length !== 1) return;
+          // Important : avec Realtime Database, le premier passage peut être null si le cache local est vide.
+          // On retourne le jeu sans modification dans ce cas, puis le SDK relance avec la valeur serveur.
+          if (game === null) return game;
 
-          const hand = game.deck.splice(0, 7);
-          game.players.push({ id: playerId, name, hand, score: 0, unoSafe: false });
-          game.status = 'playing';
-          game.turnIndex = Math.floor(Math.random() * 2);
-          game.lastAction = `${name} a rejoint la partie. La manche commence !`;
-          game.updatedAt = Date.now();
-          return game;
+          if (game.status !== 'lobby') return game;
+          if (!Array.isArray(game.players) || game.players.length !== 1) return game;
+
+          const deck = Array.isArray(game.deck) ? [...game.deck] : [];
+          const hand = deck.splice(0, 7);
+
+          return {
+            ...game,
+            deck,
+            players: [
+              game.players[0],
+              { id: playerId, name, hand, score: 0, unoSafe: false }
+            ],
+            status: 'playing',
+            turnIndex: Math.floor(Math.random() * 2),
+            lastAction: `${name} a rejoint la partie. La manche commence !`,
+            updatedAt: Date.now()
+          };
         }), 10000, 'Firebase ne répond pas. Vérifiez Realtime Database et ses règles.');
 
-        if (!result.committed) throw new Error('Partie introuvable, déjà commencée ou complète.');
+        const finalGame = result.snapshot.val();
+        const joined = finalGame?.players?.some(player => player.id === playerId);
+        if (!result.committed || !joined) {
+          throw new Error('Impossible de rejoindre : la partie vient peut-être d’être prise par quelqu’un d’autre.');
+        }
 
         state.gameId = id;
         state.playerId = playerId;
