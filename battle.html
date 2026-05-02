@@ -324,7 +324,33 @@
       setState({ message });
       window.setTimeout(() => {
         if (state.message === message) setState({ message: '' });
-      }, 2600);
+      }, 5200);
+    }
+
+    function withTimeout(promise, ms, timeoutMessage) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          window.setTimeout(() => reject(new Error(timeoutMessage)), ms);
+        })
+      ]);
+    }
+
+    function firebaseErrorMessage(error) {
+      const raw = String(error?.message || error || '');
+      const code = String(error?.code || '');
+
+      if (code.includes('permission-denied') || raw.includes('permission-denied')) {
+        return 'Permission refusée par Firestore. Publiez des règles de test qui autorisent /games.';
+      }
+      if (code.includes('unavailable') || raw.includes('unavailable')) {
+        return 'Firestore indisponible. Vérifiez votre connexion et que Firestore est activé.';
+      }
+      if (raw.includes('Firebase ne répond pas')) return raw;
+      if (raw.includes('Missing or insufficient permissions')) {
+        return 'Règles Firestore trop restrictives : Missing or insufficient permissions.';
+      }
+      return `Erreur Firebase : ${raw}`;
     }
 
     function sanitizeGameId(value) {
@@ -546,7 +572,15 @@
 
       setState({ loading: true });
       try {
-        await setDoc(gameRef(id), dealGame(id, player));
+        const ref = gameRef(id);
+        console.info('[UNO] Création partie Firestore:', id, ref.path);
+
+        await withTimeout(
+          setDoc(ref, dealGame(id, player)),
+          10000,
+          'Firebase ne répond pas. Vérifiez Firestore, les règles et la connexion réseau.'
+        );
+
         state.gameId = id;
         state.playerId = playerId;
         state.playerName = name;
@@ -554,9 +588,9 @@
         listenGame(id);
         setState({ screen: 'lobby', loading: false });
       } catch (error) {
-        console.error(error);
+        console.error('[UNO] Erreur création partie:', error);
         setState({ loading: false });
-        toast('Impossible de créer la partie. Vérifiez Firebase.');
+        toast(firebaseErrorMessage(error));
       }
     }
 
