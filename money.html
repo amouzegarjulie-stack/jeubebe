@@ -110,7 +110,7 @@
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
     // Configuration Firebase à remplir.
- const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -325,13 +325,18 @@
     }
 
     async function joinRoom(roomId) {
+      if (!initFirebaseIfReady()) {
+        renderFirebaseMissing();
+        return;
+      }
+
       const snapshot = await get(ref(db, `compteDiscordeRooms/${roomId}`));
 
       if (!snapshot.exists()) {
         local.roomId = '';
         replaceUrlWithRoom('');
-        toast('Partie introuvable. Une nouvelle recherche va commencer.');
-        await findOrCreateRoom(local.pseudo);
+        renderHome();
+        toast('Salon introuvable. Vérifie le code.');
         return;
       }
 
@@ -621,6 +626,15 @@
       document.querySelector('#joinCodeBtn').addEventListener('click', async () => {
         const code = roomCodeInput.value.trim().toUpperCase();
         if (!code) return toast('Entre un code de salon.');
+
+        local.pseudo = sanitizePseudo(pseudoInput.value);
+        localStorage.setItem('lcd_pseudo', local.pseudo);
+
+        if (!initFirebaseIfReady()) {
+          renderFirebaseMissing();
+          return;
+        }
+
         renderLoading('Connexion au salon...');
         local.roomId = code;
         await joinRoom(code);
