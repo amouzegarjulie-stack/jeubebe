@@ -99,6 +99,8 @@
       box-shadow: 0 14px 28px rgba(123,223,242,.2);
     }
 
+    .btn:active { transform: scale(.98); }
+
     .btn.secondary {
       color: var(--text);
       background: rgba(255,255,255,.1);
@@ -175,13 +177,8 @@
 
     .hub { fill: #ff4d6d; filter: drop-shadow(0 5px 10px rgba(0,0,0,.35)); }
 
-    #targetZones {
-      transition: opacity .25s ease;
-    }
-
-    #targetZones.hidden-target {
-      opacity: 0;
-    }
+    #targetZones { transition: opacity .25s ease; }
+    #targetZones.hidden-target { opacity: 0; }
 
     .clue-card {
       padding: 14px;
@@ -397,21 +394,50 @@
     const $ = id => document.getElementById(id);
 
     const els = {
-      homeView: $("homeView"), joinView: $("joinView"), lobbyView: $("lobbyView"),
-      gameView: $("gameView"), finalView: $("finalView"), roomInput: $("roomInput"),
-      roomLabel: $("roomLabel"), roleLabel: $("roleLabel"), roundLabel: $("roundLabel"),
-      totalLabel: $("totalLabel"), targetZones: $("targetZones"), ticks: $("ticks"),
-      dialBg: $("dialBg"), needle: $("needle"), wheelWrap: $("wheelWrap"),
-      clueText: $("clueText"), masterControls: $("masterControls"), guesserControls: $("guesserControls"),
-      clueInput: $("clueInput"), leftInput: $("leftInput"), rightInput: $("rightInput"),
-      leftWord: $("leftWord"), rightWord: $("rightWord"), sendClue: $("sendClue"),
-      lockGuess: $("lockGuess"), nextRound: $("nextRound"), gameHint: $("gameHint"),
-      scoreStrip: $("scoreStrip"), finalScore: $("finalScore"), finalText: $("finalText"),
-      newGame: $("newGame"), settingsModal: $("settingsModal"), settingsBtn: $("settingsBtn"),
-      closeSettings: $("closeSettings"), modeSelect: $("modeSelect"), connectionState: $("connectionState"),
-      joinError: $("joinError"), createRoomBtn: $("createRoomBtn"), showJoinBtn: $("showJoinBtn"),
-      joinRoomBtn: $("joinRoomBtn"), backHomeBtn: $("backHomeBtn"), bigCode: $("bigCode"),
-      startAsMasterBtn: $("startAsMasterBtn"), copyLinkBtn: $("copyLinkBtn")
+      homeView: $("homeView"),
+      joinView: $("joinView"),
+      lobbyView: $("lobbyView"),
+      gameView: $("gameView"),
+      finalView: $("finalView"),
+      roomInput: $("roomInput"),
+      roomLabel: $("roomLabel"),
+      roleLabel: $("roleLabel"),
+      roundLabel: $("roundLabel"),
+      totalLabel: $("totalLabel"),
+      targetZones: $("targetZones"),
+      ticks: $("ticks"),
+      dialBg: $("dialBg"),
+      needle: $("needle"),
+      wheelWrap: $("wheelWrap"),
+      clueText: $("clueText"),
+      masterControls: $("masterControls"),
+      guesserControls: $("guesserControls"),
+      clueInput: $("clueInput"),
+      leftInput: $("leftInput"),
+      rightInput: $("rightInput"),
+      leftWord: $("leftWord"),
+      rightWord: $("rightWord"),
+      sendClue: $("sendClue"),
+      lockGuess: $("lockGuess"),
+      nextRound: $("nextRound"),
+      gameHint: $("gameHint"),
+      scoreStrip: $("scoreStrip"),
+      finalScore: $("finalScore"),
+      finalText: $("finalText"),
+      newGame: $("newGame"),
+      settingsModal: $("settingsModal"),
+      settingsBtn: $("settingsBtn"),
+      closeSettings: $("closeSettings"),
+      modeSelect: $("modeSelect"),
+      connectionState: $("connectionState"),
+      joinError: $("joinError"),
+      createRoomBtn: $("createRoomBtn"),
+      showJoinBtn: $("showJoinBtn"),
+      joinRoomBtn: $("joinRoomBtn"),
+      backHomeBtn: $("backHomeBtn"),
+      bigCode: $("bigCode"),
+      startAsMasterBtn: $("startAsMasterBtn"),
+      copyLinkBtn: $("copyLinkBtn")
     };
 
     const state = {
@@ -443,7 +469,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.type = "sine";
       osc.frequency.value = type === "reveal" ? 880 : 660;
 
@@ -456,14 +481,24 @@
     }
 
     function show(view) {
-      [els.homeView, els.joinView, els.lobbyView, els.gameView, els.finalView].forEach(v => v.classList.add("hidden"));
+      [els.homeView, els.joinView, els.lobbyView, els.gameView, els.finalView].forEach(v => {
+        v.classList.add("hidden");
+      });
+
       view.classList.remove("hidden");
-      if (view === els.finalView) view.classList.add("show");
-      else els.finalView.classList.remove("show");
+
+      if (view === els.finalView) {
+        view.classList.add("show");
+      } else {
+        els.finalView.classList.remove("show");
+      }
     }
 
     function configLooksValid() {
-      return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("COLLE") && firebaseConfig.projectId && !firebaseConfig.projectId.includes("TON_PROJET");
+      return firebaseConfig.apiKey &&
+        !firebaseConfig.apiKey.includes("COLLE") &&
+        firebaseConfig.projectId &&
+        !firebaseConfig.projectId.includes("TON_PROJET");
     }
 
     function initFirebase() {
@@ -473,7 +508,10 @@
       }
 
       try {
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
         state.db = firebase.database();
         els.connectionState.textContent = "Firebase connecté.";
         return true;
@@ -485,6 +523,7 @@
     }
 
     function roomRef() {
+      if (!state.db || !state.room) return null;
       return state.db.ref("wavelengthRooms/" + state.room);
     }
 
@@ -507,6 +546,7 @@
 
     function initialRoomData() {
       const p = randomPair();
+
       return {
         round: 1,
         total: 0,
@@ -531,8 +571,13 @@
 
       state.room = codeRoom();
       state.role = "master";
-      await roomRef().set(initialRoomData());
+
+      const ref = roomRef();
+      if (!ref) return;
+
+      await ref.set(initialRoomData());
       history.replaceState(null, "", "?room=" + encodeURIComponent(state.room));
+
       els.bigCode.textContent = state.room;
       els.roomLabel.textContent = "Salle " + state.room;
       show(els.lobbyView);
@@ -551,7 +596,11 @@
       }
 
       state.room = code;
-      const snap = await roomRef().once("value");
+
+      const ref = roomRef();
+      if (!ref) return;
+
+      const snap = await ref.once("value");
       if (!snap.exists()) {
         els.joinError.textContent = "Salle introuvable.";
         return;
@@ -563,10 +612,16 @@
     }
 
     function startGame() {
+      const ref = roomRef();
+      if (!ref) return;
+
       els.roomLabel.textContent = "Salle " + state.room;
 
-      if (state.roomListener) state.roomListener.off();
-      state.roomListener = roomRef();
+      if (state.roomListener) {
+        state.roomListener.off();
+      }
+
+      state.roomListener = ref;
       state.roomListener.on("value", snap => {
         state.data = snap.val();
         if (state.data) render();
@@ -576,33 +631,45 @@
     }
 
     async function patch(data) {
-      if (!state.db || !state.room) return;
-      await roomRef().update(data);
+      const ref = roomRef();
+      if (!ref) return;
+      await ref.update(data);
     }
 
     function polar(angle, r = 100) {
       const rad = (angle - 180) * Math.PI / 180;
-      return { x: Math.cos(rad) * r, y: Math.sin(rad) * r };
+      return {
+        x: Math.cos(rad) * r,
+        y: Math.sin(rad) * r
+      };
     }
 
     function arcPath(start, end, inner, outer) {
-      const a = polar(start, outer), b = polar(end, outer), c = polar(end, inner), d = polar(start, inner);
+      const a = polar(start, outer);
+      const b = polar(end, outer);
+      const c = polar(end, inner);
+      const d = polar(start, inner);
       const large = end - start > 180 ? 1 : 0;
+
       return `M ${a.x} ${a.y} A ${outer} ${outer} 0 ${large} 1 ${b.x} ${b.y} L ${c.x} ${c.y} A ${inner} ${inner} 0 ${large} 0 ${d.x} ${d.y} Z`;
     }
 
     function drawBase() {
       els.dialBg.setAttribute("d", arcPath(0, 180, 0, 104));
       els.ticks.innerHTML = "";
+
       for (let a = 0; a <= 180; a += 15) {
-        const p1 = polar(a, 101), p2 = polar(a, a % 45 === 0 ? 88 : 94);
+        const p1 = polar(a, 101);
+        const p2 = polar(a, a % 45 === 0 ? 88 : 94);
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
         line.setAttribute("x1", p1.x);
         line.setAttribute("y1", p1.y);
         line.setAttribute("x2", p2.x);
         line.setAttribute("y2", p2.y);
         line.setAttribute("stroke", "rgba(255,255,255,.22)");
         line.setAttribute("stroke-width", a % 45 === 0 ? "2" : "1");
+
         els.ticks.appendChild(line);
       }
     }
@@ -628,6 +695,7 @@
         path.setAttribute("d", arcPath(start, end, 42, 102));
         path.setAttribute("fill", z.color);
         path.setAttribute("opacity", ".95");
+
         els.targetZones.appendChild(path);
       });
     }
@@ -654,6 +722,7 @@
 
     function renderScores(scores) {
       els.scoreStrip.innerHTML = "";
+
       for (let i = 0; i < 5; i++) {
         const box = document.createElement("div");
         box.className = "score-box" + (scores[i] !== undefined ? " done" : "");
@@ -675,28 +744,7 @@
 
       show(els.gameView);
 
-    const master = isCurrentMaster();
-const reveal = d.phase === "reveal";
-const hideTarget = !master && !reveal;
-
-els.targetZones.classList.toggle("hidden-target", hideTarget);
-
-if (hideTarget) {
-  els.targetZones.innerHTML = "";
-} else {
-  drawTarget(d.targetValue || 90);
-}
-
-setNeedle(d.guessValue ?? 90);
-
-      els.roleLabel.textContent = master ? "Maître" : "Devin";
-      els.roundLabel.textContent = "Manche " + d.round + "/5";
-      els.totalLabel.textContent = (d.total || 0) + " pts";
-      els.leftWord.textContent = d.left || "";
-      els.rightWord.textContent = d.right || "";
-      els.clueText.textContent = d.clue || (master ? "Écris un indice" : "En attente de l'indice");
-      els.modeSelect.value = d.mode || "auto";
-
+      const master = isCurrentMaster();
       const reveal = d.phase === "reveal";
       const hideTarget = !master && !reveal;
       const phaseKey = d.round + "-" + d.phase;
@@ -714,6 +762,22 @@ setNeedle(d.guessValue ?? 90);
       lastPhaseSeen = phaseKey;
 
       els.targetZones.classList.toggle("hidden-target", hideTarget);
+
+      if (hideTarget) {
+        els.targetZones.innerHTML = "";
+      } else {
+        drawTarget(d.targetValue || 90);
+      }
+
+      setNeedle(d.guessValue ?? 90);
+
+      els.roleLabel.textContent = master ? "Maître" : "Devin";
+      els.roundLabel.textContent = "Manche " + (d.round || 1) + "/5";
+      els.totalLabel.textContent = (d.total || 0) + " pts";
+      els.leftWord.textContent = d.left || "";
+      els.rightWord.textContent = d.right || "";
+      els.clueText.textContent = d.clue || (master ? "Écris un indice" : "En attente de l'indice");
+      els.modeSelect.value = d.mode || "auto";
 
       els.masterControls.classList.toggle("hidden", !master || d.phase !== "clue");
       els.guesserControls.classList.toggle("hidden", master || d.phase !== "guess");
@@ -739,13 +803,16 @@ setNeedle(d.guessValue ?? 90);
       const cy = rect.top + rect.height * .86;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
-      let angle = Math.atan2(dy, dx) * 180 / Math.PI + 180;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI + 180;
+
       return Math.round(Math.max(0, Math.min(180, angle)));
     }
 
     async function sendGuess(angle, force) {
       const now = performance.now();
+
       if (!force && now - state.lastSend < 50) return;
+
       state.lastSend = now;
       setNeedle(angle);
       await patch({ guessValue: angle });
@@ -767,6 +834,7 @@ setNeedle(d.guessValue ?? 90);
 
     els.copyLinkBtn.addEventListener("click", async () => {
       const url = location.origin + location.pathname + "?room=" + encodeURIComponent(state.room);
+
       try {
         await navigator.clipboard.writeText(url);
         els.copyLinkBtn.textContent = "Lien copié";
@@ -775,11 +843,22 @@ setNeedle(d.guessValue ?? 90);
       }
     });
 
-    els.settingsBtn.addEventListener("click", () => els.settingsModal.classList.add("show"));
+    els.settingsBtn.addEventListener("click", () => {
+      els.settingsModal.classList.add("show");
+    });
 
     els.closeSettings.addEventListener("click", async () => {
       els.settingsModal.classList.remove("show");
-      if (state.data) await patch({ mode: els.modeSelect.value });
+
+      if (state.data) {
+        await patch({ mode: els.modeSelect.value });
+      }
+    });
+
+    els.settingsModal.addEventListener("click", e => {
+      if (e.target === els.settingsModal) {
+        els.settingsModal.classList.remove("show");
+      }
     });
 
     els.sendClue.addEventListener("click", async () => {
@@ -823,7 +902,7 @@ setNeedle(d.guessValue ?? 90);
       const d = state.data;
       if (!d) return;
 
-      if (d.round >= 5) {
+      if ((d.round || 1) >= 5) {
         await patch({ phase: "final" });
         return;
       }
@@ -836,7 +915,7 @@ setNeedle(d.guessValue ?? 90);
       }
 
       await patch({
-        round: d.round + 1,
+        round: (d.round || 1) + 1,
         phase: "clue",
         targetValue: nextTarget,
         guessValue: 90,
@@ -849,12 +928,17 @@ setNeedle(d.guessValue ?? 90);
 
     els.newGame.addEventListener("click", async () => {
       if (!state.room) return;
-      await roomRef().set(initialRoomData());
+
+      const ref = roomRef();
+      if (!ref) return;
+
+      await ref.set(initialRoomData());
       startGame();
     });
 
     els.wheelWrap.addEventListener("pointerdown", e => {
       if (!state.data || isCurrentMaster() || state.data.phase !== "guess") return;
+
       state.dragging = true;
       els.wheelWrap.setPointerCapture(e.pointerId);
       sendGuess(angleFromPointer(e), true);
@@ -867,13 +951,13 @@ setNeedle(d.guessValue ?? 90);
 
     window.addEventListener("pointerup", e => {
       if (!state.dragging) return;
+
       state.dragging = false;
       sendGuess(angleFromPointer(e), true);
     });
 
     drawBase();
     setNeedle(90);
-
     initFirebase();
 
     if (state.room) {
