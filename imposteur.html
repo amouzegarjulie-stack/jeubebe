@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>L'Imposteur · Mobile</title>
+
+  <!--
+    L'IMPOSTEUR · Jeu mobile 2 joueurs à distance
+    Stack : Vue.js 3 CDN + Tailwind CSS CDN + Firebase Realtime Database compat SDK 9
+
+    À faire avant utilisation :
+    1. Créer un projet Firebase.
+    2. Activer Realtime Database.
+    3. Coller votre firebaseConfig dans le bloc JS prévu plus bas.
+    4. Héberger ce fichier sur HTTPS ou l'ouvrir localement pour test.
+  -->
+
+  <!-- Police moderne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS Play CDN : parfait pour prototype / fichier unique -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            jakarta: ['Plus Jakarta Sans', 'sans-serif']
+          },
+          colors: {
+            mint: {
+              50: '#effdf7',
+              100: '#d9faec',
+              200: '#b8f3dc',
+              300: '#8ce8c6',
+              400: '#5bd5aa'
+            },
+            lavender: {
+              50: '#f7f3ff',
+              100: '#eee7ff',
+              200: '#ddd0ff',
+              300: '#c7b0ff',
+              400: '#aa8cff'
+            },
+            powder: {
+              50: '#fff4f7',
+              100: '#ffe7ee',
+              200: '#ffd0dc',
+              300: '#f7aebe',
+              400: '#ee8da5'
+            }
+          },
+          boxShadow: {
+            soft: '0 18px 45px rgba(67, 56, 99, 0.10)',
+            press: '0 10px 22px rgba(67, 56, 99, 0.12)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- Firebase compat SDK 9 -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    [v-cloak] { display: none; }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(184, 243, 220, .95), transparent 30%),
+        radial-gradient(circle at 88% 8%, rgba(221, 208, 255, .90), transparent 30%),
+        radial-gradient(circle at 50% 95%, rgba(255, 208, 220, .95), transparent 32%),
+        linear-gradient(135deg, #fffafa 0%, #f7f3ff 100%);
+      min-height: 100vh;
+      color: #2d2438;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, .72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, .72);
+    }
+
+    .btn-press {
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+    }
+
+    .btn-press:active {
+      transform: scale(.97) translateY(1px);
+      box-shadow: 0 6px 16px rgba(67, 56, 99, .10);
+      opacity: .92;
+    }
+
+    .fade-slide-enter-active,
+    .fade-slide-leave-active {
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .fade-slide-enter-from,
+    .fade-slide-leave-to {
+      opacity: 0;
+      transform: translateY(10px) scale(.98);
+    }
+
+    .pulse-ring {
+      animation: pulseRing 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(.92); opacity: .55; }
+      50% { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(.92); opacity: .55; }
+    }
+
+    .scanner-line {
+      animation: scan 1.45s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+      0%, 100% { transform: translateY(-30px); opacity: .35; }
+      50% { transform: translateY(30px); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak class="min-h-screen px-4 py-5 flex justify-center">
+    <main class="w-full max-w-md">
+      <!-- Header -->
+      <header class="flex items-center justify-between mb-5">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.24em] text-purple-400">Jeu à distance</p>
+          <h1 class="text-3xl font-extrabold tracking-tight">L'Imposteur</h1>
+        </div>
+        <div class="w-12 h-12 rounded-3xl bg-white/75 shadow-soft grid place-items-center text-2xl">🕵️</div>
+      </header>
+
+      <!-- Erreur config -->
+      <section v-if="!firebaseReady" class="glass rounded-[2rem] p-5 shadow-soft mb-4">
+        <div class="flex gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-powder-100 grid place-items-center">⚠️</div>
+          <div>
+            <h2 class="font-extrabold text-lg">Firebase non configuré</h2>
+            <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+              Collez votre <strong>firebaseConfig</strong> dans le bloc prévu au début du code JavaScript, puis rechargez la page.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Écran accueil -->
+      <transition name="fade-slide" mode="out-in">
+        <section v-if="firebaseReady && screen === 'home'" key="home" class="glass rounded-[2rem] p-5 shadow-soft">
+          <div class="rounded-[1.7rem] bg-gradient-to-br from-mint-100 via-white to-lavender-100 p-5 mb-5">
+            <h2 class="font-extrabold text-2xl leading-tight">Créez un salon secret.</h2>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+              Deux téléphones, un code, des mots proches, et beaucoup trop de suspicion.
+            </p>
+          </div>
+
+          <label class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 ml-1">Ton pseudo</label>
+          <input v-model.trim="playerName" maxlength="16" class="mt-2 w-full rounded-3xl bg-white/80 px-5 py-4 outline-none border border-white focus:ring-4 focus:ring-lavender-100 font-bold" placeholder="Ex : Michaël" />
+
+          <button @click="createRoom" class="btn-press mt-4 w-full rounded-3xl bg-mint-300 py-4 font-extrabold shadow-soft">
+            Créer un salon
+          </button>
+
+          <div class="flex items-center gap-3 my-5">
+            <div class="h-px bg-white/90 flex-1"></div>
+            <span class="text-xs font-bold text-slate-400">OU</span>
+            <div class="h-px bg-white/90 flex-1"></div>
+          </div>
+
+          <label class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 ml-1">Code salon</label>
+          <div class="mt-2 flex gap-2">
+            <input v-model.trim="joinCode" maxlength="6" @input="joinCode = joinCode.toUpperCase()" class="flex-1 rounded-3xl bg-white/80 px-5 py-4 outline-none border border-white focus:ring-4 focus:ring-powder-100 font-extrabold tracking-[0.2em] uppercase" placeholder="ABC123" />
+            <button @click="joinRoom" class="btn-press rounded-3xl bg-lavender-300 px-5 font-extrabold shadow-soft">Go</button>
+          </div>
+
+          <p v-if="toast" class="mt-4 text-sm font-bold text-powder-400">{{ toast }}</p>
+        </section>
+
+        <!-- Écran salon / jeu -->
+        <section v-else-if="firebaseReady && screen === 'room'" key="room" class="space-y-4">
+          <!-- Salon top card -->
+          <div class="glass rounded-[2rem] p-4 shadow-soft">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Salon</p>
+                <button @click="copyCode" class="btn-press text-2xl font-extrabold tracking-[0.18em]">{{ roomCode }}</button>
+              </div>
+              <button @click="leaveRoom" class="btn-press rounded-2xl bg-white/80 px-4 py-3 text-sm font-extrabold">Quitter</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <div v-for="slot in ['A','B']" :key="slot" class="rounded-3xl bg-white/70 p-3">
+                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Joueur {{ slot }}</p>
+                <p class="font-extrabold truncate">{{ playerBySlot(slot)?.name || 'En attente...' }}</p>
+                <p class="text-xs font-bold mt-1" :class="playerBySlot(slot) ? 'text-mint-400' : 'text-slate-400'">
+                  {{ playerBySlot(slot) ? 'Connecté' : 'Libre' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score / manche -->
+          <div class="grid grid-cols-3 gap-3">
+            <div class="glass rounded-3xl p-4 text-center shadow-soft">
+              <p class="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">Manche</p>
+              <p class="text-2xl font-extrabold">{{ game.round || 0 }}</p>
+            </div>
+            <div class="glass rounded-3xl p-4 text-center shadow-soft">
+              <p class="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">A</p>
+              <p class="text-2xl font-extrabold">{{ game.score?.A || 0 }}</p>
+            </div>
+            <div class="glass rounded-3xl p-4 text-center shadow-soft">
+              <p class="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">B</p>
+              <p class="text-2xl font-extrabold">{{ game.score?.B || 0 }}</p>
+            </div>
+          </div>
+
+          <!-- Attente -->
+          <div v-if="playerCount < 2" class="glass rounded-[2rem] p-6 text-center shadow-soft">
+            <div class="mx-auto w-16 h-16 rounded-[1.7rem] bg-lavender-100 grid place-items-center text-3xl pulse-ring">📱</div>
+            <h2 class="font-extrabold text-xl mt-4">En attente du deuxième joueur</h2>
+            <p class="text-sm text-slate-600 mt-2">Partage le code salon : <strong>{{ roomCode }}</strong></p>
+          </div>
+
+          <!-- Jeu actif -->
+          <template v-else>
+            <!-- Phase teasing scanner -->
+            <div v-if="!scanned" class="glass rounded-[2rem] p-6 text-center shadow-soft overflow-hidden relative">
+              <div class="relative mx-auto w-28 h-28 rounded-[2rem] bg-white/80 grid place-items-center shadow-soft overflow-hidden">
+                <div class="absolute inset-x-4 h-1 rounded-full bg-mint-300 scanner-line"></div>
+                <div class="text-5xl">👆</div>
+              </div>
+              <h2 class="font-extrabold text-2xl mt-5">Identité verrouillée</h2>
+              <p class="text-sm text-slate-600 mt-2">Scanne ton empreinte pour découvrir ton indice.</p>
+              <button @click="scanFingerprint" class="btn-press mt-5 w-full rounded-3xl bg-gradient-to-r from-mint-300 to-lavender-300 py-4 font-extrabold shadow-soft">
+                Scanner l'empreinte
+              </button>
+            </div>
+
+            <!-- Carte mot -->
+            <transition name="fade-slide" mode="out-in">
+              <div v-if="scanned" class="glass rounded-[2rem] p-5 shadow-soft" key="word-card">
+                <div class="flex justify-between items-start gap-3 mb-4">
+                  <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Ton statut</p>
+                    <h2 class="text-2xl font-extrabold">{{ myRoleTitle }}</h2>
+                  </div>
+                  <span class="rounded-full px-3 py-2 text-xs font-extrabold" :class="modeBadgeClass">
+                    {{ modeLabel }}
+                  </span>
+                </div>
+
+                <button @click="wordVisible = !wordVisible" class="btn-press w-full rounded-[2rem] p-6 shadow-soft" :class="wordVisible ? 'bg-white' : 'bg-slate-900 text-white'">
+                  <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Mot secret</p>
+                  <p class="text-4xl font-extrabold mt-2 min-h-12 flex items-center justify-center">
+                    {{ wordVisible ? myWord : '••••••' }}
+                  </p>
+                  <p class="text-xs font-bold mt-3 opacity-60">Touchez pour {{ wordVisible ? 'cacher' : 'révéler' }}</p>
+                </button>
+
+                <div v-if="myMission" class="mt-4 rounded-[1.7rem] bg-powder-100/80 p-4">
+                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-powder-400">Mission secrète</p>
+                  <p class="font-bold mt-1 leading-relaxed">{{ myMission }}</p>
+                </div>
+
+                <div class="mt-4 rounded-[1.7rem] bg-white/65 p-4">
+                  <p class="text-sm font-bold leading-relaxed text-slate-600">{{ hintText }}</p>
+                </div>
+              </div>
+            </transition>
+
+            <!-- Actions -->
+            <div class="glass rounded-[2rem] p-4 shadow-soft">
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <button @click="addPoint('A')" class="btn-press rounded-3xl bg-white/80 py-3 font-extrabold">+1 Joueur A</button>
+                <button @click="addPoint('B')" class="btn-press rounded-3xl bg-white/80 py-3 font-extrabold">+1 Joueur B</button>
+              </div>
+              <button @click="newRound" class="btn-press w-full rounded-3xl bg-powder-300 py-4 font-extrabold shadow-soft">
+                Nouvelle Manche
+              </button>
+            </div>
+          </template>
+
+          <p v-if="toast" class="text-center text-sm font-bold text-slate-500">{{ toast }}</p>
+        </section>
+      </transition>
+    </main>
+  </div>
+
+  <script>
+    /*********************************************************************
+     * 1) COLLEZ VOTRE CONFIG FIREBASE ICI
+     * Exemple :
+     * const firebaseConfig = {
+     *   apiKey: "...",
+     *   authDomain: "...",
+     *   databaseURL: "https://votre-projet-default-rtdb.europe-west1.firebasedatabase.app",
+     *   projectId: "...",
+     *   storageBucket: "...",
+     *   messagingSenderId: "...",
+     *   appId: "..."
+     * };
+     *********************************************************************/
+   const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+
+    /*********************************************************************
+     * 2) DONNÉES DE JEU
+     * Les paires doivent rester proches pour que l'imposteur ait une chance.
+     *********************************************************************/
+    const WORD_PAIRS = [
+      ['Café', 'Chocolat chaud'], ['Plage', 'Piscine'], ['Taxi', 'Uber'], ['Pizza', 'Tarte flambée'],
+      ['Cinéma', 'Théâtre'], ['Chat', 'Chien'], ['Montagne', 'Colline'], ['Train', 'Métro'],
+      ['Boulangerie', 'Pâtisserie'], ['Burger', 'Sandwich'], ['Hôtel', 'Airbnb'], ['Parfum', 'Déodorant'],
+      ['Crêpe', 'Gaufre'], ['Stylo', 'Crayon'], ['Livre', 'Magazine'], ['Forêt', 'Parc'],
+      ['Glace', 'Sorbet'], ['Canapé', 'Fauteuil'], ['Lac', 'Rivière'], ['Téléphone', 'Tablette'],
+      ['Chemise', 'T-shirt'], ['Avion', 'Hélicoptère'], ['Écharpe', 'Bonnet'], ['Banane', 'Mangue'],
+      ['Musée', 'Galerie'], ['Sushi', 'Makis'], ['Montre', 'Bracelet'], ['Drap', 'Couette']
+    ];
+
+    const MISSIONS = [
+      "Place le mot 'Parapluie' dans la discussion sans te faire griller.",
+      "Pose une question très précise à l'autre joueur avant de donner ton indice.",
+      "Fais croire que tu hésites pendant au moins 5 secondes avant ton premier indice.",
+      "Utilise une comparaison avec un animal dans ton indice.",
+      "Dis une phrase qui commence par 'Dans mon souvenir...' avant la fin de la manche.",
+      "Glisse discrètement une fausse piste, puis reviens vers le bon thème.",
+      "Demande à l'autre joueur de répéter son indice comme si tu n'avais pas compris.",
+      "Utilise le mot 'vacances' sans que ce soit trop évident."
+    ];
+
+    /*********************************************************************
+     * 3) APPLICATION VUE
+     *********************************************************************/
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          db: null,
+          roomRef: null,
+          unsubscribeRoom: null,
+          firebaseReady: false,
+          screen: 'home',
+          playerId: localStorage.getItem('imposteurPlayerId') || this.makeId(),
+          playerName: localStorage.getItem('imposteurPlayerName') || '',
+          joinCode: '',
+          roomCode: '',
+          room: null,
+          scanned: false,
+          wordVisible: false,
+          toast: ''
+        };
+      },
+
+      computed: {
+        players() {
+          return this.room?.players || {};
+        },
+
+        playerCount() {
+          return Object.keys(this.players).length;
+        },
+
+        game() {
+          return this.room?.game || { round: 0, score: { A: 0, B: 0 } };
+        },
+
+        me() {
+          return this.players[this.playerId] || null;
+        },
+
+        mySlot() {
+          return this.me?.slot || null;
+        },
+
+        myWord() {
+          if (!this.mySlot) return '';
+          return this.game.words?.[this.mySlot] || '';
+        },
+
+        myRole() {
+          if (!this.mySlot) return 'unknown';
+          return this.game.roles?.[this.mySlot] || 'unknown';
+        },
+
+        myMission() {
+          if (!this.mySlot) return '';
+          return this.game.missions?.[this.mySlot] || '';
+        },
+
+        myRoleTitle() {
+          if (this.game.mode === 'mirror') return 'Imposteur ?';
+          if (this.myRole === 'impostor') return 'Imposteur';
+          if (this.myRole === 'complice') return 'Complice';
+          return 'Mystère';
+        },
+
+        modeLabel() {
+          const labels = {
+            classic: 'Classique',
+            impostor: 'Imposteur',
+            mirror: 'Miroir',
+            mission: 'Mission'
+          };
+          return labels[this.game.mode] || 'Classique';
+        },
+
+        modeBadgeClass() {
+          if (this.game.mode === 'mirror') return 'bg-lavender-100 text-purple-500';
+          if (this.game.mode === 'mission') return 'bg-powder-100 text-powder-400';
+          if (this.game.mode === 'impostor') return 'bg-mint-100 text-emerald-600';
+          return 'bg-white/80 text-slate-500';
+        },
+
+        hintText() {
+          if (this.game.mode === 'mirror') {
+            return "Mode Miroir : l'application brouille volontairement les pistes. Ne fais confiance à personne, même pas à ton écran.";
+          }
+          if (this.game.mode === 'mission') {
+            return "Mode Mission : joue normalement, mais tente d'accomplir ton défi secret pendant la discussion.";
+          }
+          if (this.myRole === 'impostor') {
+            return "Tu as un mot proche de celui de l'autre joueur. Sois vague, mais pas trop.";
+          }
+          return "Tu as probablement le même mot que ton complice. Trouvez l'intrus sans trop en dire.";
+        }
+      },
+
+      mounted() {
+        localStorage.setItem('imposteurPlayerId', this.playerId);
+        this.firebaseReady = this.hasFirebaseConfig();
+
+        if (this.firebaseReady) {
+          firebase.initializeApp(firebaseConfig);
+          this.db = firebase.database();
+        }
+      },
+
+      methods: {
+        hasFirebaseConfig() {
+          return Boolean(firebaseConfig.apiKey && firebaseConfig.databaseURL && firebaseConfig.projectId);
+        },
+
+        makeId() {
+          return 'p_' + Math.random().toString(36).slice(2, 11);
+        },
+
+        makeRoomCode() {
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        },
+
+        cleanName() {
+          const fallback = 'Joueur ' + Math.floor(10 + Math.random() * 89);
+          const name = (this.playerName || fallback).trim().slice(0, 16);
+          this.playerName = name;
+          localStorage.setItem('imposteurPlayerName', name);
+          return name;
+        },
+
+        async createRoom() {
+          this.toast = '';
+          const code = this.makeRoomCode();
+          const name = this.cleanName();
+          const initialGame = this.generateRound(1, { A: 0, B: 0 });
+
+          await this.db.ref('rooms/' + code).set({
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP,
+            game: initialGame,
+            players: {
+              [this.playerId]: {
+                name,
+                slot: 'A',
+                joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                online: true
+              }
+            }
+          });
+
+          this.enterRoom(code);
+        },
+
+        async joinRoom() {
+          this.toast = '';
+          const code = (this.joinCode || '').trim().toUpperCase();
+          if (code.length < 4) return this.flash('Entre un code salon valide.');
+
+          const snap = await this.db.ref('rooms/' + code).once('value');
+          if (!snap.exists()) return this.flash('Salon introuvable.');
+
+          const room = snap.val();
+          const players = room.players || {};
+          const already = players[this.playerId];
+          const usedSlots = Object.values(players).map(p => p.slot);
+          const slot = already?.slot || (!usedSlots.includes('A') ? 'A' : !usedSlots.includes('B') ? 'B' : null);
+
+          if (!slot) return this.flash('Ce salon est déjà complet.');
+
+          await this.db.ref(`rooms/${code}/players/${this.playerId}`).update({
+            name: this.cleanName(),
+            slot,
+            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+            online: true
+          });
+
+          this.enterRoom(code);
+        },
+
+        enterRoom(code) {
+          this.roomCode = code;
+          this.screen = 'room';
+          this.scanned = false;
+          this.wordVisible = false;
+          this.roomRef = this.db.ref('rooms/' + code);
+
+          this.roomRef.on('value', snapshot => {
+            this.room = snapshot.val();
+            if (!this.room) {
+              this.leaveRoom(false);
+              this.flash('Le salon a été fermé.');
+            }
+          });
+
+          this.db.ref(`rooms/${code}/players/${this.playerId}/online`).onDisconnect().set(false);
+        },
+
+        leaveRoom(remove = true) {
+          if (this.roomRef) this.roomRef.off();
+          if (remove && this.roomCode) {
+            this.db.ref(`rooms/${this.roomCode}/players/${this.playerId}`).remove();
+          }
+          this.roomRef = null;
+          this.room = null;
+          this.roomCode = '';
+          this.screen = 'home';
+          this.scanned = false;
+          this.wordVisible = false;
+        },
+
+        playerBySlot(slot) {
+          return Object.values(this.players).find(p => p.slot === slot);
+        },
+
+        scanFingerprint() {
+          this.wordVisible = false;
+          this.scanned = false;
+          setTimeout(() => {
+            this.scanned = true;
+            if (navigator.vibrate) navigator.vibrate(35);
+          }, 900);
+        },
+
+        async newRound() {
+          const nextRound = (this.game.round || 0) + 1;
+          const score = this.game.score || { A: 0, B: 0 };
+          const nextGame = this.generateRound(nextRound, score);
+          await this.db.ref(`rooms/${this.roomCode}/game`).set(nextGame);
+          await this.db.ref(`rooms/${this.roomCode}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
+          this.scanned = false;
+          this.wordVisible = false;
+        },
+
+        async addPoint(slot) {
+          const score = { A: this.game.score?.A || 0, B: this.game.score?.B || 0 };
+          score[slot] += 1;
+          await this.db.ref(`rooms/${this.roomCode}/game/score`).set(score);
+          if (navigator.vibrate) navigator.vibrate(20);
+        },
+
+        generateRound(roundNumber, score) {
+          const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+          const sameWord = pair[Math.floor(Math.random() * pair.length)];
+          const impostorSlot = Math.random() < .5 ? 'A' : 'B';
+          const compliceSlot = impostorSlot === 'A' ? 'B' : 'A';
+
+          // Tirage intelligent demandé : 70 % complices, 30 % imposteur.
+          // Puis petite chance de manche spéciale qui vient remplacer ou enrichir le tirage.
+          const roll = Math.random();
+          let mode = roll < .70 ? 'classic' : 'impostor';
+
+          const specialRoll = Math.random();
+          if (specialRoll < .12) mode = 'mirror';       // Les deux se pensent suspects.
+          else if (specialRoll < .26) mode = 'mission'; // Défi secret ajouté.
+
+          const game = {
+            round: roundNumber,
+            score,
+            mode,
+            seed: Math.random().toString(36).slice(2),
+            words: { A: sameWord, B: sameWord },
+            roles: { A: 'complice', B: 'complice' },
+            missions: { A: '', B: '' }
+          };
+
+          if (mode === 'impostor') {
+            game.words[compliceSlot] = pair[0];
+            game.words[impostorSlot] = pair[1];
+            game.roles[compliceSlot] = 'complice';
+            game.roles[impostorSlot] = 'impostor';
+          }
+
+          if (mode === 'mirror') {
+            game.words.A = pair[0];
+            game.words.B = pair[1];
+            game.roles.A = 'impostor';
+            game.roles.B = 'impostor';
+          }
+
+          if (mode === 'mission') {
+            // La mission garde le ratio global : souvent même mot, parfois mots proches.
+            if (roll >= .70) {
+              game.words[compliceSlot] = pair[0];
+              game.words[impostorSlot] = pair[1];
+              game.roles[impostorSlot] = 'impostor';
+            }
+            game.missions.A = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+            game.missions.B = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+          }
+
+          return game;
+        },
+
+        async copyCode() {
+          try {
+            await navigator.clipboard.writeText(this.roomCode);
+            this.flash('Code copié.');
+          } catch (_) {
+            this.flash('Code : ' + this.roomCode);
+          }
+        },
+
+        flash(message) {
+          this.toast = message;
+          setTimeout(() => {
+            if (this.toast === message) this.toast = '';
+          }, 2400);
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
