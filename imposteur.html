@@ -385,15 +385,15 @@ const raw = {
         };
       },
       computed: {
-        bothPlayersOnline() {
-          return !!(this.players.p1?.online && this.players.p2?.online);
-        },
+       bothPlayersOnline() {
+  return !!(this.players.p1 && this.players.p2);
+},
         opponentId() {
           return this.playerId === 'p1' ? 'p2' : 'p1';
         },
-        opponentDisconnected() {
-          return this.screen !== 'home' && this.players[this.opponentId] && !this.players[this.opponentId].online;
-        },
+       opponentDisconnected() {
+  return false;
+},
         myRole() {
           return this.round?.roles?.[this.playerId] || '';
         },
