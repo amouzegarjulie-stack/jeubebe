@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#fbcfe8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Tu préfères ?" />
+  <title>Tu préfères ? - Jeu de couple</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      get,
+      update,
+      onValue,
+      remove,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+
+    /*
+      ==========================================================
+      CONFIGURATION FIREBASE
+      ==========================================================
+      1. Va sur https://console.firebase.google.com/
+      2. Crée un projet
+      3. Ajoute une app Web
+      4. Active Realtime Database
+      5. Remplace les valeurs ci-dessous par ta configuration
+    */
+    const firebaseConfig = {
+      apiKey: "REMPLACE_MOI",
+      authDomain: "REMPLACE_MOI.firebaseapp.com",
+      databaseURL: "https://REMPLACE_MOI-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "REMPLACE_MOI",
+      storageBucket: "REMPLACE_MOI.appspot.com",
+      messagingSenderId: "REMPLACE_MOI",
+      appId: "REMPLACE_MOI"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const TOTAL_ROUNDS = 10;
+
+    const questions = [
+      { a: "Manger les frites avant le burger", b: "Garder les frites pour la fin", category: "Nourriture" },
+{ a: "Dormir côté mur", b: "Dormir côté extérieur du lit", category: "Vie" },
+{ a: "Répondre immédiatement aux messages", b: "Répondre quand on a vraiment le temps", category: "Lifestyle" },
+{ a: "Mettre le réveil 3 fois", b: "Se lever dès la première sonnerie", category: "Habitudes" },
+{ a: "Finir une série en 2 jours", b: "Regarder lentement pour faire durer", category: "Divertissement" },
+{ a: "Partager son dessert", b: "Prendre chacun le sien", category: "Nourriture" },
+{ a: "Arriver en avance", b: "Arriver pile à l'heure", category: "Vie" },
+{ a: "Dire quand quelque chose ne va pas", b: "Garder pour soi et digérer", category: "Relation" },
+{ a: "Regarder son téléphone au réveil", b: "Attendre avant de toucher au téléphone", category: "Lifestyle" },
+{ a: "Faire une sieste imprévue", b: "Tenir jusqu’au soir", category: "Habitudes" },
+{ a: "Goûter dans l’assiette de l’autre", b: "Ne jamais toucher à l’assiette de l’autre", category: "Nourriture" },
+{ a: "Préparer sa valise à l’avance", b: "Faire sa valise au dernier moment", category: "Voyage" },
+{ a: "Envoyer un long message", b: "Envoyer plusieurs petits messages", category: "Communication" },
+{ a: "Avoir toujours un plan", b: "Improviser au dernier moment", category: "Lifestyle" },
+{ a: "Mettre la musique en voiture", b: "Profiter du silence", category: "Vie" },
+{ a: "Dormir avec une couverture lourde", b: "Dormir léger sans trop couvrir", category: "Confort" },
+{ a: "Finir un livre commencé", b: "Abandonner si ça ne plaît pas", category: "Divertissement" },
+{ a: "Se souvenir des dates importantes", b: "Se souvenir des petits détails du quotidien", category: "Relation" },
+{ a: "Envoyer un message avant d’appeler", b: "Appeler directement", category: "Communication" },
+{ a: "Prendre des photos souvenirs", b: "Profiter du moment sans téléphone", category: "Lifestyle" },
+{ a: "Nettoyer au fur et à mesure", b: "Tout nettoyer d’un coup", category: "Vie" },
+{ a: "Dormir avec un bruit de fond", b: "Dormir dans le silence total", category: "Habitudes" },
+{ a: "Tester de nouveaux plats", b: "Reprendre toujours ce qu’on aime", category: "Nourriture" },
+{ a: "Rester à discuter tard le soir", b: "Se coucher tôt sans discuter", category: "Relation" },
+{ a: "Dire \"je t’aime\" souvent", b: "Le montrer par des actions", category: "Romance" },
+{ a: "Regarder la météo avant de sortir", b: "Sortir sans vérifier", category: "Habitudes" },
+{ a: "Faire une liste de tâches", b: "Fonctionner à l’instinct", category: "Organisation" },
+{ a: "Prendre une douche le matin", b: "Prendre une douche le soir", category: "Habitudes" },
+{ a: "Relire ses messages avant d’envoyer", b: "Envoyer sans relire", category: "Communication" },
+{ a: "Ranger immédiatement après utilisation", b: "Laisser traîner un peu", category: "Vie" },
+{ a: "Faire les courses avec une liste", b: "Improviser dans le magasin", category: "Vie" },
+{ a: "Planifier ses week-ends", b: "Décider le jour même", category: "Lifestyle" },
+{ a: "Regarder un film déjà vu", b: "Toujours chercher du nouveau", category: "Divertissement" },
+{ a: "Manger devant une série", b: "Manger sans écran", category: "Habitudes" },
+{ a: "Se souvenir des conversations", b: "Se souvenir des émotions", category: "Relation" },
+{ a: "Faire du sport seul", b: "Faire du sport à deux", category: "Lifestyle" },
+{ a: "Écouter des podcasts", b: "Écouter de la musique", category: "Divertissement" },
+{ a: "Prendre son temps le matin", b: "Aller droit à l’essentiel", category: "Habitudes" },
+{ a: "Envoyer un vocal", b: "Écrire un message", category: "Communication" },
+{ a: "Faire une surprise", b: "Demander clairement", category: "Relation" },
+{ a: "Regarder les avis avant d’acheter", b: "Acheter au feeling", category: "Vie" },
+{ a: "Dormir avec la fenêtre ouverte", b: "Dormir avec la fenêtre fermée", category: "Confort" },
+{ a: "Faire les choses parfaitement", b: "Faire vite et améliorer après", category: "Travail" },
+{ a: "Se lever sans réveil", b: "Toujours mettre un réveil", category: "Habitudes" },
+{ a: "Prévoir un budget", b: "Dépenser spontanément", category: "Vie" }
+    ];
+
+    const state = {
+      roomId: null,
+      playerId: null,
+      playerName: null,
+      room: null,
+      unsubscribe: null,
+      selectedChoice: null
+    };
+
+    const $app = document.getElementById("app");
+
+    function haptic(type = "light") {
+      if (!navigator.vibrate) return;
+      const patterns = {
+        light: 12,
+        medium: 25,
+        success: [15, 30, 15],
+        error: [40, 30, 40]
+      };
+      navigator.vibrate(patterns[type] || patterns.light);
+    }
+
+    function randomRoomId() {
+      return String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function pickRounds() {
+      return shuffle(questions).slice(0, TOTAL_ROUNDS);
+    }
+
+    function playerLabel(id) {
+      if (!state.room?.players?.[id]) return "Joueur";
+      return state.room.players[id].name || "Joueur";
+    }
+
+    function otherPlayerId() {
+      const ids = Object.keys(state.room?.players || {});
+      return ids.find(id => id !== state.playerId);
+    }
+
+    function currentChooserId(room = state.room) {
+      const ids = Object.keys(room?.players || {});
+      if (ids.length < 2) return ids[0] || "p1";
+      return room.round % 2 === 0 ? ids[0] : ids[1];
+    }
+
+    function isHost() {
+      return state.playerId === "p1";
+    }
+
+    function screenShell(content) {
+      $app.innerHTML = `
+        <main class="min-h-screen w-full overflow-hidden bg-[radial-gradient(circle_at_top_left,#fbcfe8,transparent_32%),radial-gradient(circle_at_bottom_right,#bae6fd,transparent_34%),linear-gradient(135deg,#fff7ed,#fdf2f8,#ecfeff)] px-5 py-6 text-slate-900 sm:px-6">
+          <section class="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-md flex-col justify-center">
+            ${content}
+          </section>
+        </main>
+      `;
+    }
+
+    function card(content, extra = "") {
+      return `
+        <div class="animate-enter rounded-[2rem] border border-white/70 bg-white/70 p-6 shadow-2xl shadow-pink-100/70 backdrop-blur-xl ${extra}">
+          ${content}
+        </div>
+      `;
+    }
+
+    function button(label, id, variant = "primary", extra = "") {
+      const variants = {
+        primary: "bg-slate-950 text-white shadow-slate-300/60 active:scale-[0.97]",
+        pink: "bg-pink-300 text-slate-900 shadow-pink-200/80 active:scale-[0.97]",
+        blue: "bg-sky-200 text-slate-900 shadow-sky-200/80 active:scale-[0.97]",
+        ghost: "bg-white/70 text-slate-800 shadow-white/60 active:scale-[0.97]"
+      };
+      return `
+        <button id="${id}" class="w-full rounded-[1.5rem] px-5 py-4 text-base font-bold shadow-lg transition duration-200 hover:-translate-y-0.5 ${variants[variant]} ${extra}">
+          ${label}
+        </button>
+      `;
+    }
+
+    function showHome() {
+      screenShell(card(`
+        <div class="mb-8 text-center">
+          <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-pink-200 text-4xl shadow-lg shadow-pink-100">❤️</div>
+          <h1 class="text-4xl font-black tracking-tight">Tu préfères ?</h1>
+          <p class="mt-3 text-sm leading-6 text-slate-600">Un mini-jeu de couple en 10 tours pour voir si vous êtes vraiment connectés.</p>
+        </div>
+
+        <label class="mb-2 block text-sm font-bold text-slate-700">Ton prénom</label>
+        <input id="nameInput" maxlength="16" placeholder="Ex : Julie" class="mb-4 w-full rounded-[1.4rem] border border-white bg-white/80 px-5 py-4 text-base font-semibold outline-none ring-pink-200 transition focus:ring-4" />
+
+        <div class="space-y-3">
+          ${button("Créer un salon", "createBtn", "pink")}
+          <div class="grid grid-cols-[1fr_auto] gap-3">
+            <input id="roomInput" inputmode="numeric" maxlength="4" placeholder="ID salon" class="w-full rounded-[1.4rem] border border-white bg-white/80 px-5 py-4 text-center text-lg font-black tracking-[0.35em] outline-none ring-sky-200 transition focus:ring-4" />
+            <button id="joinBtn" class="rounded-[1.4rem] bg-sky-200 px-5 py-4 font-black shadow-lg shadow-sky-100 transition active:scale-95">OK</button>
+          </div>
+        </div>
+
+        <p id="homeError" class="mt-4 hidden rounded-2xl bg-red-100 px-4 py-3 text-center text-sm font-semibold text-red-700"></p>
+      `));
+
+      document.getElementById("createBtn").onclick = createRoom;
+      document.getElementById("joinBtn").onclick = joinRoom;
+    }
+
+    function getName() {
+      const value = document.getElementById("nameInput")?.value?.trim();
+      return value || "Mon amour";
+    }
+
+    function showHomeError(message) {
+      const el = document.getElementById("homeError");
+      el.textContent = message;
+      el.classList.remove("hidden");
+      haptic("error");
+    }
+
+    async function createRoom() {
+      haptic();
+      const name = getName();
+      let roomId = randomRoomId();
+      let roomRef = ref(db, `rooms/${roomId}`);
+      let snapshot = await get(roomRef);
+
+      while (snapshot.exists()) {
+        roomId = randomRoomId();
+        roomRef = ref(db, `rooms/${roomId}`);
+        snapshot = await get(roomRef);
+      }
+
+      state.roomId = roomId;
+      state.playerId = "p1";
+      state.playerName = name;
+
+      await set(roomRef, {
+        createdAt: serverTimestamp(),
+        status: "waiting",
+        round: 0,
+        score: 0,
+        rounds: pickRounds(),
+        players: {
+          p1: { name, joinedAt: Date.now() }
+        },
+        choices: {},
+        lastResult: null
+      });
+
+      subscribeToRoom();
+    }
+
+    async function joinRoom() {
+      haptic();
+      const name = getName();
+      const roomId = document.getElementById("roomInput").value.trim();
+
+      if (!/^\d{4}$/.test(roomId)) {
+        showHomeError("Entre un ID de salon à 4 chiffres.");
+        return;
+      }
+
+      const roomRef = ref(db, `rooms/${roomId}`);
+      const snapshot = await get(roomRef);
+
+      if (!snapshot.exists()) {
+        showHomeError("Salon introuvable.");
+        return;
+      }
+
+      const room = snapshot.val();
+      if (room.players && Object.keys(room.players).length >= 2) {
+        showHomeError("Ce salon est déjà complet.");
+        return;
+      }
+
+      state.roomId = roomId;
+      state.playerId = "p2";
+      state.playerName = name;
+
+      await update(roomRef, {
+        status: "playing",
+        [`players/p2`]: { name, joinedAt: Date.now() }
+      });
+
+      subscribeToRoom();
+    }
+
+    function subscribeToRoom() {
+      const roomRef = ref(db, `rooms/${state.roomId}`);
+      onValue(roomRef, snapshot => {
+        if (!snapshot.exists()) {
+          showHome();
+          return;
+        }
+        state.room = snapshot.val();
+        renderRoom();
+      });
+    }
+
+    function renderRoom() {
+      if (!state.room) return;
+      if (state.room.status === "waiting") return showWaiting();
+      if (state.room.status === "result") return showResult();
+      if (state.room.status === "finished") return showFinal();
+      return showGame();
+    }
+
+    function showWaiting() {
+      screenShell(card(`
+        <div class="text-center">
+          <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-yellow-100 text-5xl shadow-lg">💌</div>
+          <h2 class="text-3xl font-black">Salon créé</h2>
+          <p class="mt-3 text-slate-600">Partage cet ID avec ton partenaire.</p>
+          <div class="my-7 rounded-[2rem] bg-white/80 px-6 py-5 text-5xl font-black tracking-[0.25em] shadow-inner">${state.roomId}</div>
+          <div class="flex items-center justify-center gap-2 text-sm font-bold text-slate-500">
+            <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-pink-400"></span>
+            En attente du deuxième joueur...
+          </div>
+        </div>
+      `));
+    }
+
+    function showGame() {
+      const round = state.room.round || 0;
+      const q = state.room.rounds[round];
+      const chooser = currentChooserId();
+      const chooserName = playerLabel(chooser);
+      const myChoice = state.room.choices?.[round]?.[state.playerId];
+      const other = otherPlayerId();
+      const otherChoice = other ? state.room.choices?.[round]?.[other] : null;
+      const waitingForOther = myChoice && !otherChoice;
+
+      screenShell(`
+        ${card(`
+          <div class="mb-5 flex items-center justify-between">
+            <span class="rounded-full bg-white/70 px-4 py-2 text-xs font-black text-slate-600">Tour ${round + 1}/${TOTAL_ROUNDS}</span>
+            <span class="rounded-full bg-pink-100 px-4 py-2 text-xs font-black text-pink-700">Score ${state.room.score || 0}</span>
+          </div>
+
+          <div class="text-center">
+            <p class="text-sm font-black uppercase tracking-[0.25em] text-slate-400">Tu préfères ?</p>
+            <h2 class="mt-3 text-2xl font-black leading-tight">C'est au tour de ${chooserName} de choisir sa préférence</h2>
+            <p class="mt-3 text-sm leading-6 text-slate-600">${state.playerId === chooser ? "Choisis ce que tu préfères vraiment." : "Devine ce que ton partenaire va choisir."}</p>
+          </div>
+
+          <div class="mt-7 grid gap-4">
+            <button data-choice="a" class="choiceBtn rounded-[2rem] bg-pink-200 p-6 text-left shadow-xl shadow-pink-100 transition duration-200 hover:-translate-y-1 active:scale-[0.97] ${myChoice === "a" ? "ring-4 ring-pink-400" : ""}">
+              <span class="mb-3 inline-block rounded-full bg-white/60 px-3 py-1 text-xs font-black text-pink-700">${q.category}</span>
+              <span class="block text-2xl font-black">${q.a}</span>
+            </button>
+            <button data-choice="b" class="choiceBtn rounded-[2rem] bg-sky-200 p-6 text-left shadow-xl shadow-sky-100 transition duration-200 hover:-translate-y-1 active:scale-[0.97] ${myChoice === "b" ? "ring-4 ring-sky-400" : ""}">
+              <span class="mb-3 inline-block rounded-full bg-white/60 px-3 py-1 text-xs font-black text-sky-700">${q.category}</span>
+              <span class="block text-2xl font-black">${q.b}</span>
+            </button>
+          </div>
+
+          ${waitingForOther ? `<div class="mt-5 rounded-[1.5rem] bg-white/70 px-4 py-4 text-center text-sm font-bold text-slate-500">Choix enregistré. En attente de l'autre joueur...</div>` : ""}
+        `)}
+      `);
+
+      document.querySelectorAll(".choiceBtn").forEach(btn => {
+        btn.onclick = () => choose(btn.dataset.choice);
+        if (myChoice) btn.disabled = true;
+      });
+    }
+
+    async function choose(choice) {
+      haptic("medium");
+      const round = state.room.round || 0;
+      const updates = {
+        [`choices/${round}/${state.playerId}`]: choice
+      };
+      await update(ref(db, `rooms/${state.roomId}`), updates);
+
+      const freshSnap = await get(ref(db, `rooms/${state.roomId}`));
+      const fresh = freshSnap.val();
+      const roundChoices = fresh.choices?.[round] || {};
+
+      if (Object.keys(roundChoices).length === 2 && isHost()) {
+        const values = Object.values(roundChoices);
+        const match = values[0] === values[1];
+        await update(ref(db, `rooms/${state.roomId}`), {
+          status: "result",
+          score: (fresh.score || 0) + (match ? 1 : 0),
+          lastResult: {
+            match,
+            round,
+            choices: roundChoices,
+            shownAt: Date.now()
+          }
+        });
+      }
+    }
+
+    function heartConfetti() {
+      const scalar = 2;
+      const heart = confetti.shapeFromText({ text: "❤️", scalar });
+      confetti({
+        particleCount: 70,
+        spread: 80,
+        origin: { y: 0.65 },
+        shapes: [heart],
+        scalar
+      });
+    }
+
+    function showResult() {
+      const result = state.room.lastResult;
+      const match = result?.match;
+      const round = state.room.round || 0;
+      const q = state.room.rounds[round];
+
+      if (match) {
+        setTimeout(heartConfetti, 150);
+        haptic("success");
+      } else {
+        haptic("error");
+      }
+
+      screenShell(card(`
+        <div class="text-center">
+          <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[2rem] ${match ? "bg-pink-200" : "bg-yellow-100"} text-5xl shadow-lg">
+            ${match ? "❤️" : "🧩"}
+          </div>
+          <h2 class="text-5xl font-black tracking-tight">${match ? "MATCH !" : "LOUPÉ !"}</h2>
+          <p class="mt-4 text-slate-600">${match ? "Vous avez choisi la même carte." : "Pas la même intuition cette fois."}</p>
+
+          <div class="mt-7 grid grid-cols-2 gap-3 text-left">
+            <div class="rounded-[1.5rem] bg-pink-100 p-4">
+              <p class="text-xs font-black text-pink-700">Option A</p>
+              <p class="mt-1 font-black">${q.a}</p>
+            </div>
+            <div class="rounded-[1.5rem] bg-sky-100 p-4">
+              <p class="text-xs font-black text-sky-700">Option B</p>
+              <p class="mt-1 font-black">${q.b}</p>
+            </div>
+          </div>
+
+          <p class="mt-6 rounded-[1.5rem] bg-white/70 px-4 py-4 text-lg font-black">Score : ${state.room.score || 0}/${TOTAL_ROUNDS}</p>
+
+          ${isHost() ? button(round + 1 >= TOTAL_ROUNDS ? "Voir le résultat final" : "Tour suivant", "nextBtn", match ? "pink" : "blue", "mt-5") : `<p class="mt-5 text-sm font-bold text-slate-500">En attente du créateur du salon...</p>`}
+        </div>
+      `));
+
+      const nextBtn = document.getElementById("nextBtn");
+      if (nextBtn) nextBtn.onclick = nextRound;
+    }
+
+    async function nextRound() {
+      haptic();
+      const next = (state.room.round || 0) + 1;
+      if (next >= TOTAL_ROUNDS) {
+        await update(ref(db, `rooms/${state.roomId}`), { status: "finished" });
+      } else {
+        await update(ref(db, `rooms/${state.roomId}`), {
+          round: next,
+          status: "playing",
+          lastResult: null
+        });
+      }
+    }
+
+    function showFinal() {
+      const score = state.room.score || 0;
+      const perfect = score > 7;
+      if (perfect) setTimeout(heartConfetti, 150);
+
+      screenShell(card(`
+        <div class="text-center">
+          <div class="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-[2.25rem] ${perfect ? "bg-pink-200" : "bg-mint-100"} text-6xl shadow-xl">${perfect ? "❤️" : "🧩"}</div>
+          <p class="text-sm font-black uppercase tracking-[0.25em] text-slate-400">Partie terminée</p>
+          <h2 class="mt-3 text-4xl font-black leading-tight">${perfect ? "C'est un MATCH parfait ! ❤️" : "Il va falloir apprendre à mieux vous connaître ! 🧩"}</h2>
+          <div class="my-8 rounded-[2rem] bg-white/80 px-6 py-6 text-6xl font-black shadow-inner">${score}/${TOTAL_ROUNDS}</div>
+          <div class="space-y-3">
+            ${button("Rejouer dans ce salon", "replayBtn", "pink")}
+            ${button("Quitter", "leaveBtn", "ghost")}
+          </div>
+        </div>
+      `));
+
+      document.getElementById("replayBtn").onclick = replay;
+      document.getElementById("leaveBtn").onclick = leave;
+    }
+
+    async function replay() {
+      haptic();
+      if (!isHost()) return;
+      await update(ref(db, `rooms/${state.roomId}`), {
+        status: "playing",
+        round: 0,
+        score: 0,
+        rounds: pickRounds(),
+        choices: {},
+        lastResult: null
+      });
+    }
+
+    async function leave() {
+      haptic();
+      if (isHost() && state.roomId) {
+        await remove(ref(db, `rooms/${state.roomId}`));
+      }
+      state.roomId = null;
+      state.playerId = null;
+      state.room = null;
+      showHome();
+    }
+
+    window.addEventListener("beforeunload", () => {
+      // Optionnel : tu peux nettoyer les salons expirés côté Firebase avec des rules ou une Cloud Function.
+    });
+
+    showHome();
+  </script>
+
+  <style>
+    :root {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overscroll-behavior: none;
+    }
+
+    .animate-enter {
+      animation: enter 520ms cubic-bezier(.2,.9,.25,1.12) both;
+    }
+
+    @keyframes enter {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+        filter: blur(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>
