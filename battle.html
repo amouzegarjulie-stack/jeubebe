@@ -142,6 +142,36 @@
 <body>
   <main id="app" class="relative mx-auto flex min-h-[100dvh] max-w-md flex-col px-4 py-4"></main>
 
+  <script>
+    window.addEventListener("error", event => {
+      const app = document.querySelector("#app");
+      if (!app) return;
+      app.innerHTML = `
+        <section class="flex min-h-[100dvh] items-center justify-center px-4 text-center">
+          <div class="glass w-full max-w-md rounded-[2rem] p-6">
+            <div class="mb-4 text-5xl">💥</div>
+            <h1 class="text-2xl font-black">Erreur JavaScript</h1>
+            <pre class="mt-4 max-h-72 overflow-auto rounded-2xl bg-black/40 p-4 text-left text-xs text-red-100 whitespace-pre-wrap">${String(event.message || event.error || "Erreur inconnue")}</pre>
+          </div>
+        </section>
+      `;
+    });
+
+    window.addEventListener("unhandledrejection", event => {
+      const app = document.querySelector("#app");
+      if (!app) return;
+      app.innerHTML = `
+        <section class="flex min-h-[100dvh] items-center justify-center px-4 text-center">
+          <div class="glass w-full max-w-md rounded-[2rem] p-6">
+            <div class="mb-4 text-5xl">💥</div>
+            <h1 class="text-2xl font-black">Erreur async</h1>
+            <pre class="mt-4 max-h-72 overflow-auto rounded-2xl bg-black/40 p-4 text-left text-xs text-red-100 whitespace-pre-wrap">${String(event.reason?.message || event.reason || "Erreur inconnue")}</pre>
+          </div>
+        </section>
+      `;
+    });
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
@@ -162,15 +192,15 @@
      * Colle ici les informations de ton projet Firebase.
      * Active Realtime Database dans la console Firebase.
      ************************************************************/
-    const firebaseConfig = {
-      apiKey: "",
-      authDomain: "",
-      databaseURL: "",
-      projectId: "",
-      storageBucket: "",
-      messagingSenderId: "",
-      appId: ""
-    };
+ const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
