@@ -108,8 +108,6 @@
     .btn.warning { background: linear-gradient(135deg, var(--yellow), var(--orange)); }
     .btn.danger { background: linear-gradient(135deg, var(--red), var(--orange)); color: white; }
 
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
     input, select {
       width: 100%;
       border: 0;
@@ -175,7 +173,6 @@
       filter: drop-shadow(0 4px 5px rgba(0,0,0,.45));
     }
 
-    .needle.locked { stroke: rgba(248,247,255,.58); }
     .hub { fill: #ff4d6d; filter: drop-shadow(0 5px 10px rgba(0,0,0,.35)); }
 
     #targetZones {
@@ -185,20 +182,6 @@
     #targetZones.hidden-target {
       opacity: 0;
     }
-
-    .cover {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: linear-gradient(180deg, rgba(26,26,46,.98), rgba(26,26,46,.78) 72%, transparent);
-     clip-path: polygon(0 0, 100% 0, 100% 85%, 0 85%);
-      transform-origin: top center;
-      transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .8s;
-      border-radius: 26px 26px 12px 12px;
-      z-index: 2;
-    }
-
-    .cover.open { transform: translateY(-72%) rotateX(20deg); opacity: .08; }
 
     .clue-card {
       padding: 14px;
@@ -342,7 +325,6 @@
           <line id="needle" class="needle" x1="0" y1="0" x2="0" y2="-94"></line>
           <circle class="hub" cx="0" cy="0" r="13"></circle>
         </svg>
-        <div class="cover" id="cover"></div>
       </div>
 
       <div class="clue-card">
@@ -395,19 +377,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
 
   <script>
-    /*
-      Colle ta vraie config Firebase ici.
-      Realtime Database doit être activé dans Firebase.
-    */
     const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
     const pairs = [
       ["Froid", "Chaud"], ["Silencieux", "Bruyant"], ["Film d'horreur", "Comédie"],
@@ -423,7 +401,7 @@
       gameView: $("gameView"), finalView: $("finalView"), roomInput: $("roomInput"),
       roomLabel: $("roomLabel"), roleLabel: $("roleLabel"), roundLabel: $("roundLabel"),
       totalLabel: $("totalLabel"), targetZones: $("targetZones"), ticks: $("ticks"),
-      dialBg: $("dialBg"), needle: $("needle"), cover: $("cover"), wheelWrap: $("wheelWrap"),
+      dialBg: $("dialBg"), needle: $("needle"), wheelWrap: $("wheelWrap"),
       clueText: $("clueText"), masterControls: $("masterControls"), guesserControls: $("guesserControls"),
       clueInput: $("clueInput"), leftInput: $("leftInput"), rightInput: $("rightInput"),
       leftWord: $("leftWord"), rightWord: $("rightWord"), sendClue: $("sendClue"),
@@ -445,6 +423,37 @@
       dragging: false,
       lastSend: 0
     };
+
+    let audioReady = false;
+    let lastPhaseSeen = null;
+
+    function unlockAudio() {
+      audioReady = true;
+    }
+
+    function playNotify(type = "turn") {
+      if (!audioReady) return;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = "sine";
+      osc.frequency.value = type === "reveal" ? 880 : 660;
+
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.38);
+    }
 
     function show(view) {
       [els.homeView, els.joinView, els.lobbyView, els.gameView, els.finalView].forEach(v => v.classList.add("hidden"));
@@ -484,11 +493,17 @@
     }
 
     function randomTarget() {
-      /* Centre de la cible entre 28° et 152° pour que les 5 zones restent visibles.
-         La cible change à chaque nouvelle salle et à chaque manche. */
-      return Math.round(28 + Math.random() * 124);
+      const roll = Math.random();
+
+      if (roll < 0.14) return 4;
+      if (roll < 0.28) return 176;
+
+      return Math.round(4 + Math.random() * 172);
     }
-    function randomPair() { return pairs[Math.floor(Math.random() * pairs.length)]; }
+
+    function randomPair() {
+      return pairs[Math.floor(Math.random() * pairs.length)];
+    }
 
     function initialRoomData() {
       const p = randomPair();
@@ -582,8 +597,10 @@
       for (let a = 0; a <= 180; a += 15) {
         const p1 = polar(a, 101), p2 = polar(a, a % 45 === 0 ? 88 : 94);
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
-        line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
+        line.setAttribute("x1", p1.x);
+        line.setAttribute("y1", p1.y);
+        line.setAttribute("x2", p2.x);
+        line.setAttribute("y2", p2.y);
         line.setAttribute("stroke", "rgba(255,255,255,.22)");
         line.setAttribute("stroke-width", a % 45 === 0 ? "2" : "1");
         els.ticks.appendChild(line);
@@ -592,19 +609,21 @@
 
     function drawTarget(target) {
       const zones = [
-        { w: 12, color: "var(--yellow)" },
-        { w: 10, color: "var(--orange)" },
-        { w: 8, color: "var(--red)" },
-        { w: 10, color: "var(--orange)" },
-        { w: 12, color: "var(--yellow)" }
+        { from: -26, to: -14, color: "var(--yellow)" },
+        { from: -14, to: -4, color: "var(--orange)" },
+        { from: -4, to: 4, color: "var(--red)" },
+        { from: 4, to: 14, color: "var(--orange)" },
+        { from: 14, to: 26, color: "var(--yellow)" }
       ];
-      let cursor = target - 26;
+
       els.targetZones.innerHTML = "";
+
       zones.forEach(z => {
-        const start = Math.max(0, cursor);
-        const end = Math.min(180, cursor + z.w);
-        cursor += z.w;
+        const start = Math.max(0, target + z.from);
+        const end = Math.min(180, target + z.to);
+
         if (end <= 0 || start >= 180 || end <= start) return;
+
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", arcPath(start, end, 42, 102));
         path.setAttribute("fill", z.color);
@@ -670,11 +689,21 @@
 
       const reveal = d.phase === "reveal";
       const hideTarget = !master && !reveal;
+      const phaseKey = d.round + "-" + d.phase;
 
-      /* Le Devin ne doit jamais voir l'échelle jaune/orange/rouge avant le reveal.
-         On masque donc réellement le SVG, pas seulement avec le volet visuel. */
+      if (lastPhaseSeen && phaseKey !== lastPhaseSeen) {
+        if (!master && d.phase === "guess") {
+          playNotify("turn");
+        }
+
+        if (!master && d.phase === "reveal") {
+          playNotify("reveal");
+        }
+      }
+
+      lastPhaseSeen = phaseKey;
+
       els.targetZones.classList.toggle("hidden-target", hideTarget);
-      els.cover.classList.toggle("open", !hideTarget);
 
       els.masterControls.classList.toggle("hidden", !master || d.phase !== "clue");
       els.guesserControls.classList.toggle("hidden", master || d.phase !== "guess");
@@ -712,11 +741,16 @@
       await patch({ guessValue: angle });
     }
 
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("click", unlockAudio, { once: true });
+
     els.createRoomBtn.addEventListener("click", createRoom);
+
     els.showJoinBtn.addEventListener("click", () => {
       els.joinError.textContent = "";
       show(els.joinView);
     });
+
     els.backHomeBtn.addEventListener("click", () => show(els.homeView));
     els.joinRoomBtn.addEventListener("click", joinRoom);
     els.startAsMasterBtn.addEventListener("click", startGame);
@@ -741,12 +775,15 @@
     els.sendClue.addEventListener("click", async () => {
       const d = state.data;
       if (!d) return;
+
       const clue = els.clueInput.value.trim();
       if (!clue) {
         els.gameHint.textContent = "Écris d'abord un indice.";
         return;
       }
+
       const manual = (d.mode || "auto") === "manual";
+
       await patch({
         left: manual ? (els.leftInput.value.trim() || d.left) : d.left,
         right: manual ? (els.rightInput.value.trim() || d.right) : d.right,
@@ -754,13 +791,16 @@
         phase: "guess",
         guessValue: 90
       });
+
       els.clueInput.value = "";
     });
 
     els.lockGuess.addEventListener("click", async () => {
       const d = state.data;
       if (!d) return;
+
       const s = score(d.targetValue, d.guessValue ?? 90);
+
       await patch({
         phase: "reveal",
         lastScore: s,
@@ -772,15 +812,19 @@
     els.nextRound.addEventListener("click", async () => {
       const d = state.data;
       if (!d) return;
+
       if (d.round >= 5) {
         await patch({ phase: "final" });
         return;
       }
+
       const p = (d.mode || "auto") === "auto" ? randomPair() : [d.left, d.right];
+
       let nextTarget = randomTarget();
       if (Math.abs(nextTarget - (d.targetValue || 90)) < 25) {
-        nextTarget = nextTarget < 90 ? nextTarget + 45 : nextTarget - 45;
+        nextTarget = nextTarget < 90 ? Math.min(176, nextTarget + 45) : Math.max(4, nextTarget - 45);
       }
+
       await patch({
         round: d.round + 1,
         phase: "clue",
