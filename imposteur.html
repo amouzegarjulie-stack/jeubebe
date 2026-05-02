@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>BLUFF//ADN</title>
 
+  <!-- Vue 3 + Tailwind CDN -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Firebase SDK 9 compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -40,7 +42,6 @@
   <style>
     html, body { height: 100%; background: #0f172a; overscroll-behavior: none; }
     body { touch-action: manipulation; }
-
     .scanline::before {
       content: '';
       position: fixed;
@@ -52,7 +53,6 @@
       opacity: .15;
       z-index: 50;
     }
-
     .grid-bg {
       background-image:
         radial-gradient(circle at 20% 10%, rgba(143,255,224,.12), transparent 25%),
@@ -62,12 +62,10 @@
         linear-gradient(90deg, rgba(143,255,224,.035) 1px, transparent 1px);
       background-size: auto, auto, auto, 34px 34px, 34px 34px;
     }
-
     .glitching {
       animation: glitchScreen .12s infinite;
       filter: hue-rotate(80deg) contrast(1.35) saturate(1.6);
     }
-
     .glitching::after {
       content: 'SIGNAL SABOTÉ // SIGNAL SABOTÉ // SIGNAL SABOTÉ';
       position: fixed;
@@ -84,9 +82,7 @@
       text-shadow: 3px 0 #8fffe0, -3px 0 #c4b5fd;
       animation: glitchText .08s infinite;
       padding: 24px;
-      pointer-events: none;
     }
-
     @keyframes glitchScreen {
       0% { transform: translate(0); }
       25% { transform: translate(2px, -2px); }
@@ -94,7 +90,6 @@
       75% { transform: translate(1px, 3px); }
       100% { transform: translate(0); }
     }
-
     @keyframes glitchText {
       0% { clip-path: inset(0 0 85% 0); }
       25% { clip-path: inset(18% 0 45% 0); }
@@ -102,26 +97,20 @@
       75% { clip-path: inset(5% 0 70% 0); }
       100% { clip-path: inset(0 0 0 0); }
     }
-
     .pulse-ring { animation: pulseRing 1.2s infinite ease-out; }
-
     @keyframes pulseRing {
       0% { transform: scale(.72); opacity: .9; }
       70% { transform: scale(1.25); opacity: .12; }
       100% { transform: scale(1.35); opacity: 0; }
     }
-
     .dna-spin { animation: dnaSpin 1.8s linear infinite; }
     @keyframes dnaSpin { to { transform: rotate(360deg); } }
-
     .win-pop { animation: winPop .75s cubic-bezier(.2,1.8,.2,1); }
-
     @keyframes winPop {
       0% { transform: scale(.7); opacity: 0; }
       65% { transform: scale(1.08); opacity: 1; }
       100% { transform: scale(1); }
     }
-
     .safe-bottom { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
   </style>
 </head>
@@ -140,12 +129,12 @@
         </div>
       </header>
 
-      <section v-if="fatalError" class="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-danger shadow-pink mb-4">
+      <section v-if="fatalError" class="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-danger shadow-pink">
         <p class="font-black">ERREUR SYSTÈME</p>
-        <p class="text-sm mt-1 whitespace-pre-line">{{ fatalError }}</p>
-        <button @click="fatalError = ''" class="mt-3 rounded-xl border border-danger/50 px-4 py-2 text-sm font-black">OK</button>
+        <p class="text-sm mt-1">{{ fatalError }}</p>
       </section>
 
+      <!-- ÉCRAN 1 -->
       <section v-if="screen === 'home'" class="flex-1 flex flex-col justify-center gap-4">
         <div class="rounded-3xl border border-mint/25 bg-panel/80 p-5 shadow-neon backdrop-blur">
           <p class="text-pink text-xs tracking-[.3em] mb-2">ACCÈS TERMINAL</p>
@@ -153,20 +142,21 @@
           <p class="text-sm text-lavender/75">Code à 4 chiffres. Deux joueurs maximum. Les données sont synchronisées via Firebase.</p>
         </div>
 
-        <button @click="createRoom" :disabled="loading" class="w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition disabled:opacity-35">
-          {{ loading ? 'CRÉATION...' : 'CRÉER UN SALON' }}
+        <button @click="createRoom" class="w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition">
+          CRÉER UN SALON
         </button>
 
         <div class="rounded-2xl border border-lavender/20 bg-panel/70 p-4">
           <label class="text-xs text-lavender tracking-widest">CODE SALON</label>
           <input v-model="joinCode" inputmode="numeric" maxlength="4" placeholder="0000"
                  class="mt-2 w-full rounded-xl bg-void/80 border border-mint/25 px-4 py-4 text-center text-3xl tracking-[.4em] text-white outline-none focus:border-pink" />
-          <button @click="joinRoom" :disabled="loading" class="mt-3 w-full rounded-xl border border-pink/60 text-pink font-black py-3 shadow-pink active:scale-[.98] transition disabled:opacity-35">
-            {{ loading ? 'CONNEXION...' : 'REJOINDRE' }}
+          <button @click="joinRoom" class="mt-3 w-full rounded-xl border border-pink/60 text-pink font-black py-3 shadow-pink active:scale-[.98] transition">
+            REJOINDRE
           </button>
         </div>
       </section>
 
+      <!-- ÉCRAN 2 -->
       <section v-if="screen === 'lobby'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-lavender/25 bg-panel/80 p-5 shadow-lav">
           <p class="text-xs text-pink tracking-[.3em]">LOBBY</p>
@@ -188,14 +178,14 @@
           Signal perdu : l'autre joueur semble déconnecté.
         </div>
 
-        <button v-if="isHost" @click="startRound" :disabled="loading"
+        <button v-if="isHost" @click="startRound" :disabled="!bothPlayersOnline || loading"
                 class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition disabled:opacity-35">
-          {{ loading ? 'LANCEMENT...' : 'LANCER LA MANCHE' }}
+          LANCER LA MANCHE
         </button>
-
         <p v-else class="mt-auto text-center text-sm text-lavender/70">En attente du lancement par l'hôte...</p>
       </section>
 
+      <!-- ÉCRAN 3 -->
       <section v-if="screen === 'scan'" class="flex-1 flex flex-col justify-center gap-6 select-none">
         <div class="text-center">
           <p class="text-pink text-xs tracking-[.35em]">PHASE DE SCAN ADN</p>
@@ -225,6 +215,7 @@
         </div>
       </section>
 
+      <!-- ÉCRAN 4 -->
       <section v-if="screen === 'game'" class="flex-1 flex flex-col gap-4">
         <div v-if="round?.doubleStake" class="rounded-2xl border border-amber/60 bg-amber/10 p-3 text-amber text-center font-black shadow-neon">
           MANCHE CRITIQUE : ENJEU x2 CŒURS
@@ -274,6 +265,7 @@
         </button>
       </section>
 
+      <!-- ÉCRAN 5 -->
       <section v-if="screen === 'vote'" class="flex-1 flex flex-col gap-4">
         <div class="rounded-3xl border border-pink/25 bg-panel/80 p-5 shadow-pink">
           <p class="text-xs text-pink tracking-[.3em]">VOTE FINAL</p>
@@ -320,8 +312,8 @@
           </div>
         </div>
 
-        <button v-if="bothVoted && isHost && !gameOver" @click="startRound" :disabled="loading" class="mt-auto w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition disabled:opacity-35">
-          {{ loading ? 'LANCEMENT...' : 'NOUVELLE MANCHE' }}
+        <button v-if="bothVoted && isHost && !gameOver" @click="startRound" class="mt-auto w-full rounded-2xl bg-mint text-void font-black py-4 shadow-neon active:scale-[.98] transition">
+          NOUVELLE MANCHE
         </button>
         <button v-if="bothVoted && gameOver" @click="resetMatch" class="mt-auto w-full rounded-2xl bg-pink text-white font-black py-4 shadow-pink active:scale-[.98] transition">
           RELANCER MATCH
@@ -331,17 +323,17 @@
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-      authDomain: "mille-bornes-355ca.firebaseapp.com",
-      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-      projectId: "mille-bornes-355ca",
-      storageBucket: "mille-bornes-355ca.appspot.com",
-      messagingSenderId: "1018160779227",
-      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
 
-    const { createApp } = Vue;
+    const { createApp, markRaw } = Vue;
 
     createApp({
       data() {
@@ -366,7 +358,6 @@
           timeLeft: 180,
           gameTimer: null,
           localGlitch: false,
-          lastSabotageNonce: '',
           sabotageCooldown: 0,
           cooldownTimer: null,
           words: [
@@ -390,16 +381,15 @@
           sabotageWords: ['protocole', 'signal', 'mensonge', 'trace', 'preuve', 'ombre', 'clé', 'système', 'virus', 'secret']
         };
       },
-
       computed: {
         bothPlayersOnline() {
-          return !!(this.players?.p1?.online && this.players?.p2?.online);
+          return !!(this.players.p1?.online && this.players.p2?.online);
         },
         opponentId() {
           return this.playerId === 'p1' ? 'p2' : 'p1';
         },
         opponentDisconnected() {
-          return this.screen !== 'home' && !!this.players?.[this.opponentId] && !this.players[this.opponentId].online;
+          return this.screen !== 'home' && this.players[this.opponentId] && !this.players[this.opponentId].online;
         },
         myRole() {
           return this.round?.roles?.[this.playerId] || '';
@@ -422,12 +412,10 @@
         },
         modeText() {
           if (!this.round) return '';
-
           const items = [];
           if (this.round.mode === 'duel') items.push('Mode rare : Duel de Bluff. Les deux dossiers sont corrompus.');
           if (this.round.constraint) items.push('Indice sous contrainte actif.');
           if (this.round.sabotageObjective) items.push('Objectif saboteur actif.');
-
           return items.length ? items.join(' ') : 'Mode standard. Observe, mens, déduis.';
         },
         formattedTime() {
@@ -448,47 +436,35 @@
           return { iLost: myGuess !== truth };
         },
         gameOver() {
-          return (this.players?.p1?.hearts ?? 1) <= 0 || (this.players?.p2?.hearts ?? 1) <= 0;
+          return (this.players.p1?.hearts ?? 1) <= 0 || (this.players.p2?.hearts ?? 1) <= 0;
         }
       },
-
       watch: {
         room: {
           deep: true,
           handler(val) {
             if (!val) return;
-
             this.players = val.players || {};
             this.round = val.round || null;
-
             if (val.phase && this.screen !== val.phase) {
               this.screen = val.phase;
-
               if (val.phase === 'scan') this.prepareScan();
               if (val.phase === 'game') this.prepareGame();
               if (val.phase === 'vote') this.stopGameTimer();
-              if (val.phase === 'lobby') this.stopGameTimer();
             }
-
             this.handleRemoteGlitch(val.sabotage);
-
-            if (this.bothVoted) {
-              this.resolveVotesOnce();
-            }
+            if (this.bothVoted) this.resolveVotesOnce();
           }
         }
       },
-
       mounted() {
         this.initFirebase();
         window.addEventListener('beforeunload', this.markOffline);
       },
-
       beforeUnmount() {
         window.removeEventListener('beforeunload', this.markOffline);
         this.detachRoom();
       },
-
       methods: {
         initFirebase() {
           try {
@@ -496,45 +472,31 @@
               this.fatalError = 'Ajoute ta configuration Firebase dans firebaseConfig avant de lancer le jeu.';
               return;
             }
-
-            if (!firebase.apps.length) {
-              firebase.initializeApp(firebaseConfig);
-            }
-
-            this.db = firebase.database();
-
+            firebase.initializeApp(firebaseConfig);
+            this.db = markRaw(firebase.database());
             firebase.database().ref('.info/connected').on('value', snap => {
               this.connected = !!snap.val();
             });
           } catch (err) {
-            console.error(err);
             this.fatalError = err.message || 'Firebase impossible à initialiser.';
           }
         },
-
         randomCode() {
           return String(Math.floor(1000 + Math.random() * 9000));
         },
-
         async createRoom() {
-          if (!this.db || this.loading) return;
-
+          if (!this.db) return;
           this.loading = true;
-          this.fatalError = '';
-
           try {
             let code = this.randomCode();
             let snap = await this.db.ref(`rooms/${code}`).get();
-
             while (snap.exists()) {
               code = this.randomCode();
               snap = await this.db.ref(`rooms/${code}`).get();
             }
-
             this.roomCode = code;
             this.playerId = 'p1';
             this.isHost = true;
-
             await this.db.ref(`rooms/${code}`).set({
               createdAt: firebase.database.ServerValue.TIMESTAMP,
               phase: 'lobby',
@@ -544,183 +506,112 @@
                 p2: { online: false, hearts: 3 }
               },
               roundNumber: 0,
-              round: null,
-              scanReady: null,
-              sabotage: { by: '', ts: 0, nonce: '' }
+              sabotage: { by: '', ts: 0 }
             });
-
             this.attachRoom(code);
             this.screen = 'lobby';
-          } catch (err) {
-            console.error(err);
-            this.fatalError = 'Impossible de créer le salon : ' + (err.message || err);
           } finally {
             this.loading = false;
           }
         },
-
         async joinRoom() {
-          if (!this.db || this.loading) return;
-
+          if (!this.db) return;
           const code = (this.joinCode || '').replace(/\D/g, '').slice(0, 4);
-          if (code.length !== 4) {
-            this.fatalError = 'Entre un code salon à 4 chiffres.';
-            return;
-          }
-
+          if (code.length !== 4) return;
           this.loading = true;
-          this.fatalError = '';
-
           try {
-            const ref = this.db.ref(`rooms/${code}`);
+            const ref = markRaw(this.db.ref(`rooms/${code}`));
             const snap = await ref.get();
-
             if (!snap.exists()) {
               this.fatalError = 'Salon introuvable.';
               return;
             }
-
-            const data = snap.val() || {};
-
+            const data = snap.val();
             if (data.players?.p1?.online && data.players?.p2?.online) {
               this.fatalError = 'Salon complet.';
               return;
             }
-
             this.roomCode = code;
             this.playerId = data.players?.p1?.online ? 'p2' : 'p1';
             this.isHost = this.playerId === data.host;
-
             await ref.child(`players/${this.playerId}`).update({
               online: true,
               hearts: data.players?.[this.playerId]?.hearts ?? 3,
               joinedAt: firebase.database.ServerValue.TIMESTAMP
             });
-
             this.attachRoom(code);
             this.screen = data.phase || 'lobby';
-          } catch (err) {
-            console.error(err);
-            this.fatalError = 'Impossible de rejoindre le salon : ' + (err.message || err);
           } finally {
             this.loading = false;
           }
         },
-
         attachRoom(code) {
           this.detachRoom();
-
-          this.roomRef = this.db.ref(`rooms/${code}`);
-          this.roomRef.on('value', snap => {
-            this.room = snap.val();
-          });
-
-          const statusRef = this.db.ref(`rooms/${code}/players/${this.playerId}/online`);
+          this.roomRef = markRaw(this.db.ref(`rooms/${code}`));
+          this.roomRef.on('value', snap => { this.room = snap.val(); });
+          const statusRef = markRaw(this.db.ref(`rooms/${code}/players/${this.playerId}/online`));
           this.connectedRef = statusRef;
           statusRef.onDisconnect().set(false);
           statusRef.set(true);
         },
-
         detachRoom() {
           if (this.roomRef) this.roomRef.off();
           this.roomRef = null;
         },
-
         markOffline() {
           if (this.connectedRef) this.connectedRef.set(false);
         },
-
         hearts(n) {
           return '♥'.repeat(Math.max(0, n)) + '♡'.repeat(Math.max(0, 3 - n));
         },
-
         pick(arr) {
           return arr[Math.floor(Math.random() * arr.length)];
         },
-
         async startRound() {
-          if (this.loading) return;
-
-          if (!this.isHost) {
-            this.fatalError = "Seul l'hôte peut lancer la manche.";
-            return;
-          }
-
-          if (!this.roomRef) {
-            this.fatalError = 'Référence du salon introuvable. Recharge la page.';
-            return;
-          }
-
-          if (!this.bothPlayersOnline) {
-            this.fatalError = 'Les deux joueurs ne sont pas détectés en ligne côté Firebase.\nJoueur 1 : ' + (this.players?.p1?.online ? 'online' : 'offline') + '\nJoueur 2 : ' + (this.players?.p2?.online ? 'online' : 'offline');
-            console.log('players =', this.players);
-            return;
-          }
-
-          this.loading = true;
-          this.fatalError = '';
-
-          try {
-            this.wordVisible = false;
-
-            const pair = this.pick(this.words);
-            const swap = Math.random() > .5;
-            const commonWord = swap ? pair[1] : pair[0];
-            const impostorWord = swap ? pair[0] : pair[1];
-            const duel = Math.random() < .30;
-            const useConstraint = Math.random() < .30;
-            const useSaboteur = Math.random() < .30;
-            const doubleStake = Math.random() < .12;
-            const impostorPlayer = Math.random() < .5 ? 'p1' : 'p2';
-
-            const roles = duel
-              ? { p1: 'impostor', p2: 'impostor' }
-              : {
-                  p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
-                  p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
-                };
-
-            await this.roomRef.update({
-              phase: 'scan',
-              roundNumber: (this.room?.roundNumber || 0) + 1,
-              scanReady: null,
-              round: {
-                id: Date.now(),
-                mode: duel ? 'duel' : 'standard',
-                commonWord,
-                impostorWord,
-                roles,
-                constraint: useConstraint ? this.pick(this.constraints) : '',
-                sabotageObjective: useSaboteur ? this.pick(this.sabotageWords) : '',
-                doubleStake,
-                votes: {},
-                resolved: false,
-                startedAt: firebase.database.ServerValue.TIMESTAMP
-              }
-            });
-          } catch (err) {
-            console.error(err);
-            this.fatalError = 'Impossible de lancer la manche : ' + (err.message || err);
-          } finally {
-            this.loading = false;
-          }
+          if (!this.isHost || !this.bothPlayersOnline) return;
+          this.wordVisible = false;
+          const pair = this.pick(this.words);
+          const swap = Math.random() > .5;
+          const commonWord = swap ? pair[1] : pair[0];
+          const impostorWord = swap ? pair[0] : pair[1];
+          const duel = Math.random() < .30;
+          const useConstraint = Math.random() < .30;
+          const useSaboteur = Math.random() < .30;
+          const doubleStake = Math.random() < .12;
+          const impostorPlayer = Math.random() < .5 ? 'p1' : 'p2';
+          const roles = duel ? { p1: 'impostor', p2: 'impostor' } : {
+            p1: impostorPlayer === 'p1' ? 'impostor' : 'civil',
+            p2: impostorPlayer === 'p2' ? 'impostor' : 'civil'
+          };
+          await this.roomRef.update({
+            phase: 'scan',
+            roundNumber: (this.room?.roundNumber || 0) + 1,
+            round: {
+              id: Date.now(),
+              mode: duel ? 'duel' : 'standard',
+              commonWord,
+              impostorWord,
+              roles,
+              constraint: useConstraint ? this.pick(this.constraints) : '',
+              sabotageObjective: useSaboteur ? this.pick(this.sabotageWords) : '',
+              doubleStake,
+              votes: {},
+              resolved: false,
+              startedAt: firebase.database.ServerValue.TIMESTAMP
+            }
+          });
         },
-
         prepareScan() {
           this.wordVisible = false;
           this.scanProgress = 0;
           this.stopGameTimer();
         },
-
         startScan() {
           this.cancelScan();
-
           const start = performance.now();
-
           this.scanTimer = setInterval(() => {
             const elapsed = performance.now() - start;
             this.scanProgress = Math.min(100, elapsed / 3000 * 100);
-
             if (this.scanProgress >= 100) {
               this.cancelScan(false);
               this.db.ref(`rooms/${this.roomCode}/scanReady/${this.playerId}`).set(true);
@@ -728,130 +619,87 @@
             }
           }, 40);
         },
-
         cancelScan(reset = true) {
           if (this.scanTimer) clearInterval(this.scanTimer);
           this.scanTimer = null;
-
-          if (reset && this.scanProgress < 100) {
-            this.scanProgress = 0;
-          }
+          if (reset && this.scanProgress < 100) this.scanProgress = 0;
         },
-
         async checkScanReady() {
+          if (!this.isHost) return;
           setTimeout(async () => {
-            try {
-              const snap = await this.db.ref(`rooms/${this.roomCode}/scanReady`).get();
-              const ready = snap.val() || {};
-
-              if (ready.p1 && ready.p2 && this.roomRef) {
-                await this.roomRef.update({ phase: 'game', scanReady: null });
-              }
-            } catch (err) {
-              console.error(err);
-              this.fatalError = 'Erreur pendant la validation du scan : ' + (err.message || err);
+            const snap = await this.db.ref(`rooms/${this.roomCode}/scanReady`).get();
+            const ready = snap.val() || {};
+            if (ready.p1 && ready.p2) {
+              await this.roomRef.update({ phase: 'game', scanReady: null });
             }
           }, 250);
         },
-
         prepareGame() {
           this.wordVisible = false;
           this.timeLeft = 180;
           this.stopGameTimer();
-
           this.gameTimer = setInterval(() => {
             this.timeLeft = Math.max(0, this.timeLeft - 1);
-
-            if (this.timeLeft <= 0) {
-              this.goVote();
-            }
+            if (this.timeLeft <= 0) this.goVote();
           }, 1000);
         },
-
         stopGameTimer() {
           if (this.gameTimer) clearInterval(this.gameTimer);
           this.gameTimer = null;
         },
-
         async sabotage() {
           if (this.sabotageCooldown > 0 || !this.roomRef) return;
-
           await this.roomRef.child('sabotage').set({
             by: this.playerId,
             ts: firebase.database.ServerValue.TIMESTAMP,
             nonce: Math.random().toString(36).slice(2)
           });
-
           this.sabotageCooldown = 20;
           clearInterval(this.cooldownTimer);
-
           this.cooldownTimer = setInterval(() => {
             this.sabotageCooldown -= 1;
-
-            if (this.sabotageCooldown <= 0) {
-              clearInterval(this.cooldownTimer);
-            }
+            if (this.sabotageCooldown <= 0) clearInterval(this.cooldownTimer);
           }, 1000);
         },
-
         handleRemoteGlitch(sabotage) {
           if (!sabotage?.by || sabotage.by === this.playerId) return;
           if (this.lastSabotageNonce === sabotage.nonce) return;
-
           this.lastSabotageNonce = sabotage.nonce;
           this.localGlitch = true;
-
-          if (navigator.vibrate) {
-            navigator.vibrate([80, 40, 80]);
-          }
-
-          setTimeout(() => {
-            this.localGlitch = false;
-          }, 1800);
+          if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+          setTimeout(() => { this.localGlitch = false; }, 1800);
         },
-
         async goVote() {
-          if (this.roomRef) {
-            await this.roomRef.update({ phase: 'vote' });
-          }
+          if (this.roomRef) await this.roomRef.update({ phase: 'vote' });
         },
-
         async vote(choice) {
-          if (!this.round || this.hasVoted || !this.roomRef) return;
+          if (!this.round || this.hasVoted) return;
           await this.roomRef.child(`round/votes/${this.playerId}`).set(choice);
         },
-
         async resolveVotesOnce() {
-          if (!this.isHost || this.round?.resolved || !this.roomRef) return;
-
+          if (!this.isHost || this.round?.resolved) return;
           const stake = this.round.doubleStake ? 2 : 1;
           const updates = { 'round/resolved': true };
-
           ['p1', 'p2'].forEach(pid => {
             const oid = pid === 'p1' ? 'p2' : 'p1';
             const guessed = this.round.votes?.[pid];
             const truth = this.round.roles?.[oid];
-
             if (guessed !== truth) {
               const current = this.players[pid]?.hearts ?? 3;
               updates[`players/${pid}/hearts`] = Math.max(0, current - stake);
             }
           });
-
           await this.roomRef.update(updates);
         },
-
         async resetMatch() {
-          if (!this.isHost || !this.roomRef) return;
-
+          if (!this.isHost) return;
           await this.roomRef.update({
             phase: 'lobby',
             round: null,
             roundNumber: 0,
-            scanReady: null,
             'players/p1/hearts': 3,
             'players/p2/hearts': 3,
-            sabotage: { by: '', ts: 0, nonce: '' }
+            sabotage: { by: '', ts: 0 }
           });
         }
       }
