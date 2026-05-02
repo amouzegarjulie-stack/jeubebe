@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>VECTEURS 8</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #070707;
+      --grid: #222222;
+      --text: #f4f4f4;
+      --muted: #777777;
+      --white: #f7f7f7;
+      --dark: #242424;
+      --accent: #b9f5d8;
+      --accent-2: #d6ccff;
+      --danger: #ff8e8e;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100dvh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at 50% 0%, #111 0%, #000 54%);
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .topbar {
+      height: 54px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid #111;
+      gap: 8px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .brand strong {
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      font-weight: 800;
+    }
+
+    .brand span {
+      margin-top: 5px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .room-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input,
+    button {
+      border: 1px solid #242424;
+      background: #080808;
+      color: var(--text);
+      height: 34px;
+      border-radius: 999px;
+      font: inherit;
+      outline: none;
+    }
+
+    input {
+      width: 70px;
+      text-align: center;
+      font-size: 15px;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+    }
+
+    button {
+      padding: 0 11px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .status {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid #0c0c0c;
+    }
+
+    .status b {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .board-wrap {
+      width: 100vw;
+      height: 100vw;
+      max-height: calc(100dvh - 54px - 36px - 144px - var(--safe-bottom));
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .board {
+      width: min(100vw, 100dvh - 54px - 36px - 144px - var(--safe-bottom));
+      height: min(100vw, 100dvh - 54px - 36px - 144px - var(--safe-bottom));
+      min-width: 280px;
+      min-height: 280px;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      border: 1px solid var(--grid);
+      background: #030303;
+    }
+
+    .cell {
+      position: relative;
+      border-right: 0.5px solid var(--grid);
+      border-bottom: 0.5px solid var(--grid);
+    }
+
+    .cell:nth-child(8n) {
+      border-right: 0;
+    }
+
+    .cell:nth-last-child(-n + 8) {
+      border-bottom: 0;
+    }
+
+    .cell.valid::after {
+      content: "";
+      position: absolute;
+      inset: 25%;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.52;
+      box-shadow: 0 0 18px rgba(185, 245, 216, 0.25);
+    }
+
+    .cell.capture::after {
+      background: var(--danger);
+      box-shadow: 0 0 18px rgba(255, 142, 142, 0.25);
+    }
+
+    .piece {
+      position: absolute;
+      width: 9.6vw;
+      height: 9.6vw;
+      max-width: 42px;
+      max-height: 42px;
+      min-width: 28px;
+      min-height: 28px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: left 160ms ease, top 160ms ease, transform 140ms ease, box-shadow 140ms ease;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .piece::after {
+      content: "";
+      width: 58%;
+      height: 58%;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .piece.p1 {
+      background: var(--white);
+      border: 1px solid rgba(0,0,0,0.5);
+      box-shadow: 0 5px 18px rgba(255,255,255,0.13);
+    }
+
+    .piece.p2 {
+      background: var(--dark);
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 5px 18px rgba(0,0,0,0.75);
+    }
+
+    .piece.selected {
+      transform: translate(-50%, -50%) scale(1.17);
+      box-shadow: 0 0 0 4px rgba(214, 204, 255, 0.18), 0 0 28px rgba(214, 204, 255, 0.34);
+    }
+
+    .bottom {
+      margin-top: auto;
+      width: 100%;
+      min-height: 144px;
+      padding: 10px 10px calc(10px + var(--safe-bottom));
+      background: linear-gradient(180deg, rgba(0,0,0,0), #050505 18%, #050505 100%);
+      border-top: 1px solid #111;
+    }
+
+    .cards {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .card {
+      flex: 1;
+      height: 88px;
+      border-radius: 20px;
+      border: 1px solid #242424;
+      background: #080808;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 9px;
+      transition: transform 130ms ease, border-color 130ms ease, background 130ms ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    .card.selected {
+      transform: translateY(-10px);
+      border-color: rgba(185,245,216,0.75);
+      background: #0d1612;
+    }
+
+    .card-title {
+      font-size: clamp(10px, 3vw, 14px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .card-desc {
+      font-size: clamp(9px, 2.6vw, 11px);
+      color: #9a9a9a;
+      line-height: 1.2;
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: #777;
+      font-size: 12px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.86);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(360px, 92vw);
+      border: 1px solid #222;
+      background: #070707;
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.85);
+    }
+
+    .modal h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0.12em;
+    }
+
+    .modal p {
+      color: #aaa;
+      line-height: 1.35;
+      font-size: 14px;
+      margin: 0 0 18px;
+    }
+
+    .modal .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .modal button {
+      flex: 1;
+      height: 44px;
+      font-size: 14px;
+    }
+
+    .modal input {
+      width: 100%;
+      height: 48px;
+      border-radius: 16px;
+      font-size: 22px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <strong>VECTEURS 8</strong>
+        <span id="roleLabel">hors ligne</span>
+      </div>
+      <div class="room-tools">
+        <input id="roomCode" inputmode="numeric" maxlength="4" placeholder="0000" />
+        <button id="joinBtn">Salon</button>
+      </div>
+    </header>
+
+    <section class="status">
+      <span>Tour : <b id="turnLabel">-</b></span>
+      <span>Salon : <b id="roomLabel">Local</b></span>
+    </section>
+
+    <section class="board-wrap">
+      <div id="board" class="board" aria-label="Plateau Vecteurs 8"></div>
+    </section>
+
+    <section class="bottom">
+      <div id="cards" class="cards"></div>
+      <div id="hint" class="hint">Choisis une carte, puis un pion.</div>
+    </section>
+  </main>
+
+  <div id="overlay" class="overlay show">
+    <div class="modal">
+      <h1>VECTEURS 8</h1>
+      <p>Jeu mobile tactique en 8x8. Crée un salon ou rejoins un code à 4 chiffres.</p>
+      <input id="startCode" inputmode="numeric" maxlength="4" placeholder="Code salon" />
+      <div class="row">
+        <button id="createBtn">Créer</button>
+        <button id="joinStartBtn">Rejoindre</button>
+      </div>
+      <div class="row">
+        <button id="localBtn">Mode local</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*
+      1) Remplace cette configuration par celle de ton projet Firebase.
+      2) Active Realtime Database dans Firebase Console.
+      3) Règles de test possibles pendant le développement :
+         {
+           "rules": {
+             ".read": true,
+             ".write": true
+           }
+         }
+    */
+    const firebaseConfig = {
+      apiKey: "REMPLACE_MOI",
+      authDomain: "REMPLACE_MOI.firebaseapp.com",
+      databaseURL: "https://REMPLACE_MOI-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "REMPLACE_MOI",
+      storageBucket: "REMPLACE_MOI.appspot.com",
+      messagingSenderId: "REMPLACE_MOI",
+      appId: "REMPLACE_MOI"
+    };
+
+    const CARD_DEFS = {
+      AVANT: {
+        title: "AVANT",
+        desc: "1 case vers l'avant",
+        moves: (p) => [[p.dir, 0]]
+      },
+      DIAGONALE: {
+        title: "DIAGONALE",
+        desc: "1 case en diagonale",
+        moves: (p) => [[p.dir, -1], [p.dir, 1]]
+      },
+      CAVALIER: {
+        title: "CAVALIER",
+        desc: "Saut en L",
+        moves: (p) => [[p.dir * 2, -1], [p.dir * 2, 1], [p.dir, -2], [p.dir, 2]]
+      },
+      PIVOT: {
+        title: "PIVOT",
+        desc: "1 case latérale",
+        moves: () => [[0, -1], [0, 1]]
+      },
+      ELAN: {
+        title: "ÉLAN",
+        desc: "2 cases avant si libre",
+        moves: (p) => [[p.dir * 2, 0]]
+      }
+    };
+
+    const ALL_CARDS = Object.keys(CARD_DEFS);
+    const HAND_SIZE = 3;
+    const boardEl = document.getElementById("board");
+    const cardsEl = document.getElementById("cards");
+    const hintEl = document.getElementById("hint");
+    const turnLabel = document.getElementById("turnLabel");
+    const roleLabel = document.getElementById("roleLabel");
+    const roomLabel = document.getElementById("roomLabel");
+    const overlay = document.getElementById("overlay");
+    const roomCodeInput = document.getElementById("roomCode");
+    const startCodeInput = document.getElementById("startCode");
+
+    let db = null;
+    let roomRef = null;
+    let roomCode = null;
+    let myPlayer = 1;
+    let online = false;
+    let selectedCard = null;
+    let selectedPieceId = null;
+    let validTargets = [];
+    let audioCtx = null;
+
+    let state = freshGame();
+
+    function freshGame() {
+      const pieces = {};
+      let id = 1;
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 8; c++) {
+          pieces["p" + id++] = { player: 2, r, c };
+        }
+      }
+      for (let r = 6; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          pieces["p" + id++] = { player: 1, r, c };
+        }
+      }
+      return {
+        pieces,
+        turn: 1,
+        hands: {
+          1: drawHand(),
+          2: drawHand()
+        },
+        winner: null,
+        updatedAt: Date.now()
+      };
+    }
+
+    function drawHand() {
+      const shuffled = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, HAND_SIZE);
+    }
+
+    function nextCard(exceptHand) {
+      const pool = ALL_CARDS.filter(c => !exceptHand.includes(c));
+      return pool[Math.floor(Math.random() * pool.length)] || ALL_CARDS[0];
+    }
+
+    function initBoard() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.addEventListener("pointerdown", onCellTap, { passive: true });
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function render() {
+      renderBoard();
+      renderCards();
+      turnLabel.textContent = state.winner ? `Joueur ${state.winner} gagne` : `Joueur ${state.turn}`;
+      roleLabel.textContent = online ? `joueur ${myPlayer}` : "mode local";
+      roomLabel.textContent = roomCode || "Local";
+    }
+
+    function renderBoard() {
+      document.querySelectorAll(".cell").forEach(cell => {
+        cell.classList.remove("valid", "capture");
+        const r = Number(cell.dataset.r);
+        const c = Number(cell.dataset.c);
+        const target = validTargets.find(t => t.r === r && t.c === c);
+        if (target) cell.classList.add(target.capture ? "capture" : "valid");
+      });
+
+      boardEl.querySelectorAll(".piece").forEach(p => p.remove());
+      Object.entries(state.pieces).forEach(([id, piece]) => {
+        const el = document.createElement("div");
+        el.className = `piece p${piece.player}`;
+        if (selectedPieceId === id) el.classList.add("selected");
+        el.dataset.id = id;
+        positionPiece(el, piece.r, piece.c);
+        el.addEventListener("pointerdown", onPieceTap, { passive: true });
+        boardEl.appendChild(el);
+      });
+    }
+
+    function positionPiece(el, r, c) {
+      const size = boardEl.getBoundingClientRect().width;
+      const cell = size / 8;
+      el.style.left = `${c * cell + cell / 2}px`;
+      el.style.top = `${r * cell + cell / 2}px`;
+    }
+
+    function renderCards() {
+      const hand = state.hands?.[myTurnPerspective()] || [];
+      cardsEl.innerHTML = "";
+      hand.forEach(cardName => {
+        const def = CARD_DEFS[cardName];
+        const card = document.createElement("div");
+        card.className = "card";
+        if (selectedCard === cardName) card.classList.add("selected");
+        card.dataset.card = cardName;
+        card.innerHTML = `<div class="card-title">${def.title}</div><div class="card-desc">${def.desc}</div>`;
+        card.addEventListener("pointerdown", onCardTap, { passive: true });
+        cardsEl.appendChild(card);
+      });
+    }
+
+    function myTurnPerspective() {
+      return online ? myPlayer : state.turn;
+    }
+
+    function canPlay() {
+      return !state.winner && (!online || state.turn === myPlayer);
+    }
+
+    function onCardTap(e) {
+      if (!canPlay()) return setHint("Ce n'est pas ton tour.");
+      selectedCard = e.currentTarget.dataset.card;
+      selectedPieceId = null;
+      validTargets = [];
+      setHint("Carte choisie. Touche un de tes pions.");
+      pop(180, 0.025);
+      render();
+    }
+
+    function onPieceTap(e) {
+      e.stopPropagation();
+      if (!canPlay()) return setHint("Ce n'est pas ton tour.");
+      if (!selectedCard) return setHint("Choisis d'abord une carte.");
+
+      const id = e.currentTarget.dataset.id;
+      const piece = state.pieces[id];
+      if (!piece || piece.player !== state.turn) return setHint("Ce pion n'est pas à toi.");
+
+      selectedPieceId = id;
+      validTargets = getValidTargets(id, selectedCard);
+      setHint(validTargets.length ? "Choisis une destination." : "Aucun coup valide avec cette carte.");
+      pop(260, 0.025);
+      render();
+    }
+
+    function onCellTap(e) {
+      if (!canPlay() || !selectedPieceId || !selectedCard) return;
+      const r = Number(e.currentTarget.dataset.r);
+      const c = Number(e.currentTarget.dataset.c);
+      const target = validTargets.find(t => t.r === r && t.c === c);
+      if (!target) return;
+      playMove(selectedPieceId, r, c, selectedCard);
+    }
+
+    function getValidTargets(id, cardName) {
+      const piece = state.pieces[id];
+      if (!piece) return [];
+      const perspective = {
+        dir: piece.player === 1 ? -1 : 1
+      };
+      const moves = CARD_DEFS[cardName].moves(perspective);
+      const targets = [];
+
+      moves.forEach(([dr, dc]) => {
+        const r = piece.r + dr;
+        const c = piece.c + dc;
+        if (r < 0 || r > 7 || c < 0 || c > 7) return;
+
+        const occupant = pieceAt(r, c);
+        if (occupant && occupant.piece.player === piece.player) return;
+
+        if (cardName === "ELAN") {
+          const midR = piece.r + perspective.dir;
+          if (pieceAt(midR, c) || occupant) return;
+        }
+
+        targets.push({ r, c, capture: Boolean(occupant) });
+      });
+      return targets;
+    }
+
+    function pieceAt(r, c) {
+      for (const [id, piece] of Object.entries(state.pieces)) {
+        if (piece.r === r && piece.c === c) return { id, piece };
+      }
+      return null;
+    }
+
+    function playMove(id, r, c, cardName) {
+      const moving = state.pieces[id];
+      const captured = pieceAt(r, c);
+      if (captured && captured.id !== id) delete state.pieces[captured.id];
+
+      state.pieces[id] = { ...moving, r, c };
+
+      const hand = [...state.hands[state.turn]];
+      const idx = hand.indexOf(cardName);
+      if (idx !== -1) hand[idx] = nextCard(hand.filter((_, i) => i !== idx));
+      state.hands[state.turn] = hand;
+
+      const enemy = state.turn === 1 ? 2 : 1;
+      const enemyPieces = Object.values(state.pieces).filter(p => p.player === enemy).length;
+      if (enemyPieces === 0 || (moving.player === 1 && r === 0) || (moving.player === 2 && r === 7)) {
+        state.winner = moving.player;
+      } else {
+        state.turn = enemy;
+      }
+
+      state.updatedAt = Date.now();
+      selectedCard = null;
+      selectedPieceId = null;
+      validTargets = [];
+      setHint(state.winner ? `Joueur ${state.winner} gagne.` : `Au joueur ${state.turn}.`);
+      pop(420, 0.04);
+      vibrate(20);
+      syncState();
+      render();
+    }
+
+    function setHint(text) {
+      hintEl.textContent = text;
+    }
+
+    function pop(freq = 240, duration = 0.03) {
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (_) {}
+    }
+
+    function vibrate(ms) {
+      if (navigator.vibrate) navigator.vibrate(ms);
+    }
+
+    function initFirebase() {
+      if (db) return true;
+      if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "REMPLACE_MOI") {
+        alert("Ajoute ta configuration Firebase dans le fichier HTML avant d'utiliser le multijoueur.");
+        return false;
+      }
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      return true;
+    }
+
+    async function createRoom() {
+      if (!initFirebase()) return;
+      roomCode = String(Math.floor(1000 + Math.random() * 9000));
+      roomCodeInput.value = roomCode;
+      startCodeInput.value = roomCode;
+      myPlayer = 1;
+      online = true;
+      state = freshGame();
+      roomRef = db.ref(`vecteurs8/rooms/${roomCode}`);
+      await roomRef.set({ state, players: { 1: true }, createdAt: Date.now() });
+      listenRoom();
+      overlay.classList.remove("show");
+      setHint("Salon créé. Partage le code à 4 chiffres.");
+      render();
+    }
+
+    async function joinRoom(code) {
+      if (!initFirebase()) return;
+      code = String(code || "").replace(/\D/g, "").slice(0, 4);
+      if (code.length !== 4) return setHint("Entre un code salon à 4 chiffres.");
+
+      roomCode = code;
+      roomCodeInput.value = code;
+      roomRef = db.ref(`vecteurs8/rooms/${roomCode}`);
+      const snap = await roomRef.get();
+      if (!snap.exists()) {
+        alert("Salon introuvable.");
+        return;
+      }
+
+      const data = snap.val();
+      myPlayer = data.players?.[2] ? 1 : 2;
+      online = true;
+      await roomRef.child(`players/${myPlayer}`).set(true);
+      listenRoom();
+      overlay.classList.remove("show");
+      setHint(`Connecté au salon ${roomCode}. Tu es joueur ${myPlayer}.`);
+      render();
+    }
+
+    function listenRoom() {
+      if (!roomRef) return;
+      roomRef.child("state").off();
+      roomRef.child("state").on("value", snap => {
+        const remote = snap.val();
+        if (!remote) return;
+        state = remote;
+        selectedCard = null;
+        selectedPieceId = null;
+        validTargets = [];
+        render();
+      });
+    }
+
+    function syncState() {
+      if (online && roomRef) roomRef.child("state").set(state);
+    }
+
+    document.getElementById("createBtn").addEventListener("pointerdown", createRoom, { passive: true });
+    document.getElementById("joinStartBtn").addEventListener("pointerdown", () => joinRoom(startCodeInput.value), { passive: true });
+    document.getElementById("joinBtn").addEventListener("pointerdown", () => joinRoom(roomCodeInput.value), { passive: true });
+    document.getElementById("localBtn").addEventListener("pointerdown", () => {
+      online = false;
+      roomCode = null;
+      state = freshGame();
+      overlay.classList.remove("show");
+      setHint("Mode local : les deux joueurs jouent sur cet iPhone.");
+      render();
+    }, { passive: true });
+
+    startCodeInput.addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
+    roomCodeInput.addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4));
+    window.addEventListener("resize", render);
+
+    initBoard();
+    render();
+  </script>
+</body>
+</html>
