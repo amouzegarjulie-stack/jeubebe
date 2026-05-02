@@ -2,197 +2,233 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-  <meta name="theme-color" content="#312e81" />
-  <title>Bataille Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNO Duo - Firebase Multiplayer</title>
 
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Inter', 'ui-sans-serif', 'system-ui']
+          },
+          colors: {
+            coral: '#FF5A5F',
+            deepblue: '#16425B',
+            mint: '#7AE7C7',
+            pastel: '#FFE066',
+            ink: '#17202A'
+          },
+          boxShadow: {
+            soft: '0 20px 70px rgba(15, 23, 42, 0.16)',
+            card: '0 18px 35px rgba(0, 0, 0, 0.20)'
+          }
+        }
+      }
+    };
+  </script>
 
   <style>
     :root {
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
+      --glass-bg: rgba(255, 255, 255, 0.74);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --dark-glass: rgba(15, 23, 42, 0.65);
     }
 
     * {
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
 
     body {
       min-height: 100vh;
-      min-height: 100dvh;
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bottom);
-      overflow: hidden;
+      overflow-x: hidden;
       background:
-        radial-gradient(circle at top left, rgba(250, 204, 21, 0.28), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.28), transparent 34%),
-        linear-gradient(135deg, #1e1b4b, #312e81 48%, #4c1d95);
-      color: white;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    input, button {
-      font-size: 16px;
+        radial-gradient(circle at top left, rgba(255, 90, 95, 0.28), transparent 34%),
+        radial-gradient(circle at top right, rgba(122, 231, 199, 0.32), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(255, 224, 102, 0.30), transparent 32%),
+        linear-gradient(135deg, #f8fbff 0%, #edf2f7 45%, #e8eef8 100%);
+      color: #17202A;
     }
 
     .glass {
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: var(--glass-bg);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
     }
 
-    .soft-card {
-      background: linear-gradient(145deg, #ffffff, #eef2ff);
-      box-shadow:
-        14px 14px 34px rgba(15, 23, 42, 0.28),
-        -8px -8px 24px rgba(255, 255, 255, 0.14);
+    .glass-dark {
+      background: var(--dark-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.26);
     }
 
-    .playing-card {
-      width: min(25vw, 96px);
-      height: min(36vw, 138px);
-      min-width: 74px;
-      min-height: 106px;
+    .uno-card {
+      width: 74px;
+      height: 112px;
       border-radius: 18px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      user-select: none;
       transform-style: preserve-3d;
-      transition: transform 360ms ease, opacity 280ms ease, filter 280ms ease;
+      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.23);
+      border: 3px solid rgba(255, 255, 255, 0.88);
+      overflow: hidden;
     }
 
-    .card-back {
-      background:
-        radial-gradient(circle at center, rgba(250, 204, 21, 0.7) 0 9%, transparent 10%),
-        linear-gradient(135deg, #4338ca, #7c3aed);
-      border: 4px solid rgba(255, 255, 255, 0.9);
-      box-shadow: inset 0 0 0 2px rgba(250, 204, 21, 0.35), 0 16px 34px rgba(0, 0, 0, 0.28);
+    .uno-card::before {
+      content: '';
+      position: absolute;
+      width: 76%;
+      height: 48%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.24);
+      transform: rotate(-28deg);
+      inset: 25% 12%;
     }
 
-    .card-face {
-      background: linear-gradient(160deg, #ffffff, #f8fafc);
-      color: #111827;
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    .uno-card::after {
+      content: attr(data-corner);
+      position: absolute;
+      top: 7px;
+      left: 9px;
+      font-weight: 900;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
     }
 
-    .red-card {
-      color: #dc2626;
+    .uno-card .value {
+      position: relative;
+      z-index: 2;
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.90);
+      color: #17202A;
+      font-size: 23px;
+      font-weight: 950;
+      transform: rotate(-8deg);
+      box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.06);
     }
 
-    .pile-button {
-      touch-action: manipulation;
-      transition: transform 160ms ease, filter 160ms ease;
+    .uno-card.playable {
+      cursor: pointer;
+      filter: saturate(1.08);
     }
 
-    .pile-button:active {
-      transform: scale(0.96);
-      filter: brightness(1.08);
+    .uno-card.playable:hover {
+      transform: translateY(-14px) scale(1.05) rotate(-2deg);
+      box-shadow: 0 22px 48px rgba(15, 23, 42, 0.28);
     }
 
-    .float-in {
-      animation: floatIn 340ms ease both;
+    .uno-card.disabled {
+      opacity: 0.55;
+      filter: grayscale(0.25);
     }
 
-    .pulse-gold {
-      animation: pulseGold 1.4s ease-in-out infinite;
+    .card-red { background: linear-gradient(145deg, #ff686b, #d62828); }
+    .card-blue { background: linear-gradient(145deg, #2f80ed, #16425B); }
+    .card-green { background: linear-gradient(145deg, #7AE7C7, #1b998b); }
+    .card-yellow { background: linear-gradient(145deg, #FFE066, #f9a620); }
+    .card-wild { background: conic-gradient(from 45deg, #ff5a5f, #ffe066, #7ae7c7, #2f80ed, #ff5a5f); }
+    .card-back { background: linear-gradient(145deg, #17202A, #16425B); }
+
+    .card-back .value {
+      color: white;
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.42);
     }
 
-    .win-sweep-left {
-      animation: sweepLeft 520ms ease forwards;
+    .hand-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(22, 66, 91, 0.35) transparent;
     }
 
-    .win-sweep-right {
-      animation: sweepRight 520ms ease forwards;
+    .hand-scroll::-webkit-scrollbar { height: 8px; }
+    .hand-scroll::-webkit-scrollbar-track { background: transparent; }
+    .hand-scroll::-webkit-scrollbar-thumb {
+      background: rgba(22, 66, 91, 0.28);
+      border-radius: 999px;
     }
 
-    .shake {
-      animation: shake 380ms ease-in-out;
+    .fade-in {
+      animation: fadeIn 240ms ease both;
     }
 
-    @keyframes floatIn {
-      from { opacity: 0; transform: translateY(18px) scale(0.94); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    .pop-in {
+      animation: popIn 260ms cubic-bezier(.2, .9, .2, 1.2) both;
     }
 
-    @keyframes pulseGold {
-      0%, 100% { box-shadow: 0 0 0 rgba(250, 204, 21, 0); }
-      50% { box-shadow: 0 0 34px rgba(250, 204, 21, 0.52); }
+    .pulse-soft {
+      animation: pulseSoft 1.6s ease-in-out infinite;
     }
 
-    @keyframes sweepLeft {
-      to { opacity: 0; transform: translateX(-44vw) translateY(16vh) rotate(-15deg) scale(0.72); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes sweepRight {
-      to { opacity: 0; transform: translateX(44vw) translateY(-16vh) rotate(15deg) scale(0.72); }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.9) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
+    @keyframes pulseSoft {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.035); }
+    }
+
+    @media (min-width: 768px) {
+      .uno-card {
+        width: 88px;
+        height: 132px;
+        border-radius: 22px;
+      }
+      .uno-card .value {
+        width: 62px;
+        height: 62px;
+        font-size: 28px;
+      }
+      .uno-card::after {
+        font-size: 17px;
+      }
     }
   </style>
 </head>
+<body class="font-display">
+  <main id="app" class="min-h-screen p-4 md:p-8"></main>
 
-<body>
-  <main id="app" class="relative mx-auto flex min-h-[100dvh] max-w-md flex-col px-4 py-4"></main>
-
-  <script>
-    window.addEventListener("error", event => {
-      const app = document.querySelector("#app");
-      if (!app) return;
-      app.innerHTML = `
-        <section class="flex min-h-[100dvh] items-center justify-center px-4 text-center">
-          <div class="glass w-full max-w-md rounded-[2rem] p-6">
-            <div class="mb-4 text-5xl">💥</div>
-            <h1 class="text-2xl font-black">Erreur JavaScript</h1>
-            <pre class="mt-4 max-h-72 overflow-auto rounded-2xl bg-black/40 p-4 text-left text-xs text-red-100 whitespace-pre-wrap">${String(event.message || event.error || "Erreur inconnue")}</pre>
-          </div>
-        </section>
-      `;
-    });
-
-    window.addEventListener("unhandledrejection", event => {
-      const app = document.querySelector("#app");
-      if (!app) return;
-      app.innerHTML = `
-        <section class="flex min-h-[100dvh] items-center justify-center px-4 text-center">
-          <div class="glass w-full max-w-md rounded-[2rem] p-6">
-            <div class="mb-4 text-5xl">💥</div>
-            <h1 class="text-2xl font-black">Erreur async</h1>
-            <pre class="mt-4 max-h-72 overflow-auto rounded-2xl bg-black/40 p-4 text-left text-xs text-red-100 whitespace-pre-wrap">${String(event.reason?.message || event.reason || "Erreur inconnue")}</pre>
-          </div>
-        </section>
-      `;
-    });
-  </script>
-
+  <!-- Firebase SDK v10+ ESM -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
     import {
-      getDatabase,
-      ref,
-      set,
-      get,
-      onValue,
-      update,
-      runTransaction,
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      onSnapshot,
       serverTimestamp,
-      onDisconnect,
-      remove
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+      runTransaction,
+      deleteDoc
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
-    /************************************************************
-     * CONFIGURATION FIREBASE
-     * Colle ici les informations de ton projet Firebase.
-     * Active Realtime Database dans la console Firebase.
-     ************************************************************/
- const firebaseConfig = {
+    /*********************************************************************
+     * 1. CONFIGURATION FIREBASE
+     * Remplacez les valeurs ci-dessous par celles de votre projet Firebase.
+     *********************************************************************/
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -203,641 +239,904 @@
 };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const db = getFirestore(app);
 
-    const $app = document.querySelector("#app");
-
-    const state = {
-      roomCode: null,
-      playerId: null,
-      unsubscribe: null,
-      game: null,
-      busy: false,
-      lastResolutionId: null
+    /*********************************************************************
+     * 2. CONSTANTES ET ETAT LOCAL
+     *********************************************************************/
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const COLOR_LABELS = {
+      red: 'Rouge corail',
+      blue: 'Bleu profond',
+      green: 'Vert menthe',
+      yellow: 'Jaune pastel',
+      wild: 'Wild'
+    };
+    const COLOR_CLASSES = {
+      red: 'card-red',
+      blue: 'card-blue',
+      green: 'card-green',
+      yellow: 'card-yellow',
+      wild: 'card-wild'
+    };
+    const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+2', 'skip', 'reverse'];
+    const SPECIAL_LABELS = {
+      skip: '⦸',
+      reverse: '↺',
+      wild: '★',
+      '+2': '+2'
     };
 
-    const SUITS = ["♠", "♥", "♦", "♣"];
-    const VALUES = [
-      { label: "2", rank: 2 },
-      { label: "3", rank: 3 },
-      { label: "4", rank: 4 },
-      { label: "5", rank: 5 },
-      { label: "6", rank: 6 },
-      { label: "7", rank: 7 },
-      { label: "8", rank: 8 },
-      { label: "9", rank: 9 },
-      { label: "10", rank: 10 },
-      { label: "J", rank: 11 },
-      { label: "Q", rank: 12 },
-      { label: "K", rank: 13 },
-      { label: "A", rank: 14 }
-    ];
+    const STORAGE_KEY = 'uno-duo-player-session-v1';
 
-    function uid() {
-      return Math.random().toString(36).slice(2, 10);
+    let state = {
+      screen: 'home',
+      gameId: '',
+      playerId: '',
+      playerName: '',
+      game: null,
+      unsubscribe: null,
+      loading: false,
+      message: '',
+      chosenWildCardId: null
+    };
+
+    const $app = document.querySelector('#app');
+
+    /*********************************************************************
+     * 3. UTILITAIRES GENERAUX
+     *********************************************************************/
+    function uid(prefix = 'id') {
+      return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
     }
 
-    function roomRef(code = state.roomCode) {
-      return ref(db, `warRooms/${code}`);
+    function gameId() {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     }
 
-    function createDeck() {
-      return SUITS.flatMap(suit => VALUES.map(value => ({
-        id: `${value.label}${suit}-${uid()}`,
-        label: value.label,
-        suit,
-        rank: value.rank,
-        color: suit === "♥" || suit === "♦" ? "red" : "black"
-      })));
+    function saveSession() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        gameId: state.gameId,
+        playerId: state.playerId,
+        playerName: state.playerName
+      }));
     }
 
-    function shuffle(cards) {
-      const copy = [...cards];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
+    function loadSession() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      } catch {
+        return {};
       }
-      return copy;
     }
 
-    function code4() {
-      return String(Math.floor(1000 + Math.random() * 9000));
+    function clearSession() {
+      localStorage.removeItem(STORAGE_KEY);
     }
 
-    function meKey() {
-      return `p${state.playerId}`;
-    }
-
-    function opponentKey() {
-      return state.playerId === 1 ? "p2" : "p1";
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function renderShell(inner) {
-      $app.innerHTML = inner;
+    function setState(patch) {
+      state = { ...state, ...patch };
+      render();
     }
 
     function toast(message) {
-      const node = document.createElement("div");
-      node.className = "fixed left-1/2 top-[calc(env(safe-area-inset-top)+16px)] z-50 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm text-white backdrop-blur";
-      node.textContent = message;
-      document.body.appendChild(node);
-      setTimeout(() => node.remove(), 1900);
+      setState({ message });
+      window.setTimeout(() => {
+        if (state.message === message) setState({ message: '' });
+      }, 2600);
     }
 
-    function showFirebaseError(error) {
-      const message = error?.message || String(error || "Erreur inconnue");
-      renderShell(`
-        <section class="flex flex-1 flex-col items-center justify-center text-center">
-          <div class="glass w-full rounded-[2rem] p-7">
-            <div class="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-red-500/20 text-4xl">⚠️</div>
-            <h1 class="text-2xl font-black">Firebase inaccessible</h1>
-            <p class="mt-3 text-sm leading-6 text-white/75">L'application est chargée, mais Realtime Database refuse la connexion ou ne répond pas.</p>
-            <pre class="mt-5 max-h-40 overflow-auto rounded-2xl bg-black/35 p-4 text-left text-xs text-red-100 whitespace-pre-wrap">${escapeHtml(message)}</pre>
-            <div class="mt-5 rounded-2xl bg-white/10 p-4 text-left text-sm leading-6 text-white/80">
-              <p class="font-bold text-yellow-200">À vérifier :</p>
-              <p>1. Realtime Database est bien créée.</p>
-              <p>2. Les règles autorisent temporairement la lecture/écriture.</p>
-              <p>3. databaseURL correspond exactement à l'URL affichée dans Firebase.</p>
-            </div>
-            <button id="retryFirebaseBtn" class="mt-5 w-full rounded-2xl bg-yellow-300 px-5 py-4 font-black text-indigo-950">Réessayer</button>
-          </div>
-        </section>
-      `);
-      document.querySelector("#retryFirebaseBtn").addEventListener("click", boot);
+    function sanitizeGameId(value) {
+      return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
     }
 
-    function showConnecting() {
-      renderShell(`
-        <section class="flex flex-1 flex-col items-center justify-center text-center">
-          <div class="glass w-full rounded-[2rem] p-7">
-            <div class="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-3xl bg-white/15 text-5xl">🔌</div>
-            <h1 class="text-2xl font-black">Connexion Firebase...</h1>
-            <p class="mt-3 text-sm text-white/70">Test d'accès à Realtime Database.</p>
-            <div class="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
-              <div class="h-full w-1/2 animate-pulse rounded-full bg-yellow-300"></div>
-            </div>
-          </div>
-        </section>
-      `);
+    function escapeHTML(str) {
+      return String(str || '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#039;',
+        '"': '&quot;'
+      })[char]);
     }
 
-    async function testFirebaseAccess() {
-      const testPath = ref(db, `warRooms/__connectionTest_${uid()}`);
-      await set(testPath, { ok: true, at: Date.now() });
-      await remove(testPath);
+    function currentPlayerIndex(game = state.game) {
+      return game?.players?.findIndex(player => player.id === state.playerId) ?? -1;
     }
 
-    async function boot() {
-      showConnecting();
+    function opponentIndex(game = state.game) {
+      const current = currentPlayerIndex(game);
+      return current === 0 ? 1 : 0;
+    }
+
+    function currentPlayer(game = state.game) {
+      return game?.players?.find(player => player.id === state.playerId) || null;
+    }
+
+    function isMyTurn(game = state.game) {
+      return game?.status === 'playing' && game?.players?.[game.turnIndex]?.id === state.playerId;
+    }
+
+    function gameRef(id = state.gameId) {
+      return doc(db, 'games', id);
+    }
+
+    /*********************************************************************
+     * 4. LOGIQUE UNO
+     *********************************************************************/
+    function createDeck() {
+      const deck = [];
+
+      for (const color of COLORS) {
+        deck.push(makeCard(color, '0'));
+
+        // UNO classique : deux cartes de chaque valeur/action sauf 0.
+        for (let copy = 0; copy < 2; copy++) {
+          for (const value of VALUES.filter(v => v !== '0')) {
+            deck.push(makeCard(color, value));
+          }
+        }
+      }
+
+      for (let i = 0; i < 4; i++) {
+        deck.push(makeCard('wild', 'wild'));
+      }
+
+      return shuffle(deck);
+    }
+
+    function makeCard(color, value) {
+      return {
+        id: uid('card'),
+        color,
+        value,
+        points: cardPoints(value)
+      };
+    }
+
+    function cardPoints(value) {
+      if (value === 'wild') return 50;
+      if (['+2', 'skip', 'reverse'].includes(value)) return 20;
+      return Number(value) || 0;
+    }
+
+    function shuffle(input) {
+      const array = [...input];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function dealGame(gameId, hostPlayer) {
+      let deck = createDeck();
+      const players = [
+        { ...hostPlayer, hand: deck.splice(0, 7), unoSafe: false, score: 0 },
+      ];
+
+      let topCard = deck.shift();
+
+      // Evite de démarrer sur une carte d'action trop ambiguë.
+      while (topCard.value === 'wild' || ['+2', 'skip', 'reverse'].includes(topCard.value)) {
+        deck.push(topCard);
+        deck = shuffle(deck);
+        topCard = deck.shift();
+      }
+
+      return {
+        id: gameId,
+        status: 'lobby',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        players,
+        deck,
+        discardPile: [topCard],
+        activeColor: topCard.color,
+        turnIndex: 0,
+        direction: 1,
+        winnerId: null,
+        lastAction: 'Partie créée. En attente du second joueur.',
+        rematchVotes: [],
+        version: 1
+      };
+    }
+
+    function canPlay(card, game) {
+      const top = game.discardPile[game.discardPile.length - 1];
+      return card.color === 'wild'
+        || card.color === game.activeColor
+        || card.value === top.value;
+    }
+
+    function nextTurnIndex(game, skipCount = 0) {
+      const totalPlayers = game.players.length;
+      const step = 1 + skipCount;
+      return (game.turnIndex + game.direction * step + totalPlayers * 10) % totalPlayers;
+    }
+
+    function drawCardsMutable(game, playerIndex, amount) {
+      for (let i = 0; i < amount; i++) {
+        if (!game.deck.length) recycleDiscardIntoDeck(game);
+        if (!game.deck.length) return;
+        game.players[playerIndex].hand.push(game.deck.shift());
+      }
+    }
+
+    function recycleDiscardIntoDeck(game) {
+      if (game.discardPile.length <= 1) return;
+      const top = game.discardPile[game.discardPile.length - 1];
+      game.deck = shuffle(game.discardPile.slice(0, -1).map(card => ({ ...card, id: uid('card') })));
+      game.discardPile = [top];
+    }
+
+    function applyCardEffect(game, card, chosenColor) {
+      let skip = 0;
+      let actionText = '';
+
+      if (card.value === '+2') {
+        const target = nextTurnIndex(game, 0);
+        drawCardsMutable(game, target, 2);
+        skip = 1;
+        actionText = `+2 joué. ${game.players[target].name} pioche 2 cartes et passe son tour.`;
+      }
+
+      if (card.value === 'skip') {
+        skip = 1;
+        actionText = 'Saut de tour joué.';
+      }
+
+      if (card.value === 'reverse') {
+        // En duel, inversion agit comme un saut de tour.
+        game.direction *= -1;
+        skip = game.players.length === 2 ? 1 : 0;
+        actionText = 'Inversion jouée. En duel, cela passe le tour adverse.';
+      }
+
+      if (card.value === 'wild') {
+        actionText = `Changement de couleur : ${COLOR_LABELS[chosenColor]}.`;
+      }
+
+      game.activeColor = card.value === 'wild' ? chosenColor : card.color;
+      game.turnIndex = nextTurnIndex(game, skip);
+      return actionText;
+    }
+
+    function calculateLoserHandPoints(game, winnerId) {
+      const loser = game.players.find(player => player.id !== winnerId);
+      return loser?.hand?.reduce((sum, card) => sum + card.points, 0) || 0;
+    }
+
+    function freshRoundFromExistingPlayers(game) {
+      let deck = createDeck();
+      const topCard = deck.shift();
+      const players = game.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        hand: deck.splice(0, 7),
+        unoSafe: false,
+        score: player.score || 0
+      }));
+
+      return {
+        ...game,
+        status: 'playing',
+        deck,
+        discardPile: [topCard],
+        activeColor: topCard.color === 'wild' ? COLORS[Math.floor(Math.random() * COLORS.length)] : topCard.color,
+        turnIndex: Math.floor(Math.random() * players.length),
+        direction: 1,
+        players,
+        winnerId: null,
+        lastAction: 'Nouvelle manche lancée.',
+        rematchVotes: [],
+        updatedAt: serverTimestamp()
+      };
+    }
+
+    /*********************************************************************
+     * 5. FIRESTORE : CREER, REJOINDRE, ECOUTER, JOUER
+     *********************************************************************/
+    async function createGame() {
+      const name = getPlayerName();
+      const id = gameId();
+      const playerId = uid('player');
+      const player = { id: playerId, name, hand: [], unoSafe: false, score: 0 };
+
+      setState({ loading: true });
       try {
-        await Promise.race([
-          testFirebaseAccess(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase après 8 secondes. Vérifie les règles Realtime Database, l'URL databaseURL, ou le domaine autorisé.")), 8000))
-        ]);
-        showHome();
+        await setDoc(gameRef(id), dealGame(id, player));
+        state.gameId = id;
+        state.playerId = playerId;
+        state.playerName = name;
+        saveSession();
+        listenGame(id);
+        setState({ screen: 'lobby', loading: false });
       } catch (error) {
         console.error(error);
-        showFirebaseError(error);
+        setState({ loading: false });
+        toast('Impossible de créer la partie. Vérifiez Firebase.');
       }
     }
 
-    function cardHtml(card, extra = "") {
-      if (!card) {
-        return `<div class="playing-card card-back ${extra}"></div>`;
-      }
+    async function joinGame() {
+      const input = document.querySelector('#joinGameId');
+      const id = sanitizeGameId(input?.value);
+      const name = getPlayerName();
+      if (!id) return toast('Entrez un Game ID valide.');
 
-      const red = card.color === "red" ? "red-card" : "";
-      return `
-        <div class="playing-card card-face ${red} ${extra} flex flex-col justify-between p-3">
-          <div class="text-left text-xl font-black leading-none">${card.label}</div>
-          <div class="grid place-items-center text-4xl font-black leading-none">${card.suit}</div>
-          <div class="rotate-180 text-left text-xl font-black leading-none">${card.label}</div>
-        </div>
-      `;
-    }
-
-    function hiddenCardHtml(label = "") {
-      return `
-        <div class="relative">
-          <div class="playing-card card-back"></div>
-          ${label ? `<div class="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-white/70">${label}</div>` : ""}
-        </div>
-      `;
-    }
-
-    function showHome() {
-      state.roomCode = null;
-      state.playerId = null;
-      if (state.unsubscribe) state.unsubscribe();
-
-      renderShell(`
-        <section class="flex flex-1 flex-col items-center justify-center gap-7 text-center">
-          <div class="glass float-in w-full rounded-[2rem] px-6 py-8">
-            <div class="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-3xl bg-white/15 text-5xl shadow-2xl">⚔️</div>
-            <h1 class="text-4xl font-black tracking-tight">Bataille Live</h1>
-            <p class="mt-3 text-sm leading-6 text-white/75">Crée ou rejoins une partie en temps réel. Les cartes restent cachées jusqu'à ce que les deux joueurs aient joué.</p>
-
-            <div class="mt-8 grid gap-3">
-              <button id="createBtn" class="rounded-2xl bg-yellow-300 px-5 py-4 font-black text-indigo-950 shadow-xl shadow-yellow-300/20 active:scale-95">Créer une partie</button>
-              <button id="joinOpenBtn" class="rounded-2xl bg-white/16 px-5 py-4 font-bold text-white ring-1 ring-white/20 active:scale-95">Rejoindre une partie</button>
-            </div>
-          </div>
-        </section>
-      `);
-
-      document.querySelector("#createBtn").addEventListener("click", createRoom);
-      document.querySelector("#joinOpenBtn").addEventListener("click", showJoin);
-    }
-
-    function showJoin() {
-      renderShell(`
-        <section class="flex flex-1 flex-col justify-center gap-5">
-          <button id="backBtn" class="absolute left-4 top-5 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80">← Retour</button>
-          <div class="glass float-in rounded-[2rem] px-6 py-8 text-center">
-            <h2 class="text-3xl font-black">Rejoindre</h2>
-            <p class="mt-2 text-sm text-white/70">Entre le code à 4 chiffres de ton adversaire.</p>
-            <input id="codeInput" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="1234"
-              class="mt-7 w-full rounded-2xl border border-white/20 bg-white/95 px-5 py-4 text-center text-3xl font-black tracking-[0.35em] text-indigo-950 outline-none" />
-            <button id="joinBtn" class="mt-4 w-full rounded-2xl bg-yellow-300 px-5 py-4 font-black text-indigo-950 shadow-xl shadow-yellow-300/20 active:scale-95">Entrer</button>
-          </div>
-        </section>
-      `);
-
-      document.querySelector("#backBtn").addEventListener("click", showHome);
-      document.querySelector("#joinBtn").addEventListener("click", () => joinRoom(document.querySelector("#codeInput").value.trim()));
-      document.querySelector("#codeInput").addEventListener("input", e => {
-        e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4);
-      });
-    }
-
-    async function createRoom() {
+      setState({ loading: true });
       try {
-        let code = code4();
-        let snap = await get(roomRef(code));
-        while (snap.exists()) {
-          code = code4();
-          snap = await get(roomRef(code));
-        }
+        await runTransaction(db, async transaction => {
+          const ref = gameRef(id);
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) throw new Error('NOT_FOUND');
 
-        state.roomCode = code;
-        state.playerId = 1;
+          const game = snap.data();
+          if (game.players.length >= 2 && !game.players.some(p => p.id === state.playerId)) {
+            throw new Error('FULL');
+          }
+          if (game.status !== 'lobby') throw new Error('ALREADY_STARTED');
 
-        await set(roomRef(code), {
-          code,
-          status: "waiting",
-          createdAt: serverTimestamp(),
-          players: {
-            p1: { connected: true, name: "Joueur 1", joinedAt: serverTimestamp() }
-          },
-          game: null
+          const playerId = uid('player');
+          let deck = [...game.deck];
+          const secondPlayer = {
+            id: playerId,
+            name,
+            hand: deck.splice(0, 7),
+            unoSafe: false,
+            score: 0
+          };
+
+          const players = [...game.players, secondPlayer];
+          transaction.update(ref, {
+            players,
+            deck,
+            status: 'playing',
+            turnIndex: Math.floor(Math.random() * 2),
+            lastAction: `${name} a rejoint la partie. La manche commence !`,
+            updatedAt: serverTimestamp()
+          });
+
+          state.gameId = id;
+          state.playerId = playerId;
+          state.playerName = name;
         });
 
-        onDisconnect(ref(db, `warRooms/${code}/players/p1/connected`)).set(false);
-        listenRoom();
+        saveSession();
+        listenGame(id);
+        setState({ screen: 'game', loading: false });
       } catch (error) {
         console.error(error);
-        toast("Impossible de créer la partie. Vérifie Firebase.");
-      }
-    }
-
-    async function joinRoom(code) {
-      if (!/^\d{4}$/.test(code)) {
-        toast("Code invalide.");
-        return;
-      }
-
-      try {
-        const snapshot = await get(roomRef(code));
-        if (!snapshot.exists()) {
-          toast("Partie introuvable.");
-          return;
-        }
-
-        const room = snapshot.val();
-        if (room.players?.p2?.connected) {
-          toast("Cette partie est déjà complète.");
-          return;
-        }
-
-        state.roomCode = code;
-        state.playerId = 2;
-
-        await update(roomRef(code), {
-          "players/p2": { connected: true, name: "Joueur 2", joinedAt: serverTimestamp() },
-          status: "ready"
-        });
-
-        onDisconnect(ref(db, `warRooms/${code}/players/p2/connected`)).set(false);
-        await initializeGameIfNeeded(code);
-        listenRoom();
-      } catch (error) {
-        console.error(error);
-        toast("Impossible de rejoindre la partie.");
-      }
-    }
-
-    async function initializeGameIfNeeded(code) {
-      await runTransaction(roomRef(code), room => {
-        if (!room) return room;
-        if (room.game?.initialized) return room;
-        if (!room.players?.p1 || !room.players?.p2) return room;
-
-        const deck = shuffle(createDeck());
-        room.status = "playing";
-        room.game = {
-          initialized: true,
-          phase: "normal",
-          round: 1,
-          pot: [],
-          table: {
-            p1: { visible: null, hidden: [], committed: false },
-            p2: { visible: null, hidden: [], committed: false }
-          },
-          decks: {
-            p1: deck.slice(0, 26),
-            p2: deck.slice(26, 52)
-          },
-          message: "La partie commence.",
-          winner: null,
-          resolving: false,
-          lastWinner: null,
-          resolutionId: null
+        setState({ loading: false });
+        const messages = {
+          NOT_FOUND: 'Partie introuvable.',
+          FULL: 'Cette partie est déjà complète.',
+          ALREADY_STARTED: 'Cette partie a déjà commencé.'
         };
-        return room;
+        toast(messages[error.message] || 'Impossible de rejoindre la partie.');
+      }
+    }
+
+    function listenGame(id) {
+      if (state.unsubscribe) state.unsubscribe();
+      state.unsubscribe = onSnapshot(gameRef(id), snap => {
+        if (!snap.exists()) {
+          clearSession();
+          setState({ screen: 'home', game: null, gameId: '', playerId: '' });
+          toast('La partie a été supprimée.');
+          return;
+        }
+
+        const game = snap.data();
+        const isKnownPlayer = game.players?.some(player => player.id === state.playerId);
+        const screen = game.status === 'lobby' ? 'lobby' : game.status === 'finished' ? 'finished' : 'game';
+
+        setState({ game, screen: isKnownPlayer ? screen : 'home' });
+      }, error => {
+        console.error(error);
+        toast('Connexion Firestore perdue.');
       });
     }
 
-    function listenRoom() {
+    async function playCard(cardId, chosenColor = null) {
+      if (!state.gameId) return;
+
+      try {
+        await runTransaction(db, async transaction => {
+          const ref = gameRef();
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) throw new Error('GAME_NOT_FOUND');
+
+          const game = structuredClone(snap.data());
+          if (!isMyTurn(game)) throw new Error('NOT_YOUR_TURN');
+
+          const pIndex = currentPlayerIndex(game);
+          const player = game.players[pIndex];
+          const cardIndex = player.hand.findIndex(card => card.id === cardId);
+          if (cardIndex === -1) throw new Error('CARD_NOT_FOUND');
+
+          const card = player.hand[cardIndex];
+          if (!canPlay(card, game)) throw new Error('CARD_NOT_PLAYABLE');
+          if (card.value === 'wild' && !COLORS.includes(chosenColor)) throw new Error('COLOR_REQUIRED');
+
+          player.hand.splice(cardIndex, 1);
+          game.discardPile.push(card);
+          player.unoSafe = player.hand.length <= 1;
+
+          let actionText = `${player.name} joue ${displayCardText(card)}.`;
+          actionText += ' ' + applyCardEffect(game, card, chosenColor);
+
+          if (player.hand.length === 0) {
+            const points = calculateLoserHandPoints(game, player.id);
+            player.score = (player.score || 0) + points;
+            game.status = 'finished';
+            game.winnerId = player.id;
+            game.lastAction = `${player.name} remporte la manche avec ${points} point(s).`;
+          } else {
+            game.lastAction = actionText.trim();
+          }
+
+          game.updatedAt = serverTimestamp();
+          transaction.update(ref, game);
+        });
+      } catch (error) {
+        console.error(error);
+        const messages = {
+          NOT_YOUR_TURN: "Ce n'est pas votre tour.",
+          CARD_NOT_PLAYABLE: 'Cette carte ne peut pas être posée.',
+          COLOR_REQUIRED: 'Choisissez une couleur.',
+          CARD_NOT_FOUND: 'Carte introuvable.'
+        };
+        toast(messages[error.message] || 'Action impossible.');
+      } finally {
+        state.chosenWildCardId = null;
+        render();
+      }
+    }
+
+    async function drawOneCard() {
+      if (!state.gameId) return;
+
+      try {
+        await runTransaction(db, async transaction => {
+          const ref = gameRef();
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) throw new Error('GAME_NOT_FOUND');
+
+          const game = structuredClone(snap.data());
+          if (!isMyTurn(game)) throw new Error('NOT_YOUR_TURN');
+
+          const pIndex = currentPlayerIndex(game);
+          drawCardsMutable(game, pIndex, 1);
+          game.players[pIndex].unoSafe = false;
+          game.turnIndex = nextTurnIndex(game, 0);
+          game.lastAction = `${game.players[pIndex].name} pioche une carte.`;
+          game.updatedAt = serverTimestamp();
+
+          transaction.update(ref, game);
+        });
+      } catch (error) {
+        console.error(error);
+        toast(error.message === 'NOT_YOUR_TURN' ? "Ce n'est pas votre tour." : 'Impossible de piocher.');
+      }
+    }
+
+    async function voteRematch() {
+      if (!state.gameId) return;
+
+      try {
+        await runTransaction(db, async transaction => {
+          const ref = gameRef();
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) throw new Error('GAME_NOT_FOUND');
+
+          const game = structuredClone(snap.data());
+          const votes = Array.from(new Set([...(game.rematchVotes || []), state.playerId]));
+
+          if (votes.length >= 2) {
+            transaction.update(ref, freshRoundFromExistingPlayers(game));
+          } else {
+            transaction.update(ref, {
+              rematchVotes: votes,
+              lastAction: `${state.playerName} veut rejouer.`,
+              updatedAt: serverTimestamp()
+            });
+          }
+        });
+      } catch (error) {
+        console.error(error);
+        toast('Impossible de relancer la manche.');
+      }
+    }
+
+    async function leaveAndCleanup() {
       if (state.unsubscribe) state.unsubscribe();
-      state.unsubscribe = onValue(roomRef(), snapshot => {
-        if (!snapshot.exists()) {
-          showHome();
-          toast("La partie a été fermée.");
-          return;
-        }
-        state.game = snapshot.val();
-        renderGame();
-        maybeAutoResolve();
-      });
+      const id = state.gameId;
+      clearSession();
+      setState({ screen: 'home', game: null, gameId: '', playerId: '', playerName: '' });
+
+      // Nettoyage simple : le joueur hôte peut supprimer la partie terminée.
+      try {
+        if (id) await deleteDoc(gameRef(id));
+      } catch (error) {
+        console.warn('Nettoyage ignoré :', error);
+      }
+    }
+
+    /*********************************************************************
+     * 6. RENDU UI
+     *********************************************************************/
+    function render() {
+      const view = {
+        home: renderHome,
+        lobby: renderLobby,
+        game: renderGame,
+        finished: renderFinished
+      }[state.screen] || renderHome;
+
+      $app.innerHTML = `
+        <div class="fixed inset-0 pointer-events-none overflow-hidden">
+          <div class="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-coral/20 blur-3xl"></div>
+          <div class="absolute top-16 -right-24 w-80 h-80 rounded-full bg-mint/25 blur-3xl"></div>
+          <div class="absolute -bottom-28 left-1/4 w-96 h-96 rounded-full bg-pastel/25 blur-3xl"></div>
+        </div>
+        <section class="relative z-10 min-h-[calc(100vh-2rem)] max-w-7xl mx-auto fade-in">
+          ${view()}
+        </section>
+        ${state.message ? `<div class="fixed z-50 left-1/2 bottom-6 -translate-x-1/2 px-5 py-3 rounded-2xl glass-dark text-white text-sm shadow-soft pop-in">${escapeHTML(state.message)}</div>` : ''}
+      `;
+
+      bindEvents();
+    }
+
+    function renderHome() {
+      const stored = loadSession();
+      return `
+        <div class="min-h-[calc(100vh-2rem)] grid place-items-center">
+          <div class="glass rounded-[2rem] p-6 md:p-10 w-full max-w-2xl">
+            <div class="text-center mb-8">
+              <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 text-deepblue text-sm font-bold mb-5">
+                <span class="w-2 h-2 rounded-full bg-mint"></span>
+                Firebase Firestore temps réel
+              </div>
+              <h1 class="text-5xl md:text-7xl font-black tracking-tight text-ink">UNO Duo</h1>
+              <p class="mt-4 text-slate-600 text-base md:text-lg">Un UNO multijoueur à 2 joueurs, fluide, minimaliste et synchronisé en temps réel.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="rounded-3xl bg-white/65 p-5 border border-white/70">
+                <label class="text-sm font-extrabold text-slate-700">Votre pseudo</label>
+                <input id="playerName" maxlength="18" value="${escapeHTML(stored.playerName || '')}" placeholder="Joueur" class="mt-2 w-full rounded-2xl px-4 py-3 bg-white/80 outline-none border border-slate-200 focus:border-deepblue" />
+                <button id="createGame" class="mt-4 w-full rounded-2xl bg-deepblue text-white py-3 font-black shadow-soft hover:scale-[1.02] active:scale-[0.98] transition" ${state.loading ? 'disabled' : ''}>
+                  ${state.loading ? 'Création...' : 'Créer une partie'}
+                </button>
+              </div>
+
+              <div class="rounded-3xl bg-white/65 p-5 border border-white/70">
+                <label class="text-sm font-extrabold text-slate-700">Game ID</label>
+                <input id="joinGameId" maxlength="12" placeholder="ABC123" class="mt-2 w-full rounded-2xl px-4 py-3 bg-white/80 uppercase tracking-[0.25em] outline-none border border-slate-200 focus:border-coral" />
+                <button id="joinGame" class="mt-4 w-full rounded-2xl bg-coral text-white py-3 font-black shadow-soft hover:scale-[1.02] active:scale-[0.98] transition" ${state.loading ? 'disabled' : ''}>
+                  ${state.loading ? 'Connexion...' : 'Rejoindre'}
+                </button>
+              </div>
+            </div>
+
+            ${stored.gameId && stored.playerId ? `
+              <button id="resumeGame" class="mt-5 w-full rounded-2xl bg-white/80 border border-white text-deepblue py-3 font-black hover:bg-white transition">
+                Reprendre la partie ${escapeHTML(stored.gameId)}
+              </button>
+            ` : ''}
+
+            <p class="mt-6 text-xs text-slate-500 text-center">Configurez Firebase, activez Firestore, puis ouvrez ce fichier dans deux navigateurs ou appareils.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLobby() {
+      const game = state.game;
+      return `
+        <div class="min-h-[calc(100vh-2rem)] grid place-items-center">
+          <div class="glass rounded-[2rem] p-8 md:p-10 w-full max-w-xl text-center">
+            <div class="mx-auto w-20 h-20 rounded-3xl bg-deepblue text-white grid place-items-center text-3xl font-black pulse-soft">UNO</div>
+            <h2 class="mt-6 text-3xl md:text-4xl font-black">Salon créé</h2>
+            <p class="mt-3 text-slate-600">Partagez ce Game ID avec le second joueur.</p>
+            <div class="mt-6 rounded-3xl bg-white/75 border border-white p-5">
+              <div class="text-xs font-black uppercase tracking-[0.28em] text-slate-500">Game ID</div>
+              <button id="copyGameId" class="mt-2 text-5xl font-black tracking-[0.18em] text-deepblue">${escapeHTML(state.gameId)}</button>
+              <p class="mt-3 text-xs text-slate-500">Cliquez sur le code pour le copier.</p>
+            </div>
+            <div class="mt-6 flex items-center justify-center gap-3 text-sm text-slate-600">
+              <span class="w-3 h-3 rounded-full bg-mint animate-pulse"></span>
+              ${game?.players?.length || 1}/2 joueur(s) connecté(s)
+            </div>
+            <button id="leaveGame" class="mt-8 px-5 py-3 rounded-2xl bg-white/70 border border-white text-slate-700 font-bold hover:bg-white transition">Quitter</button>
+          </div>
+        </div>
+      `;
     }
 
     function renderGame() {
-      const room = state.game;
-      const game = room.game;
-      const me = meKey();
-      const opp = opponentKey();
-      const p1Connected = !!room.players?.p1?.connected;
-      const p2Connected = !!room.players?.p2?.connected;
+      const game = state.game;
+      if (!game) return renderHome();
 
-      if (!game) {
-        renderShell(`
-          <section class="flex flex-1 flex-col items-center justify-center text-center">
-            <div class="glass float-in w-full rounded-[2rem] p-7">
-              <p class="text-sm uppercase tracking-[0.28em] text-yellow-200">Code partie</p>
-              <div class="mt-3 rounded-3xl bg-white/95 px-6 py-5 text-5xl font-black tracking-[0.22em] text-indigo-950">${state.roomCode}</div>
-              <p class="mt-5 text-white/75">En attente du deuxième joueur...</p>
-              <div class="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
-                <div class="h-full w-1/2 animate-pulse rounded-full bg-yellow-300"></div>
-              </div>
-              <button id="leaveBtn" class="mt-7 rounded-2xl bg-white/10 px-5 py-3 text-sm text-white/80">Quitter</button>
-            </div>
-          </section>
-        `);
-        document.querySelector("#leaveBtn").addEventListener("click", leaveRoom);
-        return;
-      }
-
-      const myDeckCount = game.decks?.[me]?.length || 0;
-      const oppDeckCount = game.decks?.[opp]?.length || 0;
-      const myTable = game.table?.[me] || {};
-      const oppTable = game.table?.[opp] || {};
-      const bothCommitted = !!myTable.committed && !!oppTable.committed;
-      const myPlayed = !!myTable.committed;
-      const canPlay = room.status === "playing" && !game.winner && !myPlayed && myDeckCount > 0 && !game.resolving;
-      const isWar = game.phase === "war";
-      const instruction = game.winner
-        ? (game.winner === me ? "Victoire !" : "Défaite...")
-        : isWar
-          ? "Bataille : pose 1 carte cachée puis 1 visible."
-          : "Appuie sur ton tas pour jouer.";
-
-      renderShell(`
-        <section class="flex min-h-[100dvh] flex-col gap-3 pb-3 pt-2">
-          <header class="glass rounded-[1.6rem] px-4 py-3">
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p class="text-xs uppercase tracking-[0.22em] text-yellow-200">Bataille Live</p>
-                <p class="text-lg font-black">Code ${state.roomCode}</p>
-              </div>
-              <button id="leaveBtn" class="rounded-full bg-white/10 px-3 py-2 text-xs text-white/80">Quitter</button>
-            </div>
-            <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <div class="rounded-2xl bg-white/10 p-3">
-                <p class="text-white/60">Adversaire ${p1Connected && p2Connected ? "🟢" : "🟠"}</p>
-                <p class="text-2xl font-black">${oppDeckCount}</p>
-              </div>
-              <div class="rounded-2xl bg-yellow-300/95 p-3 text-indigo-950">
-                <p class="opacity-70">Toi</p>
-                <p class="text-2xl font-black">${myDeckCount}</p>
-              </div>
-            </div>
-          </header>
-
-          <section class="glass flex flex-1 flex-col justify-between rounded-[2rem] p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase tracking-[0.22em] text-white/55">Adversaire</p>
-                <p class="text-sm font-semibold text-white/80">${oppTable.committed ? "Carte posée" : "Attend..."}</p>
-              </div>
-              <div class="scale-75 opacity-90">${oppTable.committed && !bothCommitted ? hiddenCardHtml() : ""}</div>
-            </div>
-
-            <div class="grid place-items-center py-2">
-              <div id="centerCards" class="relative flex min-h-[170px] w-full items-center justify-center gap-4">
-                ${renderCenterCards(game, me, opp, bothCommitted)}
-              </div>
-              <div class="mt-3 min-h-14 text-center">
-                <p class="text-lg font-black text-yellow-200">${escapeHtml(instruction)}</p>
-                <p class="mt-1 text-sm text-white/70">${escapeHtml(game.message || "")}</p>
-                <p class="mt-1 text-xs text-white/50">Pot : ${game.pot?.length || 0} carte(s)</p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <button id="playBtn" ${canPlay ? "" : "disabled"} class="pile-button ${canPlay ? "pulse-gold" : "opacity-55"} flex items-center gap-3 rounded-[1.6rem] bg-white/10 p-3 text-left ring-1 ring-white/15">
-                ${hiddenCardHtml()}
-                <div>
-                  <p class="text-xs uppercase tracking-[0.22em] text-yellow-200">Ton tas</p>
-                  <p class="text-sm font-bold">${canPlay ? "Jouer" : myPlayed ? "Carte posée" : "Patiente"}</p>
-                </div>
-              </button>
-
-              <div class="text-right">
-                <p class="text-xs uppercase tracking-[0.22em] text-white/55">Manche</p>
-                <p class="text-3xl font-black">${game.round || 1}</p>
-              </div>
-            </div>
-          </section>
-        </section>
-      `);
-
-      document.querySelector("#leaveBtn").addEventListener("click", leaveRoom);
-      document.querySelector("#playBtn")?.addEventListener("click", playTurn);
-    }
-
-    function renderCenterCards(game, me, opp, bothCommitted) {
-      const myTable = game.table?.[me] || {};
-      const oppTable = game.table?.[opp] || {};
-      const sweepClass = game.lastWinner
-        ? game.lastWinner === me
-          ? "win-sweep-right"
-          : "win-sweep-left"
-        : "";
-
-      if (game.phase === "war" && !bothCommitted) {
-        return `
-          <div class="flex items-center gap-4">
-            ${hiddenCardHtml("Pot")}
-            <div class="grid h-16 w-16 place-items-center rounded-full bg-yellow-300 text-3xl font-black text-indigo-950 shadow-xl">VS</div>
-            ${hiddenCardHtml("Bataille")}
-          </div>
-        `;
-      }
-
-      if (!bothCommitted) {
-        return `
-          <div class="grid h-32 w-32 place-items-center rounded-full border border-white/20 bg-white/10 text-center text-sm font-semibold text-white/70">
-            Suspense...
-          </div>
-        `;
-      }
+      const me = currentPlayer(game);
+      const enemy = game.players[opponentIndex(game)] || { name: 'Adversaire', hand: [] };
+      const topCard = game.discardPile[game.discardPile.length - 1];
+      const myTurn = isMyTurn(game);
 
       return `
-        <div class="float-in ${sweepClass}">
-          <p class="mb-2 text-center text-xs text-white/60">Adversaire</p>
-          ${cardHtml(oppTable.visible, game.phase === "war" ? "shake" : "")}
-        </div>
-        <div class="grid h-12 w-12 place-items-center rounded-full bg-yellow-300 text-sm font-black text-indigo-950 shadow-xl">VS</div>
-        <div class="float-in ${sweepClass}">
-          <p class="mb-2 text-center text-xs text-white/60">Toi</p>
-          ${cardHtml(myTable.visible, game.phase === "war" ? "shake" : "")}
+        <div class="min-h-[calc(100vh-2rem)] flex flex-col gap-4 md:gap-6">
+          ${renderTopBar(game, me, enemy)}
+
+          <section class="glass rounded-[2rem] p-4 md:p-6 flex-1 flex flex-col justify-between gap-5">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-xs uppercase tracking-[0.24em] font-black text-slate-500">Adversaire</div>
+                <div class="text-xl md:text-2xl font-black">${escapeHTML(enemy.name || 'Adversaire')}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                ${renderCardBackStack(enemy.hand?.length || 0)}
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-[1fr_auto_1fr] items-center gap-5 py-2 md:py-8">
+              <div class="hidden md:block rounded-3xl bg-white/45 border border-white/60 p-5 text-slate-600">
+                <div class="text-xs uppercase tracking-[0.2em] font-black mb-2">Dernière action</div>
+                <p class="text-sm leading-relaxed">${escapeHTML(game.lastAction || 'La partie commence.')}</p>
+              </div>
+
+              <div class="flex items-center justify-center gap-5 md:gap-8">
+                <button id="drawCard" class="uno-card card-back ${myTurn ? 'playable pulse-soft' : 'disabled'}" data-corner="UNO" ${myTurn ? '' : 'disabled'} title="Piocher">
+                  <span class="value">+</span>
+                </button>
+                <div class="flex flex-col items-center gap-3">
+                  ${renderCard(topCard, false, true)}
+                  <div class="px-4 py-2 rounded-full bg-white/75 border border-white text-sm font-black text-deepblue">
+                    Couleur : ${escapeHTML(COLOR_LABELS[game.activeColor])}
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-3xl bg-white/45 border border-white/60 p-5">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <div class="text-xs uppercase tracking-[0.2em] font-black text-slate-500">Tour</div>
+                    <p class="font-black ${myTurn ? 'text-coral' : 'text-slate-700'}">${myTurn ? 'A vous de jouer' : `A ${escapeHTML(game.players[game.turnIndex]?.name || 'adversaire')}`}</p>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs uppercase tracking-[0.2em] font-black text-slate-500">Pioche</div>
+                    <p class="font-black text-deepblue">${game.deck?.length || 0}</p>
+                  </div>
+                </div>
+                <p class="md:hidden mt-4 text-sm text-slate-600">${escapeHTML(game.lastAction || 'La partie commence.')}</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <div class="text-xs uppercase tracking-[0.24em] font-black text-slate-500">Votre main</div>
+                  <div class="text-xl md:text-2xl font-black">${escapeHTML(me?.name || 'Vous')} · ${me?.hand?.length || 0} carte(s)</div>
+                </div>
+                <div class="px-3 py-2 rounded-full ${myTurn ? 'bg-coral text-white' : 'bg-white/70 text-slate-600'} text-xs font-black">
+                  ${myTurn ? 'Jouez ou piochez' : 'Patientez'}
+                </div>
+              </div>
+
+              <div class="hand-scroll flex gap-3 overflow-x-auto px-1 pt-4 pb-5 min-h-[150px] md:min-h-[175px]">
+                ${(me?.hand || []).map(card => renderCard(card, myTurn && canPlay(card, game), false)).join('')}
+              </div>
+            </div>
+          </section>
+
+          ${state.chosenWildCardId ? renderColorPicker() : ''}
         </div>
       `;
     }
 
-    async function playTurn() {
-      if (state.busy) return;
-      state.busy = true;
-
-      const player = meKey();
-
-      try {
-        await runTransaction(roomRef(), room => {
-          if (!room?.game || room.status !== "playing") return room;
-          const game = room.game;
-          if (game.winner || game.resolving) return room;
-          if (game.table?.[player]?.committed) return room;
-
-          const deck = game.decks[player] || [];
-          if (deck.length <= 0) {
-            game.winner = player === "p1" ? "p2" : "p1";
-            room.status = "finished";
-            return room;
-          }
-
-          if (game.phase === "war") {
-            const hidden = [];
-            let visible = null;
-
-            if (deck.length >= 2) {
-              hidden.push(deck.shift());
-              visible = deck.shift();
-            } else {
-              visible = deck.shift();
-            }
-
-            game.table[player] = { hidden, visible, committed: true };
-            game.message = `${player === "p1" ? "Joueur 1" : "Joueur 2"} a posé ses cartes de bataille.`;
-          } else {
-            const visible = deck.shift();
-            game.table[player] = { hidden: [], visible, committed: true };
-            game.message = `${player === "p1" ? "Joueur 1" : "Joueur 2"} a joué.`;
-          }
-
-          game.decks[player] = deck;
-          return room;
-        });
-      } catch (error) {
-        console.error(error);
-        toast("La carte n'a pas pu être jouée.");
-      } finally {
-        state.busy = false;
-      }
+    function renderTopBar(game, me, enemy) {
+      return `
+        <header class="glass rounded-[1.7rem] px-4 md:px-6 py-4 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-deepblue text-white grid place-items-center font-black">UNO</div>
+            <div>
+              <div class="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Partie ${escapeHTML(state.gameId)}</div>
+              <div class="font-black text-ink">${escapeHTML(me?.name || 'Vous')} vs ${escapeHTML(enemy?.name || 'Adversaire')}</div>
+            </div>
+          </div>
+          <div class="hidden sm:flex items-center gap-2 text-sm">
+            ${game.players.map(player => `
+              <div class="px-3 py-2 rounded-full bg-white/70 border border-white font-bold ${game.players[game.turnIndex]?.id === player.id ? 'text-coral' : 'text-slate-600'}">
+                ${escapeHTML(player.name)} · ${player.hand?.length || 0}
+              </div>
+            `).join('')}
+          </div>
+        </header>
+      `;
     }
 
-    async function maybeAutoResolve() {
-      const room = state.game;
-      const game = room?.game;
-      if (!game || game.winner || game.resolving) return;
-      if (!game.table?.p1?.committed || !game.table?.p2?.committed) return;
+    function renderCard(card, playable = false, isTop = false) {
+      if (!card) return '';
+      const label = SPECIAL_LABELS[card.value] || card.value;
+      const classes = [
+        'uno-card',
+        COLOR_CLASSES[card.color] || 'card-wild',
+        playable ? 'playable' : '',
+        !playable && !isTop ? 'disabled' : '',
+        isTop ? 'pop-in' : ''
+      ].join(' ');
 
-      const resolutionKey = `${game.round}-${game.phase}-${game.table.p1.visible?.id}-${game.table.p2.visible?.id}`;
-      if (state.lastResolutionId === resolutionKey) return;
-      state.lastResolutionId = resolutionKey;
-
-      setTimeout(() => resolveRound(resolutionKey), 850);
+      return `
+        <button class="${classes}" data-card-id="${card.id}" data-card-value="${card.value}" data-corner="${escapeHTML(label)}" ${playable ? '' : 'disabled'} title="${escapeHTML(displayCardText(card))}">
+          <span class="value">${escapeHTML(label)}</span>
+        </button>
+      `;
     }
 
-    async function resolveRound(resolutionKey) {
-      try {
-        await runTransaction(roomRef(), room => {
-          if (!room?.game || room.game.winner || room.game.resolving) return room;
-
-          const game = room.game;
-          const t1 = game.table.p1;
-          const t2 = game.table.p2;
-          if (!t1?.committed || !t2?.committed) return room;
-
-          const currentKey = `${game.round}-${game.phase}-${t1.visible?.id}-${t2.visible?.id}`;
-          if (currentKey !== resolutionKey) return room;
-
-          game.resolving = true;
-
-          const roundCards = [
-            ...(game.pot || []),
-            ...(t1.hidden || []),
-            t1.visible,
-            ...(t2.hidden || []),
-            t2.visible
-          ].filter(Boolean);
-
-          const p1Rank = t1.visible?.rank || 0;
-          const p2Rank = t2.visible?.rank || 0;
-
-          if (p1Rank === p2Rank) {
-            game.phase = "war";
-            game.pot = roundCards;
-            game.table = {
-              p1: { visible: null, hidden: [], committed: false },
-              p2: { visible: null, hidden: [], committed: false }
-            };
-            game.message = "Égalité ! Bataille : chaque joueur pose une carte cachée puis une visible.";
-            game.resolving = false;
-            game.lastWinner = null;
-
-            const p1CanContinue = (game.decks.p1?.length || 0) > 0;
-            const p2CanContinue = (game.decks.p2?.length || 0) > 0;
-            if (!p1CanContinue || !p2CanContinue) {
-              const winner = p1CanContinue ? "p1" : "p2";
-              game.decks[winner].push(...shuffle(roundCards));
-              game.winner = winner;
-              room.status = "finished";
-              game.message = `${winner === "p1" ? "Joueur 1" : "Joueur 2"} gagne : l'autre joueur ne peut plus continuer la bataille.`;
-            }
-
-            return room;
-          }
-
-          const winner = p1Rank > p2Rank ? "p1" : "p2";
-          game.decks[winner].push(...shuffle(roundCards));
-          game.pot = [];
-          game.phase = "normal";
-          game.round = (game.round || 1) + 1;
-          game.table = {
-            p1: { visible: null, hidden: [], committed: false },
-            p2: { visible: null, hidden: [], committed: false }
-          };
-          game.lastWinner = winner;
-          game.resolutionId = uid();
-          game.message = `${winner === "p1" ? "Joueur 1" : "Joueur 2"} remporte ${roundCards.length} carte(s).`;
-          game.resolving = false;
-
-          const p1Count = game.decks.p1?.length || 0;
-          const p2Count = game.decks.p2?.length || 0;
-          if (p1Count === 0 || p2Count === 0) {
-            game.winner = p1Count > 0 ? "p1" : "p2";
-            room.status = "finished";
-            game.message = `${game.winner === "p1" ? "Joueur 1" : "Joueur 2"} gagne la partie !`;
-          }
-
-          return room;
-        });
-      } catch (error) {
-        console.error(error);
-      }
+    function renderCardBackStack(count) {
+      const visible = Math.min(5, Math.max(1, count));
+      return `
+        <div class="flex -space-x-9 md:-space-x-10 items-center">
+          ${Array.from({ length: visible }, (_, index) => `
+            <div class="uno-card card-back scale-[.62] md:scale-75" style="transform: translateX(${index * 2}px) rotate(${(index - 2) * 3}deg);" data-corner="UNO">
+              <span class="value">?</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="ml-1 px-3 py-2 rounded-full bg-white/70 border border-white text-sm font-black text-deepblue">${count}</div>
+      `;
     }
 
-    async function leaveRoom() {
-      try {
-        if (state.roomCode && state.playerId) {
-          await update(roomRef(), {
-            [`players/${meKey()}/connected`]: false,
-            status: state.game?.game?.winner ? "finished" : "abandoned"
-          });
+    function renderColorPicker() {
+      return `
+        <div class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-sm grid place-items-center p-4">
+          <div class="glass rounded-[2rem] p-6 w-full max-w-md text-center pop-in">
+            <h3 class="text-2xl font-black">Choisissez une couleur</h3>
+            <p class="mt-2 text-slate-600 text-sm">La couleur active changera après votre carte Wild.</p>
+            <div class="grid grid-cols-2 gap-3 mt-6">
+              ${COLORS.map(color => `
+                <button class="chooseColor rounded-3xl p-5 ${colorButtonClass(color)} text-white font-black shadow-soft hover:scale-[1.03] transition" data-color="${color}">
+                  ${escapeHTML(COLOR_LABELS[color])}
+                </button>
+              `).join('')}
+            </div>
+            <button id="cancelWild" class="mt-5 text-sm font-bold text-slate-500 hover:text-slate-800">Annuler</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFinished() {
+      const game = state.game;
+      const winner = game?.players?.find(player => player.id === game.winnerId);
+      const meWon = winner?.id === state.playerId;
+      const me = currentPlayer(game);
+      const enemy = game?.players?.[opponentIndex(game)];
+      const hasVoted = game?.rematchVotes?.includes(state.playerId);
+
+      return `
+        <div class="min-h-[calc(100vh-2rem)] grid place-items-center">
+          <div class="glass rounded-[2rem] p-6 md:p-10 w-full max-w-2xl text-center">
+            <div class="mx-auto w-24 h-24 rounded-[2rem] ${meWon ? 'bg-mint' : 'bg-coral'} text-white grid place-items-center text-4xl font-black shadow-soft pop-in">
+              ${meWon ? '🏆' : 'GG'}
+            </div>
+            <h2 class="mt-6 text-4xl md:text-5xl font-black">${meWon ? 'Victoire !' : 'Défaite'}</h2>
+            <p class="mt-3 text-slate-600">${escapeHTML(winner?.name || 'Un joueur')} remporte cette manche.</p>
+
+            <div class="mt-7 grid grid-cols-2 gap-3">
+              ${[me, enemy].filter(Boolean).map(player => `
+                <div class="rounded-3xl bg-white/70 border border-white p-5">
+                  <div class="text-sm font-black text-slate-500">${escapeHTML(player.name)}</div>
+                  <div class="mt-2 text-4xl font-black text-deepblue">${player.score || 0}</div>
+                  <div class="text-xs text-slate-500">point(s)</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <p class="mt-5 text-sm text-slate-600">${escapeHTML(game?.lastAction || '')}</p>
+
+            <div class="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
+              <button id="rematch" class="px-6 py-3 rounded-2xl bg-deepblue text-white font-black shadow-soft hover:scale-[1.02] transition">
+                ${hasVoted ? 'En attente de l’autre joueur...' : 'Rejouer'}
+              </button>
+              <button id="leaveGame" class="px-6 py-3 rounded-2xl bg-white/75 border border-white text-slate-700 font-black hover:bg-white transition">
+                Quitter et nettoyer
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function displayCardText(card) {
+      const label = SPECIAL_LABELS[card.value] || card.value;
+      return card.value === 'wild' ? 'Wild' : `${label} ${COLOR_LABELS[card.color]}`;
+    }
+
+    function colorButtonClass(color) {
+      return {
+        red: 'bg-coral',
+        blue: 'bg-deepblue',
+        green: 'bg-emerald-400',
+        yellow: 'bg-amber-300 text-slate-900'
+      }[color];
+    }
+
+    /*********************************************************************
+     * 7. EVENTS UI
+     *********************************************************************/
+    function bindEvents() {
+      document.querySelector('#createGame')?.addEventListener('click', createGame);
+      document.querySelector('#joinGame')?.addEventListener('click', joinGame);
+      document.querySelector('#drawCard')?.addEventListener('click', drawOneCard);
+      document.querySelector('#rematch')?.addEventListener('click', voteRematch);
+      document.querySelector('#leaveGame')?.addEventListener('click', leaveAndCleanup);
+
+      document.querySelector('#joinGameId')?.addEventListener('keydown', event => {
+        if (event.key === 'Enter') joinGame();
+      });
+
+      document.querySelector('#copyGameId')?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(state.gameId);
+          toast('Game ID copié.');
+        } catch {
+          toast('Copie impossible, sélectionnez le code manuellement.');
         }
-      } catch (error) {
-        console.error(error);
-      }
-      showHome();
+      });
+
+      document.querySelector('#resumeGame')?.addEventListener('click', () => {
+        const stored = loadSession();
+        if (!stored.gameId || !stored.playerId) return;
+        state.gameId = stored.gameId;
+        state.playerId = stored.playerId;
+        state.playerName = stored.playerName || 'Joueur';
+        listenGame(stored.gameId);
+        setState({ screen: 'lobby' });
+      });
+
+      document.querySelectorAll('[data-card-id]').forEach(button => {
+        button.addEventListener('click', () => {
+          const cardId = button.dataset.cardId;
+          const value = button.dataset.cardValue;
+          if (value === 'wild') {
+            setState({ chosenWildCardId: cardId });
+          } else {
+            playCard(cardId);
+          }
+        });
+      });
+
+      document.querySelectorAll('.chooseColor').forEach(button => {
+        button.addEventListener('click', () => {
+          playCard(state.chosenWildCardId, button.dataset.color);
+        });
+      });
+
+      document.querySelector('#cancelWild')?.addEventListener('click', () => setState({ chosenWildCardId: null }));
     }
 
-    window.addEventListener("beforeunload", () => {
-      if (state.roomCode && state.playerId) {
-        const playerRef = ref(db, `warRooms/${state.roomCode}/players/${meKey()}/connected`);
-        set(playerRef, false).catch(() => {});
-      }
-    });
+    function getPlayerName() {
+      const input = document.querySelector('#playerName');
+      const stored = loadSession();
+      return String(input?.value || stored.playerName || 'Joueur').trim().slice(0, 18) || 'Joueur';
+    }
 
-    boot();
+    /*********************************************************************
+     * 8. BOOTSTRAP
+     *********************************************************************/
+    render();
+
+    // Auto-reprise douce si une session existe, sans forcer la connexion.
+    const stored = loadSession();
+    if (stored.gameId && stored.playerId) {
+      state.gameId = stored.gameId;
+      state.playerId = stored.playerId;
+      state.playerName = stored.playerName || 'Joueur';
+    }
   </script>
 </body>
 </html>
