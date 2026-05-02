@@ -187,17 +187,16 @@
     }
 
     .cover {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-
-  background: #1a1a2e;
-
-  /* 👇 IMPORTANT : demi-cercle parfait */
-  clip-path: ellipse(100% 60% at 50% 0%);
-
-  transition: transform .8s ease, opacity .8s;
-}
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(26,26,46,.98), rgba(26,26,46,.78) 72%, transparent);
+     clip-path: polygon(0 0, 100% 0, 100% 85%, 0 85%);
+      transform-origin: top center;
+      transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .8s;
+      border-radius: 26px 26px 12px 12px;
+      z-index: 2;
+    }
 
     .cover.open { transform: translateY(-72%) rotateX(20deg); opacity: .08; }
 
