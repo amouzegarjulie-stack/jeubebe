@@ -243,10 +243,9 @@
         </div>
         <div class="space-y-3 text-sm font-semibold leading-relaxed text-slate-700">
           <p>Chaque joueur reçoit 26 cartes.</p>
-          <p>Chaque joueur voit sa prochaine carte, puis clique sur Jouer ma carte.</p>
-          <p>Quand les deux joueurs ont joué, la plus forte carte gagne la pile.</p>
+          <p>Le jeu fonctionne au tour par tour : joueur 1 pose, puis joueur 2 pose.</p>
+          <p>Quand les deux cartes sont posées, la carte la plus forte gagne la pile.</p>
           <p>En cas d'égalité, bataille automatique : une carte face cachée, puis une carte visible. Le gagnant prend toute la pile.</p>
-          <p>Le joueur qui récupère toutes les cartes gagne la partie.</p>
         </div>
       </div>
     </div>
@@ -372,7 +371,7 @@
           createdAt: Date.now(),
           updatedAt: Date.now(),
           status: 'waiting',
-          hostPlayerId: state.playerId,
+          currentPlayer: 'p1',
           turnNumber: 0,
           winner: null,
           lastMessage: `${pseudo} attend un adversaire.`,
@@ -380,10 +379,6 @@
           table: {
             p1: null,
             p2: null
-          },
-          played: {
-            p1: false,
-            p2: false
           },
           lastRound: {
             p1: null,
@@ -460,8 +455,9 @@
 
         await update(ref(db, `rooms/${roomId}`), {
           status: 'playing',
+          currentPlayer: 'p1',
           updatedAt: Date.now(),
-          lastMessage: `${pseudo} a rejoint. La partie commence.`,
+          lastMessage: `${pseudo} a rejoint. ${room.players.p1.pseudo} commence.`,
           'players/p2/id': state.playerId,
           'players/p2/pseudo': pseudo,
           'players/p2/connectedAt': Date.now()
@@ -510,50 +506,54 @@
 
       state.localLock = true;
       playBtn.disabled = true;
+      statusText.textContent = 'Carte en cours de pose...';
 
       try {
-        const roomRef = ref(db, `rooms/${state.roomId}`);
-
-        const result = await runTransaction(roomRef, (room) => {
-          if (!room || room.status !== 'playing') return room;
+        const result = await runTransaction(ref(db, `rooms/${state.roomId}`), (room) => {
+          if (!room) return room;
+          if (room.status !== 'playing') return room;
           if (!room.players?.p1?.id || !room.players?.p2?.id) return room;
-          if (room.played?.[state.playerKey]) return room;
+          if (room.currentPlayer !== state.playerKey) return room;
 
           const player = room.players[state.playerKey];
           if (!player?.deck?.length) return room;
 
           const card = player.deck.shift();
-
           room.players[state.playerKey].deck = player.deck;
           room.table[state.playerKey] = card;
-          room.played[state.playerKey] = true;
           room.lastRound = { p1: null, p2: null, message: '' };
-          room.lastMessage = `${player.pseudo} a posé sa carte.`;
           room.updatedAt = Date.now();
 
-          const bothPlayed = room.played.p1 && room.played.p2 && room.table.p1 && room.table.p2;
-          if (bothPlayed) {
+          if (state.playerKey === 'p1') {
+            room.currentPlayer = 'p2';
+            room.lastMessage = `${player.pseudo} a posé sa carte. À ${room.players.p2.pseudo} de jouer.`;
+          } else {
             resolveRound(room);
+            room.currentPlayer = 'p1';
           }
 
           return room;
         });
 
         if (!result.committed) {
-          statusText.textContent = 'Action refusée par Firebase.';
+          statusText.textContent = 'Coup non joué. Ce n’est peut-être pas ton tour.';
         }
       } catch (error) {
         console.error(error);
-        statusText.textContent = 'Erreur pendant le tour. Regarde la console.';
+        statusText.textContent = `Erreur : ${error.message}`;
       } finally {
         state.localLock = false;
-        if (state.room) renderGame();
       }
     }
 
     function resolveRound(room) {
       const p1Card = room.table.p1;
       const p2Card = room.table.p2;
+
+      if (!p1Card || !p2Card) {
+        room.lastMessage = 'Erreur : il manque une carte sur la table.';
+        return;
+      }
 
       room.turnNumber = (room.turnNumber || 0) + 1;
       room.pot = [...(room.pot || []), p1Card, p2Card];
@@ -564,17 +564,15 @@
       };
 
       if (p1Card.value > p2Card.value) {
-        givePotTo(room, 'p1', `${room.players.p1.pseudo} gagne la manche avec ${cardName(p1Card)} contre ${cardName(p2Card)}.`);
+        givePotTo(room, 'p1', `${room.players.p1.pseudo} gagne avec ${cardName(p1Card)} contre ${cardName(p2Card)}.`);
       } else if (p2Card.value > p1Card.value) {
-        givePotTo(room, 'p2', `${room.players.p2.pseudo} gagne la manche avec ${cardName(p2Card)} contre ${cardName(p1Card)}.`);
+        givePotTo(room, 'p2', `${room.players.p2.pseudo} gagne avec ${cardName(p2Card)} contre ${cardName(p1Card)}.`);
       } else {
         resolveWar(room);
       }
 
       room.table = { p1: null, p2: null };
-      room.played = { p1: false, p2: false };
       room.updatedAt = Date.now();
-
       checkGameOver(room);
     }
 
@@ -589,7 +587,7 @@
         const p2 = room.players.p2;
 
         if (!p1.deck?.length && !p2.deck?.length) {
-          room.lastMessage = message + 'Plus personne ne peut jouer. La pile reste au centre.';
+          room.lastMessage = message + 'Plus personne ne peut continuer. La pile reste au centre.';
           room.lastRound.message = room.lastMessage;
           return;
         }
@@ -609,23 +607,19 @@
         room.pot.push({ ...p1Hidden, hidden: true }, { ...p2Hidden, hidden: true });
 
         if (!p1.deck?.length) {
-          givePotTo(room, 'p2', message + `${p1.pseudo} pose une carte cachée mais n’a plus de carte visible. ${p2.pseudo} gagne.`);
+          givePotTo(room, 'p2', message + `${p1.pseudo} n’a plus de carte visible. ${p2.pseudo} gagne.`);
           return;
         }
 
         if (!p2.deck?.length) {
-          givePotTo(room, 'p1', message + `${p2.pseudo} pose une carte cachée mais n’a plus de carte visible. ${p1.pseudo} gagne.`);
+          givePotTo(room, 'p1', message + `${p2.pseudo} n’a plus de carte visible. ${p1.pseudo} gagne.`);
           return;
         }
 
         const p1Visible = p1.deck.shift();
         const p2Visible = p2.deck.shift();
         room.pot.push(p1Visible, p2Visible);
-        room.lastRound = {
-          p1: p1Visible,
-          p2: p2Visible,
-          message: ''
-        };
+        room.lastRound = { p1: p1Visible, p2: p2Visible, message: '' };
 
         if (p1Visible.value > p2Visible.value) {
           givePotTo(room, 'p1', message + `${p1.pseudo} retourne ${cardName(p1Visible)} contre ${cardName(p2Visible)} et gagne toute la pile.`);
@@ -699,6 +693,7 @@
       const otherKey = state.playerKey === 'p1' ? 'p2' : 'p1';
       const other = room.players?.[otherKey];
       const roomReady = !!room.players?.p1?.id && !!room.players?.p2?.id;
+      const isMyTurn = room.currentPlayer === state.playerKey;
 
       copyRoomBtn.textContent = room.id || state.roomId;
       myName.textContent = my?.pseudo || 'Toi';
@@ -714,26 +709,15 @@
         ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700'
         : 'rounded-full bg-white/70 px-3 py-1 text-xs font-black text-slate-500 pulse-wait';
 
-      const myTableCard = room.table?.[state.playerKey] || room.lastRound?.[state.playerKey];
-      const otherTableCard = room.table?.[otherKey] || room.lastRound?.[otherKey];
+      const myVisibleCard = room.table?.[state.playerKey] || room.lastRound?.[state.playerKey];
+      const otherVisibleCard = room.table?.[otherKey] || room.lastRound?.[otherKey];
 
-      renderCard(myCardSlot, myTableCard, false);
-
-      if (room.table?.[otherKey]) {
-        renderCard(opponentCardSlot, room.table[otherKey], false);
-      } else if (room.lastRound?.[otherKey]) {
-        renderCard(opponentCardSlot, room.lastRound[otherKey], false);
-      } else {
-        renderCard(opponentCardSlot, null, true);
-      }
-
+      renderCard(myCardSlot, myVisibleCard, false);
+      renderCard(opponentCardSlot, otherVisibleCard, !otherVisibleCard);
       renderCard(nextCardSlot, my?.deck?.[0] || null, false);
       renderPot(room);
 
-      const iHavePlayed = !!room.played?.[state.playerKey];
-      const otherHasPlayed = !!room.played?.[otherKey];
-      const canPlay = room.status === 'playing' && roomReady && !iHavePlayed && (my?.deck?.length || 0) > 0;
-
+      const canPlay = room.status === 'playing' && roomReady && isMyTurn && (my?.deck?.length || 0) > 0;
       playBtn.disabled = !canPlay || state.localLock;
 
       if (!roomReady) {
@@ -745,15 +729,12 @@
       } else if (room.status === 'abandoned') {
         turnBadge.textContent = 'Abandon';
         playBtn.textContent = 'Partie quittée';
-      } else if (iHavePlayed && !otherHasPlayed) {
-        turnBadge.textContent = 'Carte posée';
-        playBtn.textContent = 'En attente de l’autre joueur';
-      } else if (!iHavePlayed && otherHasPlayed) {
+      } else if (isMyTurn) {
         turnBadge.textContent = 'À toi';
         playBtn.textContent = 'Jouer ma carte';
       } else {
-        turnBadge.textContent = 'À toi';
-        playBtn.textContent = 'Jouer ma carte';
+        turnBadge.textContent = 'Attente';
+        playBtn.textContent = `À ${other?.pseudo || 'l’autre joueur'} de jouer`;
       }
 
       registerWinIfNeeded();
@@ -805,7 +786,8 @@
       const el = document.createElement('div');
       const isRed = card.suit === '♥' || card.suit === '♦';
       el.className = `playing-card ${isRed ? 'red' : 'black'}`;
-      el.dataset.corner = `${card.label}\n${card.suit}`;
+      el.dataset.corner = `${card.label}
+${card.suit}`;
       el.innerHTML = `
         <div class="text-center">
           <div class="text-2xl font-black leading-none">${escapeHtml(card.label)}</div>
@@ -958,7 +940,7 @@
       return value
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]/g, '_')
         .slice(0, 32) || 'joueur';
     }
