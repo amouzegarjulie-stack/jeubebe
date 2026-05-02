@@ -2,4 +2,4 @@
 [1000 Bornes](voiture.html)
 [Jeu de bebe](jeu.html)
 [Wavelegth](wavelength.html)
-[Imposteur] (imposteur.html)
+[Imposteur](imposteur.html)
