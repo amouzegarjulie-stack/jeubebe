@@ -4,3 +4,4 @@
 👶 [Jeu de bebe](jeu.html)  
 📡 [Wavelength](wavelength.html)  
 🕵️ [Imposteur](imposteur.html)
+💲 [Money](money.html)
