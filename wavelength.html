@@ -263,9 +263,50 @@
     .final.show { display: grid; }
     .final .big { font-size: 56px; font-weight: 950; letter-spacing: -.08em; }
 
+    .match-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+    }
+
+    .match-card {
+      width: min(88vw, 340px);
+      padding: 28px 18px;
+      text-align: center;
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.1));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      animation: matchPop .75s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .match-emoji { font-size: 64px; }
+
+    .match-title {
+      font-size: 34px;
+      font-weight: 950;
+      letter-spacing: -.06em;
+    }
+
+    .match-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
     @keyframes pop {
       from { opacity: 0; transform: scale(.92) translateY(14px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes matchPop {
+      0% { opacity: 0; transform: scale(.75) rotate(-4deg); }
+      60% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+      100% { transform: scale(1) rotate(0); }
     }
 
     .hidden { display: none !important; }
@@ -356,6 +397,14 @@
       <h2 id="finalText">Résultat</h2>
       <button type="button" class="btn" id="newGame">Nouvelle partie</button>
     </section>
+
+    <section class="match-overlay hidden" id="matchOverlay">
+      <div class="match-card" id="matchCard">
+        <div class="match-emoji" id="matchEmoji">✨</div>
+        <div class="match-title" id="matchTitle">It's a match!</div>
+        <div class="match-sub" id="matchSub">Vous l’avez parfaitement deviné.</div>
+      </div>
+    </section>
   </main>
 
   <div class="modal" id="settingsModal">
@@ -386,56 +435,149 @@
 
     const pairs = [
       ["Red flag", "Green flag"],
-  ["Gênant", "Charmant"],
-  ["Boring", "Iconique"],
-  ["Cringe", "Stylé"],
-  ["Trop innocent", "Trop dangereux"],
-  ["Surcoté", "Sous-coté"],
-  ["Plaisir coupable", "Fierté assumée"],
-  ["Relation saine", "Relation toxique"],
-  ["Ça passe", "Impardonnable"],
-  ["Mauvaise idée", "Excellente idée"],
-  ["Pas sexy", "Très sexy"],
-  ["Trop sage", "Trop chaotique"],
-  ["Rêve d’enfant", "Cauchemar d’adulte"],
-  ["Truc de riche", "Truc de prolo"],
-  ["Geste romantique", "Geste gênant"],
-  ["Petite trahison", "Grosse trahison"],
-  ["Mensonge acceptable", "Mensonge grave"],
-  ["Trop personnel", "Pas assez profond"],
-  ["Tradition utile", "Tradition dépassée"],
-  ["Problème inventé", "Vrai problème"],
-  ["Faible", "Puissant"],
-  ["Mignon", "Malaisant"],
-  ["Respectable", "Ridicule"],
-  ["Choix immature", "Choix courageux"],
-  ["Ça rapproche", "Ça éloigne"],
-  ["Trop privé", "Trop public"],
-  ["Preuve d’amour", "Manipulation"],
-  ["Honnête", "Blessant"],
-  ["Confortable", "Excitant"],
-  ["Stable", "Étouffant"],
-  ["Libre", "Perdu"],
-  ["Ambitieux", "Obsédé"],
-  ["Humilité", "Manque de confiance"],
-  ["Confiance", "Naïveté"],
-  ["Pardon", "Faiblesse"],
-  ["Discipline", "Rigidité"],
-  ["Spontané", "Irresponsable"],
-  ["Protecteur", "Contrôlant"],
-  ["Mystérieux", "Fuyant"],
-  ["Drôle", "Lourd"],
-  ["Gentil", "Trop gentil"],
-  ["Séduisant", "Trop calculé"],
-  ["Authentique", "Sans filtre"],
-  ["Moderne", "Dégénéré"],
-  ["Traditionnel", "Coincé"],
-  ["Ouverture d’esprit", "Absence de valeurs"],
-  ["Tolérance", "Laxisme"],
-  ["Force de caractère", "Orgueil"],
-  ["Prudent", "Peureux"],
-  ["Courageux", "Inconscient"]
-];
+      ["Cringe", "Stylé"],
+      ["Trop innocent", "Trop dangereux"],
+      ["Surcoté", "Sous-coté"],
+      ["Plaisir coupable", "Fierté assumée"],
+      ["Relation saine", "Relation toxique"],
+      ["Ça passe", "Impardonnable"],
+      ["Mauvaise idée", "Excellente idée"],
+      ["Pas sexy", "Très sexy"],
+      ["Trop sage", "Trop chaotique"],
+      ["Rêve d’enfant", "Cauchemar d’adulte"],
+      ["Truc de riche", "Truc de prolo"],
+      ["Geste romantique", "Geste gênant"],
+      ["Petite trahison", "Grosse trahison"],
+      ["Mensonge acceptable", "Mensonge grave"],
+      ["Trop personnel", "Pas assez profond"],
+      ["Tradition utile", "Tradition dépassée"],
+      ["Problème inventé", "Vrai problème"],
+      ["Faible", "Puissant"],
+      ["Mignon", "Malaisant"],
+      ["Respectable", "Ridicule"],
+      ["Choix immature", "Choix courageux"],
+      ["Ça rapproche", "Ça éloigne"],
+      ["Trop privé", "Trop public"],
+      ["Preuve d’amour", "Manipulation"],
+      ["Honnête", "Blessant"],
+      ["Confortable", "Excitant"],
+      ["Stable", "Étouffant"],
+      ["Libre", "Perdu"],
+      ["Ambitieux", "Obsédé"],
+      ["Humilité", "Manque de confiance"],
+      ["Confiance", "Naïveté"],
+      ["Pardon", "Faiblesse"],
+      ["Discipline", "Rigidité"],
+      ["Spontané", "Irresponsable"],
+      ["Protecteur", "Contrôlant"],
+      ["Mystérieux", "Fuyant"],
+      ["Drôle", "Lourd"],
+      ["Gentil", "Trop gentil"],
+      ["Séduisant", "Trop calculé"],
+      ["Authentique", "Sans filtre"],
+      ["Moderne", "Dégénéré"],
+      ["Traditionnel", "Coincé"],
+      ["Ouverture d’esprit", "Absence de valeurs"],
+      ["Tolérance", "Laxisme"],
+      ["Force de caractère", "Orgueil"],
+      ["Prudent", "Peureux"],
+      ["Courageux", "Inconscient"]
+      ["Vraie excuse", "Fausse excuse"],
+["Trop tôt", "Trop tard"],
+["Bon conseil", "Mauvais conseil"],
+["Amitié sincère", "Amitié intéressée"],
+["Secret mignon", "Secret inquiétant"],
+["Surprise réussie", "Surprise gênante"],
+["Humour fin", "Humour limite"],
+["Charme naturel", "Forceur"],
+["Confiant", "Arrogant"],
+["Discret", "Invisible"],
+["Sensible", "Fragile"],
+["Passionné", "Intense"],
+["Raisonnable", "Ennuyeux"],
+["Simple", "Basique"],
+["Original", "Bizarre"],
+["Cool", "Froid"],
+["Attachant", "Collant"],
+["Disponible", "Dépendant"],
+["Indépendant", "Distant"],
+["Romantique", "Niais"],
+["Direct", "Brutal"],
+["Poli", "Hypocrite"],
+["Honnête", "Trop honnête"],
+["Calme", "Mou"],
+["Énergique", "Épuisant"],
+["Positif", "Déconnecté"],
+["Réaliste", "Pessimiste"],
+["Optimiste", "Naïf"],
+["Sérieux", "Coincé"],
+["Léger", "Superficiel"],
+["Profond", "Prise de tête"],
+["Curieux", "Intrusif"],
+["Attentionné", "Envahissant"],
+["Loyal", "Aveugle"],
+["Fidèle", "Possessif"],
+["Franc", "Méchant"],
+["Gentleman", "Vieux jeu"],
+["Classe", "Prétentieux"],
+["Sobre", "Fade"],
+["Audacieux", "Ridicule"],
+["Mature", "Blasé"],
+["Enfantin", "Touchant"],
+["Rassurant", "Prévisible"],
+["Excitant", "Instable"],
+["Sécurité", "Prison"],
+["Liberté", "Solitude"],
+["Compromis", "Sacrifice"],
+["Patience", "Passivité"],
+["Persévérance", "Obstination"],
+["Respect", "Distance"],
+["Jalousie mignonne", "Jalousie toxique"],
+["Flirt innocent", "Manque de respect"],
+["Petit mensonge", "Trahison"],
+["Vérité nécessaire", "Vérité inutile"],
+["Message mignon", "Message gênant"],
+["Silence paisible", "Silence pesant"],
+["Débat intéressant", "Dispute inutile"],
+["Critique constructive", "Attaque personnelle"],
+["Ambiance chill", "Malaise total"],
+["Soirée réussie", "Soirée interminable"],
+["Bonne habitude", "Obsession"],
+["Routine rassurante", "Routine morte"],
+["Risque calculé", "Folie pure"],
+["Plan romantique", "Plan cringe"],
+["Cadeau touchant", "Cadeau nul"],
+["Compliment sincère", "Compliment forcé"],
+["Preuve de maturité", "Manque de fun"],
+["Aventure", "Galère"],
+["Souvenir drôle", "Trauma"],
+["Problème de couple", "Détail sans importance"],
+["Green flag rare", "Red flag caché"],
+["Attitude sexy", "Attitude gênante"],
+["Personne solaire", "Personne épuisante"],
+["Bonne énergie", "Mauvais mood"],
+["Charismatique", "Insupportable"],
+["Respectueux", "Trop distant"],
+["Présent", "Étouflant"],
+["Détaché", "Indifférent"],
+["Passé romantique", "Passé suspect"],
+["Excuse valable", "Excuse bidon"],
+["Priorité saine", "Égoïsme"],
+["Franchise", "Manque de tact"],
+["Mentalité de gagnant", "Mentalité toxique"],
+["Rêve ambitieux", "Délire irréaliste"],
+["Choix responsable", "Choix triste"],
+["Peur légitime", "Blocage inutile"],
+["Besoin normal", "Caprice"],
+["Limite saine", "Mur émotionnel"],
+["Vulnérabilité", "Besoin d’attention"],
+["Élégant", "Trop sérieux"],
+["Fun", "Fatigant"],
+["Mignon au début", "Insupportable après"],
+["Bonne surprise", "Mauvais signe"],
+["Tension sexy", "Malaise"],
+["Petit défaut", "Gros problème"]
+    ];
 
     const $ = id => document.getElementById(id);
 
@@ -483,7 +625,11 @@
       backHomeBtn: $("backHomeBtn"),
       bigCode: $("bigCode"),
       startAsMasterBtn: $("startAsMasterBtn"),
-      copyLinkBtn: $("copyLinkBtn")
+      copyLinkBtn: $("copyLinkBtn"),
+      matchOverlay: $("matchOverlay"),
+      matchEmoji: $("matchEmoji"),
+      matchTitle: $("matchTitle"),
+      matchSub: $("matchSub")
     };
 
     const state = {
@@ -497,10 +643,29 @@
     };
 
     let audioReady = false;
+    let audioCtx = null;
     let lastPhaseSeen = null;
+    let lastAnimationKey = null;
 
-    function unlockAudio() {
+    async function unlockAudio() {
       audioReady = true;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx && !audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+
+      if (audioCtx && audioCtx.state === "suspended") {
+        try {
+          await audioCtx.resume();
+        } catch {}
+      }
+
+      if ("Notification" in window && Notification.permission === "default") {
+        try {
+          await Notification.requestPermission();
+        } catch {}
+      }
     }
 
     function playNotify(type = "turn") {
@@ -509,7 +674,11 @@
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
 
-      const ctx = new AudioCtx();
+      if (!audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+
+      const ctx = audioCtx;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -524,6 +693,34 @@
 
       osc.start();
       osc.stop(ctx.currentTime + 0.38);
+    }
+
+    function phoneNotify(title, body) {
+      playNotify("reveal");
+
+      if ("vibrate" in navigator) {
+        navigator.vibrate([180, 80, 180]);
+      }
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification(title, { body });
+        } catch {}
+      }
+    }
+
+    function showMatchAnimation(win, points) {
+      els.matchEmoji.textContent = win ? "💘" : "😅";
+      els.matchTitle.textContent = win ? "It's a match!" : "Oups!";
+      els.matchSub.textContent = win
+        ? "Parfait, vous êtes sur la même longueur d’onde."
+        : "Score de la manche : " + points + " point" + (points > 1 ? "s" : "") + ".";
+
+      els.matchOverlay.classList.remove("hidden");
+
+      setTimeout(() => {
+        els.matchOverlay.classList.add("hidden");
+      }, 2200);
     }
 
     function show(view) {
@@ -605,6 +802,8 @@
         right: p[1],
         scores: [],
         lastScore: 0,
+        creatorPerfect: false,
+        joinerPerfect: false,
         createdAt: Date.now()
       };
     }
@@ -782,8 +981,13 @@
       if (!d) return;
 
       if (d.phase === "final") {
-        els.finalScore.textContent = d.total || 0;
-        els.finalText.textContent = (d.total || 0) > 15 ? "Vous êtes très compatibles ! ✨" : "Continuez à vous entraîner !";
+        const won = d.creatorPerfect && d.joinerPerfect;
+
+        els.finalScore.textContent = won ? "💘" : "😅";
+        els.finalText.textContent = won
+          ? "Gagné ! Vous avez tous les deux parfaitement deviné au moins une fois."
+          : "Perdu ! Il fallait que chacun fasse au moins un sans-faute.";
+
         show(els.finalView);
         return;
       }
@@ -797,12 +1001,23 @@
 
       if (lastPhaseSeen && phaseKey !== lastPhaseSeen) {
         if (!master && d.phase === "guess") {
-          playNotify("turn");
+          phoneNotify("À toi de jouer", "Le Maître a validé son indice.");
         }
 
-     if (d.phase === "reveal") {
-  playNotify("reveal");
-}
+        if (d.phase === "reveal") {
+          const winRound = (d.lastScore || 0) === 4;
+          const animationKey = d.round + "-" + d.lastScore;
+
+          phoneNotify(
+            winRound ? "It's a match!" : "Oups!",
+            winRound ? "Vous avez parfaitement deviné." : "La manche est terminée."
+          );
+
+          if (lastAnimationKey !== animationKey) {
+            showMatchAnimation(winRound, d.lastScore || 0);
+            lastAnimationKey = animationKey;
+          }
+        }
       }
 
       lastPhaseSeen = phaseKey;
@@ -935,12 +1150,18 @@
       if (!d) return;
 
       const s = score(d.targetValue, d.guessValue ?? 90);
+      const currentRound = d.round || 1;
+
+      const creatorIsGuessing = currentRound % 2 === 0;
+      const joinerIsGuessing = currentRound % 2 === 1;
 
       await patch({
         phase: "reveal",
         lastScore: s,
         total: (d.total || 0) + s,
-        scores: [...(d.scores || []), s]
+        scores: [...(d.scores || []), s],
+        creatorPerfect: (d.creatorPerfect || false) || (creatorIsGuessing && s === 4),
+        joinerPerfect: (d.joinerPerfect || false) || (joinerIsGuessing && s === 4)
       });
     });
 
@@ -953,7 +1174,7 @@
         return;
       }
 
-      const p = (d.mode || "auto") === "auto" ? randomPair() : [d.left, d.right];
+      const p = randomPair();
 
       let nextTarget = randomTarget();
       if (Math.abs(nextTarget - (d.targetValue || 90)) < 25) {
@@ -963,6 +1184,7 @@
       await patch({
         round: (d.round || 1) + 1,
         phase: "clue",
+        mode: "auto",
         targetValue: nextTarget,
         guessValue: 90,
         clue: "",
@@ -979,6 +1201,8 @@
       if (!ref) return;
 
       await ref.set(initialRoomData());
+      lastPhaseSeen = null;
+      lastAnimationKey = null;
       startGame();
     });
 
