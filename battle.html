@@ -2,167 +2,341 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-  <meta name="theme-color" content="#312e81" />
-  <title>Bataille Live</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bataille</title>
 
   <style>
     :root {
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
+      --bg1: #6c5ce7;
+      --bg2: #00cec9;
+      --card: rgba(255, 255, 255, 0.92);
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #6c5ce7;
+      --primary-dark: #5649c9;
+      --danger: #ef4444;
+      --success: #10b981;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+      --radius: 24px;
     }
 
     * {
+      box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
 
     body {
+      margin: 0;
       min-height: 100vh;
-      min-height: 100dvh;
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bottom);
-      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(250, 204, 21, 0.28), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.28), transparent 34%),
-        linear-gradient(135deg, #1e1b4b, #312e81 48%, #4c1d95);
+        radial-gradient(circle at top left, rgba(255,255,255,.35), transparent 35%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .panel {
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      border: 1px solid rgba(255,255,255,.45);
+      animation: fadeIn .25s ease;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 44px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 18px;
+      background: #f3f4f6;
+      text-transform: uppercase;
+      text-align: center;
+      margin: 12px 0;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 17px;
+      font-weight: 800;
       color: white;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 10px 24px rgba(108, 92, 231, .35);
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+      margin-top: 10px;
     }
 
-    input, button {
-      font-size: 16px;
+    button:active {
+      transform: scale(.98);
     }
 
-    .glass {
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
     }
 
-    .soft-card {
-      background: linear-gradient(145deg, #ffffff, #eef2ff);
-      box-shadow:
-        14px 14px 34px rgba(15, 23, 42, 0.28),
-        -8px -8px 24px rgba(255, 255, 255, 0.14);
+    .secondary {
+      color: var(--primary);
+      background: white;
+      border: 1px solid rgba(108, 92, 231, .2);
+      box-shadow: none;
+    }
+
+    .danger {
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      box-shadow: 0 10px 24px rgba(239, 68, 68, .28);
+    }
+
+    .code-box {
+      background: #111827;
+      color: white;
+      text-align: center;
+      border-radius: 22px;
+      padding: 18px;
+      font-size: 34px;
+      letter-spacing: 5px;
+      font-weight: 900;
+      margin: 18px 0;
+      user-select: all;
+    }
+
+    .status {
+      margin: 14px 0 0;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.75);
+      color: var(--text);
+      text-align: center;
+      font-weight: 800;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .board-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mini {
+      background: rgba(255,255,255,.78);
+      border-radius: 18px;
+      padding: 12px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .mini span {
+      display: block;
+      margin-top: 4px;
+      font-size: 24px;
+      color: var(--primary);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .card-slot {
+      text-align: center;
+    }
+
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
     }
 
     .playing-card {
-      width: min(25vw, 96px);
-      height: min(36vw, 138px);
-      min-width: 74px;
-      min-height: 106px;
-      border-radius: 18px;
-      transform-style: preserve-3d;
-      transition: transform 360ms ease, opacity 280ms ease, filter 280ms ease;
+      height: 170px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 14px 28px rgba(0,0,0,.14);
+      border: 1px solid rgba(0,0,0,.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-size: 42px;
+      font-weight: 950;
+      position: relative;
+      overflow: hidden;
     }
 
-    .card-back {
-      background:
-        radial-gradient(circle at center, rgba(250, 204, 21, 0.7) 0 9%, transparent 10%),
-        linear-gradient(135deg, #4338ca, #7c3aed);
-      border: 4px solid rgba(255, 255, 255, 0.9);
-      box-shadow: inset 0 0 0 2px rgba(250, 204, 21, 0.35), 0 16px 34px rgba(0, 0, 0, 0.28);
-    }
-
-    .card-face {
-      background: linear-gradient(160deg, #ffffff, #f8fafc);
-      color: #111827;
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
-    }
-
-    .red-card {
+    .playing-card.red {
       color: #dc2626;
     }
 
-    .pile-button {
-      touch-action: manipulation;
-      transition: transform 160ms ease, filter 160ms ease;
+    .playing-card.black {
+      color: #111827;
     }
 
-    .pile-button:active {
-      transform: scale(0.96);
-      filter: brightness(1.08);
+    .playing-card.back {
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.18), transparent),
+        linear-gradient(135deg, #111827, #374151);
     }
 
-    .float-in {
-      animation: floatIn 340ms ease both;
+    .playing-card small {
+      font-size: 30px;
+      line-height: 1;
     }
 
-    .pulse-gold {
-      animation: pulseGold 1.4s ease-in-out infinite;
+    .played {
+      animation: pop .35s ease;
     }
 
-    .win-sweep-left {
-      animation: sweepLeft 520ms ease forwards;
+    .pill {
+      margin-top: 8px;
+      display: inline-block;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(108, 92, 231, .1);
+      color: var(--primary);
+      font-weight: 900;
+      font-size: 13px;
     }
 
-    .win-sweep-right {
-      animation: sweepRight 520ms ease forwards;
+    .footer-info {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+      font-weight: 650;
     }
 
-    .shake {
-      animation: shake 380ms ease-in-out;
+    @keyframes pop {
+      0% { transform: translateY(12px) scale(.9); opacity: .3; }
+      70% { transform: translateY(-4px) scale(1.04); opacity: 1; }
+      100% { transform: translateY(0) scale(1); }
     }
 
-    @keyframes floatIn {
-      from { opacity: 0; transform: translateY(18px) scale(0.94); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes pulseGold {
-      0%, 100% { box-shadow: 0 0 0 rgba(250, 204, 21, 0); }
-      50% { box-shadow: 0 0 34px rgba(250, 204, 21, 0.52); }
-    }
-
-    @keyframes sweepLeft {
-      to { opacity: 0; transform: translateX(-44vw) translateY(16vh) rotate(-15deg) scale(0.72); }
-    }
-
-    @keyframes sweepRight {
-      to { opacity: 0; transform: translateX(44vw) translateY(-16vh) rotate(15deg) scale(0.72); }
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 
 <body>
-  <main id="app" class="relative mx-auto flex min-h-[100dvh] max-w-md flex-col px-4 py-4"></main>
+  <main class="app">
+    <section id="homeScreen" class="panel">
+      <h1>Bataille</h1>
+      <p class="subtitle">Jeu de cartes multijoueur en temps réel</p>
+
+      <button id="createBtn">Créer une partie</button>
+
+      <input id="joinCodeInput" maxlength="6" placeholder="CODE PARTIE" />
+      <button id="joinBtn" class="secondary">Rejoindre une partie</button>
+
+      <div id="homeMessage" class="status hidden"></div>
+    </section>
+
+    <section id="lobbyScreen" class="panel hidden">
+      <h1>Bataille</h1>
+      <p class="subtitle">Partage ce code avec le deuxième joueur</p>
+
+      <div id="gameCodeBox" class="code-box">------</div>
+      <div id="lobbyMessage" class="status">En attente d’un joueur...</div>
+
+      <button id="copyCodeBtn">Copier le code</button>
+      <button id="leaveLobbyBtn" class="secondary">Quitter</button>
+    </section>
+
+    <section id="gameScreen" class="panel hidden">
+      <div class="board-top">
+        <div class="mini">Vos cartes<span id="myCount">0</span></div>
+        <div class="mini">Cartes adverses<span id="oppCount">0</span></div>
+        <div class="mini">Vos plis<span id="myScore">0</span></div>
+        <div class="mini">Plis adverses<span id="oppScore">0</span></div>
+      </div>
+
+      <div class="cards">
+        <div class="card-slot">
+          <div class="label">Vous</div>
+          <div id="myCard" class="playing-card back">★</div>
+          <div id="myReady" class="pill">Prêt ?</div>
+        </div>
+
+        <div class="card-slot">
+          <div class="label">Adversaire</div>
+          <div id="oppCard" class="playing-card back">★</div>
+          <div id="oppReady" class="pill">En attente</div>
+        </div>
+      </div>
+
+      <div id="gameMessage" class="status">La partie commence.</div>
+
+      <button id="playBtn">Jouer une carte</button>
+      <button id="newGameBtn" class="secondary hidden">Nouvelle partie</button>
+      <button id="quitGameBtn" class="danger">Quitter</button>
+
+      <p class="footer-info">
+        Code partie : <strong id="smallGameCode"></strong><br>
+        Rôle : <strong id="roleLabel"></strong>
+      </p>
+    </section>
+  </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      set,
-      get,
-      onValue,
-      update,
-      runTransaction,
-      serverTimestamp,
-      onDisconnect,
-      remove
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    /*
+      ============================================================
+      CONFIGURATION FIREBASE
+      ============================================================
+      1. Crée un projet Firebase.
+      2. Active Firestore Database.
+      3. Active Authentication > Anonymous.
+      4. Remplace l’objet ci-dessous par ta configuration Firebase.
+    */
 
-    /************************************************************
-     * CONFIGURATION FIREBASE
-     * Colle ici les informations de ton projet Firebase.
-     * Active Realtime Database dans la console Firebase.
-     ************************************************************/
-   const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -171,57 +345,165 @@
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
+    /*
+      ============================================================
+      IMPORT FIREBASE
+      ============================================================
+    */
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      onSnapshot,
+      runTransaction,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    const $app = document.querySelector("#app");
+    /*
+      ============================================================
+      ÉTAT LOCAL
+      ============================================================
+    */
 
-    const state = {
-      roomCode: null,
-      playerId: null,
-      unsubscribe: null,
-      game: null,
-      busy: false,
-      lastResolutionId: null
+    let uid = null;
+    let currentCode = null;
+    let currentRole = null;
+    let unsubscribeGame = null;
+    let heartbeatTimer = null;
+    let latestGame = null;
+
+    const els = {
+      home: document.getElementById("homeScreen"),
+      lobby: document.getElementById("lobbyScreen"),
+      game: document.getElementById("gameScreen"),
+      createBtn: document.getElementById("createBtn"),
+      joinBtn: document.getElementById("joinBtn"),
+      joinCodeInput: document.getElementById("joinCodeInput"),
+      homeMessage: document.getElementById("homeMessage"),
+      gameCodeBox: document.getElementById("gameCodeBox"),
+      lobbyMessage: document.getElementById("lobbyMessage"),
+      copyCodeBtn: document.getElementById("copyCodeBtn"),
+      leaveLobbyBtn: document.getElementById("leaveLobbyBtn"),
+      myCount: document.getElementById("myCount"),
+      oppCount: document.getElementById("oppCount"),
+      myScore: document.getElementById("myScore"),
+      oppScore: document.getElementById("oppScore"),
+      myCard: document.getElementById("myCard"),
+      oppCard: document.getElementById("oppCard"),
+      myReady: document.getElementById("myReady"),
+      oppReady: document.getElementById("oppReady"),
+      gameMessage: document.getElementById("gameMessage"),
+      playBtn: document.getElementById("playBtn"),
+      newGameBtn: document.getElementById("newGameBtn"),
+      quitGameBtn: document.getElementById("quitGameBtn"),
+      smallGameCode: document.getElementById("smallGameCode"),
+      roleLabel: document.getElementById("roleLabel")
     };
 
-    const SUITS = ["♠", "♥", "♦", "♣"];
-    const VALUES = [
-      { label: "2", rank: 2 },
-      { label: "3", rank: 3 },
-      { label: "4", rank: 4 },
-      { label: "5", rank: 5 },
-      { label: "6", rank: 6 },
-      { label: "7", rank: 7 },
-      { label: "8", rank: 8 },
-      { label: "9", rank: 9 },
-      { label: "10", rank: 10 },
-      { label: "J", rank: 11 },
-      { label: "Q", rank: 12 },
-      { label: "K", rank: 13 },
-      { label: "A", rank: 14 }
-    ];
+    /*
+      ============================================================
+      OUTILS UI
+      ============================================================
+    */
 
-    function uid() {
-      return Math.random().toString(36).slice(2, 10);
+    function showScreen(name) {
+      els.home.classList.add("hidden");
+      els.lobby.classList.add("hidden");
+      els.game.classList.add("hidden");
+      els[name].classList.remove("hidden");
     }
 
-    function roomRef(code = state.roomCode) {
-      return ref(db, `warRooms/${code}`);
+    function showMessage(el, text) {
+      el.textContent = text;
+      el.classList.remove("hidden");
     }
+
+    function setCard(el, card) {
+      el.className = "playing-card played";
+
+      if (!card) {
+        el.className = "playing-card back";
+        el.innerHTML = "★";
+        return;
+      }
+
+      const red = card.suit === "♥" || card.suit === "♦";
+      el.classList.add(red ? "red" : "black");
+      el.innerHTML = `<div>${card.label}</div><small>${card.suit}</small>`;
+
+      setTimeout(() => el.classList.remove("played"), 360);
+    }
+
+    function otherRole(role) {
+      return role === "host" ? "guest" : "host";
+    }
+
+    function gameRef(code) {
+      return doc(db, "bataille_games", code);
+    }
+
+    function generateCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 5; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
+
+    /*
+      ============================================================
+      CARTES ET LOGIQUE DE BATAILLE
+      ============================================================
+    */
 
     function createDeck() {
-      return SUITS.flatMap(suit => VALUES.map(value => ({
-        id: `${value.label}${suit}-${uid()}`,
-        label: value.label,
-        suit,
-        rank: value.rank,
-        color: suit === "♥" || suit === "♦" ? "red" : "black"
-      })));
+      const suits = ["♠", "♥", "♦", "♣"];
+      const ranks = [
+        { label: "2", value: 2 },
+        { label: "3", value: 3 },
+        { label: "4", value: 4 },
+        { label: "5", value: 5 },
+        { label: "6", value: 6 },
+        { label: "7", value: 7 },
+        { label: "8", value: 8 },
+        { label: "9", value: 9 },
+        { label: "10", value: 10 },
+        { label: "J", value: 11 },
+        { label: "Q", value: 12 },
+        { label: "K", value: 13 },
+        { label: "A", value: 14 }
+      ];
+
+      const deck = [];
+      for (const suit of suits) {
+        for (const rank of ranks) {
+          deck.push({
+            suit,
+            label: rank.label,
+            value: rank.value,
+            id: `${rank.label}${suit}`
+          });
+        }
+      }
+      return shuffle(deck);
     }
 
-    function shuffle(cards) {
-      const copy = [...cards];
+    function shuffle(array) {
+      const copy = [...array];
       for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [copy[i], copy[j]] = [copy[j], copy[i]];
@@ -229,527 +511,639 @@
       return copy;
     }
 
-    function code4() {
-      return String(Math.floor(1000 + Math.random() * 9000));
+    function dealDeck() {
+      const deck = createDeck();
+      return {
+        hostDeck: deck.slice(0, 26),
+        guestDeck: deck.slice(26)
+      };
     }
 
-    function meKey() {
-      return `p${state.playerId}`;
-    }
+    function resolveBattle(game) {
+      const hostDeck = [...game.decks.host];
+      const guestDeck = [...game.decks.guest];
+      const pot = [];
+      let message = "";
+      let winner = null;
+      let lastHostCard = null;
+      let lastGuestCard = null;
+      let battleCount = 0;
 
-    function opponentKey() {
-      return state.playerId === 1 ? "p2" : "p1";
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function renderShell(inner) {
-      $app.innerHTML = inner;
-    }
-
-    function toast(message) {
-      const node = document.createElement("div");
-      node.className = "fixed left-1/2 top-[calc(env(safe-area-inset-top)+16px)] z-50 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm text-white backdrop-blur";
-      node.textContent = message;
-      document.body.appendChild(node);
-      setTimeout(() => node.remove(), 1900);
-    }
-
-    function cardHtml(card, extra = "") {
-      if (!card) {
-        return `<div class="playing-card card-back ${extra}"></div>`;
-      }
-
-      const red = card.color === "red" ? "red-card" : "";
-      return `
-        <div class="playing-card card-face ${red} ${extra} flex flex-col justify-between p-3">
-          <div class="text-left text-xl font-black leading-none">${card.label}</div>
-          <div class="grid place-items-center text-4xl font-black leading-none">${card.suit}</div>
-          <div class="rotate-180 text-left text-xl font-black leading-none">${card.label}</div>
-        </div>
-      `;
-    }
-
-    function hiddenCardHtml(label = "") {
-      return `
-        <div class="relative">
-          <div class="playing-card card-back"></div>
-          ${label ? `<div class="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-white/70">${label}</div>` : ""}
-        </div>
-      `;
-    }
-
-    function showHome() {
-      state.roomCode = null;
-      state.playerId = null;
-      if (state.unsubscribe) state.unsubscribe();
-
-      renderShell(`
-        <section class="flex flex-1 flex-col items-center justify-center gap-7 text-center">
-          <div class="glass float-in w-full rounded-[2rem] px-6 py-8">
-            <div class="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-3xl bg-white/15 text-5xl shadow-2xl">⚔️</div>
-            <h1 class="text-4xl font-black tracking-tight">Bataille Live</h1>
-            <p class="mt-3 text-sm leading-6 text-white/75">Crée ou rejoins une partie en temps réel. Les cartes restent cachées jusqu'à ce que les deux joueurs aient joué.</p>
-
-            <div class="mt-8 grid gap-3">
-              <button id="createBtn" class="rounded-2xl bg-yellow-300 px-5 py-4 font-black text-indigo-950 shadow-xl shadow-yellow-300/20 active:scale-95">Créer une partie</button>
-              <button id="joinOpenBtn" class="rounded-2xl bg-white/16 px-5 py-4 font-bold text-white ring-1 ring-white/20 active:scale-95">Rejoindre une partie</button>
-            </div>
-          </div>
-        </section>
-      `);
-
-      document.querySelector("#createBtn").addEventListener("click", createRoom);
-      document.querySelector("#joinOpenBtn").addEventListener("click", showJoin);
-    }
-
-    function showJoin() {
-      renderShell(`
-        <section class="flex flex-1 flex-col justify-center gap-5">
-          <button id="backBtn" class="absolute left-4 top-5 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80">← Retour</button>
-          <div class="glass float-in rounded-[2rem] px-6 py-8 text-center">
-            <h2 class="text-3xl font-black">Rejoindre</h2>
-            <p class="mt-2 text-sm text-white/70">Entre le code à 4 chiffres de ton adversaire.</p>
-            <input id="codeInput" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="1234"
-              class="mt-7 w-full rounded-2xl border border-white/20 bg-white/95 px-5 py-4 text-center text-3xl font-black tracking-[0.35em] text-indigo-950 outline-none" />
-            <button id="joinBtn" class="mt-4 w-full rounded-2xl bg-yellow-300 px-5 py-4 font-black text-indigo-950 shadow-xl shadow-yellow-300/20 active:scale-95">Entrer</button>
-          </div>
-        </section>
-      `);
-
-      document.querySelector("#backBtn").addEventListener("click", showHome);
-      document.querySelector("#joinBtn").addEventListener("click", () => joinRoom(document.querySelector("#codeInput").value.trim()));
-      document.querySelector("#codeInput").addEventListener("input", e => {
-        e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4);
-      });
-    }
-
-    async function createRoom() {
-      try {
-        let code = code4();
-        let snap = await get(roomRef(code));
-        while (snap.exists()) {
-          code = code4();
-          snap = await get(roomRef(code));
+      while (true) {
+        if (hostDeck.length === 0 && guestDeck.length === 0) {
+          return buildDrawResult(game, hostDeck, guestDeck, pot, lastHostCard, lastGuestCard);
         }
 
-        state.roomCode = code;
-        state.playerId = 1;
+        if (hostDeck.length === 0) {
+          winner = "guest";
+          message = "Le joueur host n’a plus de cartes.";
+          break;
+        }
 
-        await set(roomRef(code), {
+        if (guestDeck.length === 0) {
+          winner = "host";
+          message = "Le joueur guest n’a plus de cartes.";
+          break;
+        }
+
+        const hostVisible = hostDeck.shift();
+        const guestVisible = guestDeck.shift();
+
+        lastHostCard = hostVisible;
+        lastGuestCard = guestVisible;
+
+        pot.push(hostVisible, guestVisible);
+
+        if (hostVisible.value > guestVisible.value) {
+          winner = "host";
+          message = battleCount > 0 ? "Bataille remportée par le host." : "Pli remporté par le host.";
+          break;
+        }
+
+        if (guestVisible.value > hostVisible.value) {
+          winner = "guest";
+          message = battleCount > 0 ? "Bataille remportée par le guest." : "Pli remporté par le guest.";
+          break;
+        }
+
+        battleCount++;
+
+        if (hostDeck.length === 0 && guestDeck.length === 0) {
+          return buildDrawResult(game, hostDeck, guestDeck, pot, lastHostCard, lastGuestCard);
+        }
+
+        if (hostDeck.length === 0) {
+          winner = "guest";
+          message = "Bataille ! Le host n’a plus assez de cartes.";
+          break;
+        }
+
+        if (guestDeck.length === 0) {
+          winner = "host";
+          message = "Bataille ! Le guest n’a plus assez de cartes.";
+          break;
+        }
+
+        const hostHidden = hostDeck.shift();
+        const guestHidden = guestDeck.shift();
+        pot.push(hostHidden, guestHidden);
+
+        if (hostDeck.length === 0 && guestDeck.length === 0) {
+          return buildDrawResult(game, hostDeck, guestDeck, pot, lastHostCard, lastGuestCard);
+        }
+
+        if (hostDeck.length === 0) {
+          winner = "guest";
+          message = "Bataille ! Le host n’a plus de carte visible.";
+          break;
+        }
+
+        if (guestDeck.length === 0) {
+          winner = "host";
+          message = "Bataille ! Le guest n’a plus de carte visible.";
+          break;
+        }
+      }
+
+      if (winner === "host") {
+        hostDeck.push(...pot);
+      } else {
+        guestDeck.push(...pot);
+      }
+
+      const scores = {
+        host: game.scores.host + (winner === "host" ? 1 : 0),
+        guest: game.scores.guest + (winner === "guest" ? 1 : 0)
+      };
+
+      let status = "playing";
+      let finalWinner = null;
+
+      if (hostDeck.length === 52 || guestDeck.length === 0) {
+        status = "finished";
+        finalWinner = "host";
+      }
+
+      if (guestDeck.length === 52 || hostDeck.length === 0) {
+        status = "finished";
+        finalWinner = "guest";
+      }
+
+      return {
+        decks: {
+          host: hostDeck,
+          guest: guestDeck
+        },
+        scores,
+        ready: {
+          host: false,
+          guest: false
+        },
+        lastCards: {
+          host: lastHostCard,
+          guest: lastGuestCard
+        },
+        lastWinner: winner,
+        winner: finalWinner,
+        status,
+        potSize: pot.length,
+        battleCount,
+        message,
+        turn: game.turn + 1,
+        resolving: false,
+        updatedAt: serverTimestamp()
+      };
+    }
+
+    function buildDrawResult(game, hostDeck, guestDeck, pot, lastHostCard, lastGuestCard) {
+      return {
+        decks: {
+          host: hostDeck,
+          guest: guestDeck
+        },
+        scores: game.scores,
+        ready: {
+          host: false,
+          guest: false
+        },
+        lastCards: {
+          host: lastHostCard,
+          guest: lastGuestCard
+        },
+        lastWinner: null,
+        winner: "draw",
+        status: "finished",
+        potSize: pot.length,
+        battleCount: 1,
+        message: "Égalité finale.",
+        turn: game.turn + 1,
+        resolving: false,
+        updatedAt: serverTimestamp()
+      };
+    }
+
+    /*
+      ============================================================
+      FIREBASE
+      ============================================================
+    */
+
+    async function createGame() {
+      if (!uid) return showMessage(els.homeMessage, "Connexion Firebase en cours...");
+
+      els.createBtn.disabled = true;
+      showMessage(els.homeMessage, "Création de la partie...");
+
+      try {
+        let code = generateCode();
+        let ref = gameRef(code);
+        let snap = await getDoc(ref);
+
+        while (snap.exists()) {
+          code = generateCode();
+          ref = gameRef(code);
+          snap = await getDoc(ref);
+        }
+
+        await setDoc(ref, {
           code,
           status: "waiting",
-          createdAt: serverTimestamp(),
+          hostId: uid,
+          guestId: null,
           players: {
-            p1: { connected: true, name: "Joueur 1", joinedAt: serverTimestamp() }
-          },
-          game: null
-        });
-
-        onDisconnect(ref(db, `warRooms/${code}/players/p1/connected`)).set(false);
-        listenRoom();
-      } catch (error) {
-        console.error(error);
-        toast("Impossible de créer la partie. Vérifie Firebase.");
-      }
-    }
-
-    async function joinRoom(code) {
-      if (!/^\d{4}$/.test(code)) {
-        toast("Code invalide.");
-        return;
-      }
-
-      try {
-        const snapshot = await get(roomRef(code));
-        if (!snapshot.exists()) {
-          toast("Partie introuvable.");
-          return;
-        }
-
-        const room = snapshot.val();
-        if (room.players?.p2?.connected) {
-          toast("Cette partie est déjà complète.");
-          return;
-        }
-
-        state.roomCode = code;
-        state.playerId = 2;
-
-        await update(roomRef(code), {
-          "players/p2": { connected: true, name: "Joueur 2", joinedAt: serverTimestamp() },
-          status: "ready"
-        });
-
-        onDisconnect(ref(db, `warRooms/${code}/players/p2/connected`)).set(false);
-        await initializeGameIfNeeded(code);
-        listenRoom();
-      } catch (error) {
-        console.error(error);
-        toast("Impossible de rejoindre la partie.");
-      }
-    }
-
-    async function initializeGameIfNeeded(code) {
-      await runTransaction(roomRef(code), room => {
-        if (!room) return room;
-        if (room.game?.initialized) return room;
-        if (!room.players?.p1 || !room.players?.p2) return room;
-
-        const deck = shuffle(createDeck());
-        room.status = "playing";
-        room.game = {
-          initialized: true,
-          phase: "normal",
-          round: 1,
-          pot: [],
-          table: {
-            p1: { visible: null, hidden: [], committed: false },
-            p2: { visible: null, hidden: [], committed: false }
+            host: {
+              id: uid,
+              online: true,
+              lastSeen: Date.now()
+            },
+            guest: null
           },
           decks: {
-            p1: deck.slice(0, 26),
-            p2: deck.slice(26, 52)
+            host: [],
+            guest: []
           },
-          message: "La partie commence.",
-          winner: null,
-          resolving: false,
+          scores: {
+            host: 0,
+            guest: 0
+          },
+          ready: {
+            host: false,
+            guest: false
+          },
+          lastCards: {
+            host: null,
+            guest: null
+          },
           lastWinner: null,
-          resolutionId: null
-        };
-        return room;
-      });
+          winner: null,
+          message: "En attente d’un deuxième joueur.",
+          potSize: 0,
+          battleCount: 0,
+          turn: 0,
+          resolving: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        enterGame(code, "host");
+        showScreen("lobby");
+      } catch (error) {
+        console.error(error);
+        showMessage(els.homeMessage, "Erreur Firebase. Vérifie ta configuration.");
+      } finally {
+        els.createBtn.disabled = false;
+      }
     }
 
-    function listenRoom() {
-      if (state.unsubscribe) state.unsubscribe();
-      state.unsubscribe = onValue(roomRef(), snapshot => {
-        if (!snapshot.exists()) {
-          showHome();
-          toast("La partie a été fermée.");
+    async function joinGame() {
+      if (!uid) return showMessage(els.homeMessage, "Connexion Firebase en cours...");
+
+      const code = els.joinCodeInput.value.trim().toUpperCase();
+      if (!code) return showMessage(els.homeMessage, "Entre un code partie.");
+
+      els.joinBtn.disabled = true;
+      showMessage(els.homeMessage, "Connexion à la partie...");
+
+      try {
+        const ref = gameRef(code);
+
+        await runTransaction(db, async transaction => {
+          const snap = await transaction.get(ref);
+
+          if (!snap.exists()) {
+            throw new Error("Cette partie n’existe pas.");
+          }
+
+          const game = snap.data();
+
+          if (game.hostId === uid) {
+            currentRole = "host";
+            return;
+          }
+
+          if (game.guestId && game.guestId !== uid) {
+            throw new Error("Cette partie est déjà pleine.");
+          }
+
+          if (game.status !== "waiting" && game.guestId !== uid) {
+            throw new Error("Cette partie a déjà commencé.");
+          }
+
+          const dealt = dealDeck();
+
+          transaction.update(ref, {
+            guestId: uid,
+            "players.guest": {
+              id: uid,
+              online: true,
+              lastSeen: Date.now()
+            },
+            decks: {
+              host: dealt.hostDeck,
+              guest: dealt.guestDeck
+            },
+            status: "playing",
+            message: "La partie commence.",
+            updatedAt: serverTimestamp()
+          });
+
+          currentRole = "guest";
+        });
+
+        enterGame(code, currentRole || "guest");
+      } catch (error) {
+        console.error(error);
+        showMessage(els.homeMessage, error.message || "Impossible de rejoindre la partie.");
+      } finally {
+        els.joinBtn.disabled = false;
+      }
+    }
+
+    function enterGame(code, role) {
+      currentCode = code;
+      currentRole = role;
+
+      localStorage.setItem("bataille_code", code);
+      localStorage.setItem("bataille_role", role);
+
+      els.gameCodeBox.textContent = code;
+      els.smallGameCode.textContent = code;
+      els.roleLabel.textContent = role === "host" ? "Host" : "Guest";
+
+      if (unsubscribeGame) unsubscribeGame();
+
+      unsubscribeGame = onSnapshot(gameRef(code), snap => {
+        if (!snap.exists()) {
+          cleanLocalState();
+          showScreen("home");
+          showMessage(els.homeMessage, "La partie a été supprimée ou est introuvable.");
           return;
         }
-        state.game = snapshot.val();
-        renderGame();
-        maybeAutoResolve();
+
+        latestGame = snap.data();
+        renderGame(latestGame);
+      });
+
+      startHeartbeat();
+
+      if (role === "host") {
+        showScreen("lobby");
+      } else {
+        showScreen("game");
+      }
+    }
+
+    async function playCard() {
+      if (!currentCode || !currentRole || !latestGame) return;
+      if (latestGame.status !== "playing") return;
+      if (latestGame.ready?.[currentRole]) return;
+
+      els.playBtn.disabled = true;
+
+      try {
+        const ref = gameRef(currentCode);
+
+        await runTransaction(db, async transaction => {
+          const snap = await transaction.get(ref);
+          if (!snap.exists()) return;
+
+          const game = snap.data();
+          if (game.status !== "playing") return;
+          if (game.ready[currentRole]) return;
+
+          const nextReady = {
+            ...game.ready,
+            [currentRole]: true
+          };
+
+          transaction.update(ref, {
+            ready: nextReady,
+            message: `${currentRole} est prêt.`,
+            updatedAt: serverTimestamp()
+          });
+        });
+
+        await tryResolveRound();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        els.playBtn.disabled = false;
+      }
+    }
+
+    async function tryResolveRound() {
+      if (!currentCode) return;
+
+      const ref = gameRef(currentCode);
+
+      await runTransaction(db, async transaction => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists()) return;
+
+        const game = snap.data();
+
+        if (game.status !== "playing") return;
+        if (!game.ready.host || !game.ready.guest) return;
+        if (game.resolving) return;
+
+        transaction.update(ref, { resolving: true });
+      });
+
+      await runTransaction(db, async transaction => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists()) return;
+
+        const game = snap.data();
+
+        if (game.status !== "playing") return;
+        if (!game.ready.host || !game.ready.guest) return;
+        if (!game.resolving) return;
+
+        const result = resolveBattle(game);
+        transaction.update(ref, result);
       });
     }
 
-    function renderGame() {
-      const room = state.game;
-      const game = room.game;
-      const me = meKey();
-      const opp = opponentKey();
-      const p1Connected = !!room.players?.p1?.connected;
-      const p2Connected = !!room.players?.p2?.connected;
+    async function newGameSamePlayers() {
+      if (!currentCode || !latestGame) return;
 
-      if (!game) {
-        renderShell(`
-          <section class="flex flex-1 flex-col items-center justify-center text-center">
-            <div class="glass float-in w-full rounded-[2rem] p-7">
-              <p class="text-sm uppercase tracking-[0.28em] text-yellow-200">Code partie</p>
-              <div class="mt-3 rounded-3xl bg-white/95 px-6 py-5 text-5xl font-black tracking-[0.22em] text-indigo-950">${state.roomCode}</div>
-              <p class="mt-5 text-white/75">En attente du deuxième joueur...</p>
-              <div class="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
-                <div class="h-full w-1/2 animate-pulse rounded-full bg-yellow-300"></div>
-              </div>
-              <button id="leaveBtn" class="mt-7 rounded-2xl bg-white/10 px-5 py-3 text-sm text-white/80">Quitter</button>
-            </div>
-          </section>
-        `);
-        document.querySelector("#leaveBtn").addEventListener("click", leaveRoom);
+      const ref = gameRef(currentCode);
+      const dealt = dealDeck();
+
+      await updateDoc(ref, {
+        status: "playing",
+        decks: {
+          host: dealt.hostDeck,
+          guest: dealt.guestDeck
+        },
+        scores: {
+          host: 0,
+          guest: 0
+        },
+        ready: {
+          host: false,
+          guest: false
+        },
+        lastCards: {
+          host: null,
+          guest: null
+        },
+        lastWinner: null,
+        winner: null,
+        message: "Nouvelle partie lancée.",
+        potSize: 0,
+        battleCount: 0,
+        turn: 0,
+        resolving: false,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function leaveCurrentGame() {
+      if (!currentCode || !currentRole) {
+        cleanLocalState();
+        showScreen("home");
         return;
       }
 
-      const myDeckCount = game.decks?.[me]?.length || 0;
-      const oppDeckCount = game.decks?.[opp]?.length || 0;
-      const myTable = game.table?.[me] || {};
-      const oppTable = game.table?.[opp] || {};
-      const bothCommitted = !!myTable.committed && !!oppTable.committed;
-      const myPlayed = !!myTable.committed;
-      const canPlay = room.status === "playing" && !game.winner && !myPlayed && myDeckCount > 0 && !game.resolving;
-      const isWar = game.phase === "war";
-      const instruction = game.winner
-        ? (game.winner === me ? "Victoire !" : "Défaite...")
-        : isWar
-          ? "Bataille : pose 1 carte cachée puis 1 visible."
-          : "Appuie sur ton tas pour jouer.";
-
-      renderShell(`
-        <section class="flex min-h-[100dvh] flex-col gap-3 pb-3 pt-2">
-          <header class="glass rounded-[1.6rem] px-4 py-3">
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p class="text-xs uppercase tracking-[0.22em] text-yellow-200">Bataille Live</p>
-                <p class="text-lg font-black">Code ${state.roomCode}</p>
-              </div>
-              <button id="leaveBtn" class="rounded-full bg-white/10 px-3 py-2 text-xs text-white/80">Quitter</button>
-            </div>
-            <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <div class="rounded-2xl bg-white/10 p-3">
-                <p class="text-white/60">Adversaire ${p1Connected && p2Connected ? "🟢" : "🟠"}</p>
-                <p class="text-2xl font-black">${oppDeckCount}</p>
-              </div>
-              <div class="rounded-2xl bg-yellow-300/95 p-3 text-indigo-950">
-                <p class="opacity-70">Toi</p>
-                <p class="text-2xl font-black">${myDeckCount}</p>
-              </div>
-            </div>
-          </header>
-
-          <section class="glass flex flex-1 flex-col justify-between rounded-[2rem] p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase tracking-[0.22em] text-white/55">Adversaire</p>
-                <p class="text-sm font-semibold text-white/80">${oppTable.committed ? "Carte posée" : "Attend..."}</p>
-              </div>
-              <div class="scale-75 opacity-90">${oppTable.committed && !bothCommitted ? hiddenCardHtml() : ""}</div>
-            </div>
-
-            <div class="grid place-items-center py-2">
-              <div id="centerCards" class="relative flex min-h-[170px] w-full items-center justify-center gap-4">
-                ${renderCenterCards(game, me, opp, bothCommitted)}
-              </div>
-              <div class="mt-3 min-h-14 text-center">
-                <p class="text-lg font-black text-yellow-200">${escapeHtml(instruction)}</p>
-                <p class="mt-1 text-sm text-white/70">${escapeHtml(game.message || "")}</p>
-                <p class="mt-1 text-xs text-white/50">Pot : ${game.pot?.length || 0} carte(s)</p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <button id="playBtn" ${canPlay ? "" : "disabled"} class="pile-button ${canPlay ? "pulse-gold" : "opacity-55"} flex items-center gap-3 rounded-[1.6rem] bg-white/10 p-3 text-left ring-1 ring-white/15">
-                ${hiddenCardHtml()}
-                <div>
-                  <p class="text-xs uppercase tracking-[0.22em] text-yellow-200">Ton tas</p>
-                  <p class="text-sm font-bold">${canPlay ? "Jouer" : myPlayed ? "Carte posée" : "Patiente"}</p>
-                </div>
-              </button>
-
-              <div class="text-right">
-                <p class="text-xs uppercase tracking-[0.22em] text-white/55">Manche</p>
-                <p class="text-3xl font-black">${game.round || 1}</p>
-              </div>
-            </div>
-          </section>
-        </section>
-      `);
-
-      document.querySelector("#leaveBtn").addEventListener("click", leaveRoom);
-      document.querySelector("#playBtn")?.addEventListener("click", playTurn);
-    }
-
-    function renderCenterCards(game, me, opp, bothCommitted) {
-      const myTable = game.table?.[me] || {};
-      const oppTable = game.table?.[opp] || {};
-      const sweepClass = game.lastWinner
-        ? game.lastWinner === me
-          ? "win-sweep-right"
-          : "win-sweep-left"
-        : "";
-
-      if (game.phase === "war" && !bothCommitted) {
-        return `
-          <div class="flex items-center gap-4">
-            ${hiddenCardHtml("Pot")}
-            <div class="grid h-16 w-16 place-items-center rounded-full bg-yellow-300 text-3xl font-black text-indigo-950 shadow-xl">VS</div>
-            ${hiddenCardHtml("Bataille")}
-          </div>
-        `;
-      }
-
-      if (!bothCommitted) {
-        return `
-          <div class="grid h-32 w-32 place-items-center rounded-full border border-white/20 bg-white/10 text-center text-sm font-semibold text-white/70">
-            Suspense...
-          </div>
-        `;
-      }
-
-      return `
-        <div class="float-in ${sweepClass}">
-          <p class="mb-2 text-center text-xs text-white/60">Adversaire</p>
-          ${cardHtml(oppTable.visible, game.phase === "war" ? "shake" : "")}
-        </div>
-        <div class="grid h-12 w-12 place-items-center rounded-full bg-yellow-300 text-sm font-black text-indigo-950 shadow-xl">VS</div>
-        <div class="float-in ${sweepClass}">
-          <p class="mb-2 text-center text-xs text-white/60">Toi</p>
-          ${cardHtml(myTable.visible, game.phase === "war" ? "shake" : "")}
-        </div>
-      `;
-    }
-
-    async function playTurn() {
-      if (state.busy) return;
-      state.busy = true;
-
-      const player = meKey();
-
       try {
-        await runTransaction(roomRef(), room => {
-          if (!room?.game || room.status !== "playing") return room;
-          const game = room.game;
-          if (game.winner || game.resolving) return room;
-          if (game.table?.[player]?.committed) return room;
-
-          const deck = game.decks[player] || [];
-          if (deck.length <= 0) {
-            game.winner = player === "p1" ? "p2" : "p1";
-            room.status = "finished";
-            return room;
-          }
-
-          if (game.phase === "war") {
-            const hidden = [];
-            let visible = null;
-
-            if (deck.length >= 2) {
-              hidden.push(deck.shift());
-              visible = deck.shift();
-            } else {
-              visible = deck.shift();
-            }
-
-            game.table[player] = { hidden, visible, committed: true };
-            game.message = `${player === "p1" ? "Joueur 1" : "Joueur 2"} a posé ses cartes de bataille.`;
-          } else {
-            const visible = deck.shift();
-            game.table[player] = { hidden: [], visible, committed: true };
-            game.message = `${player === "p1" ? "Joueur 1" : "Joueur 2"} a joué.`;
-          }
-
-          game.decks[player] = deck;
-          return room;
+        await updateDoc(gameRef(currentCode), {
+          [`players.${currentRole}.online`]: false,
+          [`players.${currentRole}.lastSeen`]: Date.now(),
+          updatedAt: serverTimestamp()
         });
       } catch (error) {
-        console.error(error);
-        toast("La carte n'a pas pu être jouée.");
-      } finally {
-        state.busy = false;
+        console.warn(error);
       }
+
+      cleanLocalState();
+      showScreen("home");
     }
 
-    async function maybeAutoResolve() {
-      const room = state.game;
-      const game = room?.game;
-      if (!game || game.winner || game.resolving) return;
-      if (!game.table?.p1?.committed || !game.table?.p2?.committed) return;
+    function cleanLocalState() {
+      if (unsubscribeGame) unsubscribeGame();
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
 
-      const resolutionKey = `${game.round}-${game.phase}-${game.table.p1.visible?.id}-${game.table.p2.visible?.id}`;
-      if (state.lastResolutionId === resolutionKey) return;
-      state.lastResolutionId = resolutionKey;
+      unsubscribeGame = null;
+      heartbeatTimer = null;
+      latestGame = null;
+      currentCode = null;
+      currentRole = null;
 
-      setTimeout(() => resolveRound(resolutionKey), 850);
+      localStorage.removeItem("bataille_code");
+      localStorage.removeItem("bataille_role");
     }
 
-    async function resolveRound(resolutionKey) {
-      try {
-        await runTransaction(roomRef(), room => {
-          if (!room?.game || room.game.winner || room.game.resolving) return room;
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
 
-          const game = room.game;
-          const t1 = game.table.p1;
-          const t2 = game.table.p2;
-          if (!t1?.committed || !t2?.committed) return room;
+      heartbeatTimer = setInterval(async () => {
+        if (!currentCode || !currentRole) return;
 
-          const currentKey = `${game.round}-${game.phase}-${t1.visible?.id}-${t2.visible?.id}`;
-          if (currentKey !== resolutionKey) return room;
-
-          game.resolving = true;
-
-          const roundCards = [
-            ...(game.pot || []),
-            ...(t1.hidden || []),
-            t1.visible,
-            ...(t2.hidden || []),
-            t2.visible
-          ].filter(Boolean);
-
-          const p1Rank = t1.visible?.rank || 0;
-          const p2Rank = t2.visible?.rank || 0;
-
-          if (p1Rank === p2Rank) {
-            game.phase = "war";
-            game.pot = roundCards;
-            game.table = {
-              p1: { visible: null, hidden: [], committed: false },
-              p2: { visible: null, hidden: [], committed: false }
-            };
-            game.message = "Égalité ! Bataille : chaque joueur pose une carte cachée puis une visible.";
-            game.resolving = false;
-            game.lastWinner = null;
-
-            const p1CanContinue = (game.decks.p1?.length || 0) > 0;
-            const p2CanContinue = (game.decks.p2?.length || 0) > 0;
-            if (!p1CanContinue || !p2CanContinue) {
-              const winner = p1CanContinue ? "p1" : "p2";
-              game.decks[winner].push(...shuffle(roundCards));
-              game.winner = winner;
-              room.status = "finished";
-              game.message = `${winner === "p1" ? "Joueur 1" : "Joueur 2"} gagne : l'autre joueur ne peut plus continuer la bataille.`;
-            }
-
-            return room;
-          }
-
-          const winner = p1Rank > p2Rank ? "p1" : "p2";
-          game.decks[winner].push(...shuffle(roundCards));
-          game.pot = [];
-          game.phase = "normal";
-          game.round = (game.round || 1) + 1;
-          game.table = {
-            p1: { visible: null, hidden: [], committed: false },
-            p2: { visible: null, hidden: [], committed: false }
-          };
-          game.lastWinner = winner;
-          game.resolutionId = uid();
-          game.message = `${winner === "p1" ? "Joueur 1" : "Joueur 2"} remporte ${roundCards.length} carte(s).`;
-          game.resolving = false;
-
-          const p1Count = game.decks.p1?.length || 0;
-          const p2Count = game.decks.p2?.length || 0;
-          if (p1Count === 0 || p2Count === 0) {
-            game.winner = p1Count > 0 ? "p1" : "p2";
-            room.status = "finished";
-            game.message = `${game.winner === "p1" ? "Joueur 1" : "Joueur 2"} gagne la partie !`;
-          }
-
-          return room;
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    async function leaveRoom() {
-      try {
-        if (state.roomCode && state.playerId) {
-          await update(roomRef(), {
-            [`players/${meKey()}/connected`]: false,
-            status: state.game?.game?.winner ? "finished" : "abandoned"
+        try {
+          await updateDoc(gameRef(currentCode), {
+            [`players.${currentRole}.online`]: true,
+            [`players.${currentRole}.lastSeen`]: Date.now()
           });
+        } catch (error) {
+          console.warn(error);
         }
-      } catch (error) {
-        console.error(error);
-      }
-      showHome();
+      }, 7000);
     }
+
+    /*
+      ============================================================
+      RENDU
+      ============================================================
+    */
+
+    function renderGame(game) {
+      if (!currentRole) return;
+
+      const opp = otherRole(currentRole);
+
+      if (game.status === "waiting") {
+        showScreen("lobby");
+        els.lobbyMessage.textContent = "En attente d’un deuxième joueur...";
+        return;
+      }
+
+      showScreen("game");
+
+      const myDeck = game.decks?.[currentRole] || [];
+      const oppDeck = game.decks?.[opp] || [];
+
+      els.myCount.textContent = myDeck.length;
+      els.oppCount.textContent = oppDeck.length;
+      els.myScore.textContent = game.scores?.[currentRole] || 0;
+      els.oppScore.textContent = game.scores?.[opp] || 0;
+
+      setCard(els.myCard, game.lastCards?.[currentRole] || null);
+      setCard(els.oppCard, game.lastCards?.[opp] || null);
+
+      els.myReady.textContent = game.ready?.[currentRole] ? "Carte jouée" : "Prêt ?";
+      els.oppReady.textContent = game.ready?.[opp] ? "Carte jouée" : "En attente";
+
+      els.playBtn.disabled =
+        game.status !== "playing" ||
+        game.ready?.[currentRole] ||
+        myDeck.length === 0 ||
+        game.resolving;
+
+      els.newGameBtn.classList.toggle("hidden", game.status !== "finished");
+
+      let message = translateMessage(game, currentRole);
+      els.gameMessage.textContent = message;
+
+      if (game.ready?.host && game.ready?.guest && game.status === "playing") {
+        tryResolveRound();
+      }
+    }
+
+    function translateMessage(game, role) {
+      if (game.status === "finished") {
+        if (game.winner === "draw") return "Égalité parfaite.";
+        return game.winner === role ? "Vous avez gagné la partie" : "Vous avez perdu la partie";
+      }
+
+      if (game.battleCount > 0 && game.lastWinner === null) {
+        return "Bataille !";
+      }
+
+      if (game.lastWinner) {
+        if (game.lastWinner === role) {
+          return game.battleCount > 0 ? "Bataille gagnée ! Vous remportez le tas." : "Vous avez gagné le pli";
+        }
+        return game.battleCount > 0 ? "Bataille perdue. L’adversaire remporte le tas." : "Vous avez perdu le pli";
+      }
+
+      const opp = otherRole(role);
+
+      if (game.ready?.[role] && !game.ready?.[opp]) {
+        return "Carte jouée. En attente de l’adversaire.";
+      }
+
+      if (!game.ready?.[role] && game.ready?.[opp]) {
+        return "L’adversaire a joué. À vous.";
+      }
+
+      return game.message || "Jouez une carte.";
+    }
+
+    /*
+      ============================================================
+      ÉVÉNEMENTS
+      ============================================================
+    */
+
+    els.createBtn.addEventListener("click", createGame);
+    els.joinBtn.addEventListener("click", joinGame);
+    els.playBtn.addEventListener("click", playCard);
+    els.newGameBtn.addEventListener("click", newGameSamePlayers);
+    els.leaveLobbyBtn.addEventListener("click", leaveCurrentGame);
+    els.quitGameBtn.addEventListener("click", leaveCurrentGame);
+
+    els.copyCodeBtn.addEventListener("click", async () => {
+      if (!currentCode) return;
+      await navigator.clipboard.writeText(currentCode);
+      els.lobbyMessage.textContent = "Code copié.";
+    });
+
+    els.joinCodeInput.addEventListener("input", () => {
+      els.joinCodeInput.value = els.joinCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    });
 
     window.addEventListener("beforeunload", () => {
-      if (state.roomCode && state.playerId) {
-        const playerRef = ref(db, `warRooms/${state.roomCode}/players/${meKey()}/connected`);
-        set(playerRef, false).catch(() => {});
+      if (!currentCode || !currentRole) return;
+      updateDoc(gameRef(currentCode), {
+        [`players.${currentRole}.online`]: false,
+        [`players.${currentRole}.lastSeen`]: Date.now()
+      });
+    });
+
+    /*
+      ============================================================
+      CONNEXION ANONYME
+      ============================================================
+    */
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        uid = user.uid;
+
+        const savedCode = localStorage.getItem("bataille_code");
+        const savedRole = localStorage.getItem("bataille_role");
+
+        if (savedCode && savedRole) {
+          enterGame(savedCode, savedRole);
+        }
       }
     });
 
-    showHome();
+    signInAnonymously(auth).catch(error => {
+      console.error(error);
+      showMessage(els.homeMessage, "Active l’authentification anonyme dans Firebase.");
+    });
   </script>
 </body>
 </html>
