@@ -110,7 +110,7 @@
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
     // Configuration Firebase à remplir.
-  const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -119,7 +119,6 @@
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
-    
 
     // Questions volontairement difficiles, gênantes ou moralement ambiguës.
     const QUESTIONS = [
@@ -139,9 +138,31 @@
     const TOTAL_ROUNDS = QUESTIONS.length;
     const BONUS_ON_DOUBLE_REFUSAL = 500;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const rootRef = ref(db, 'compteDiscordeRooms');
+    // Firebase ne peut pas démarrer tant que la configuration est vide.
+    // On garde donc ces variables en let et on les initialise seulement après vérification.
+    let firebaseApp = null;
+    let db = null;
+    let rootRef = null;
+
+    function isFirebaseConfigured() {
+      return Boolean(
+        firebaseConfig.apiKey &&
+        firebaseConfig.authDomain &&
+        firebaseConfig.databaseURL &&
+        firebaseConfig.projectId &&
+        firebaseConfig.appId
+      );
+    }
+
+    function initFirebaseIfReady() {
+      if (!isFirebaseConfigured()) return false;
+      if (!firebaseApp) {
+        firebaseApp = initializeApp(firebaseConfig);
+        db = getDatabase(firebaseApp);
+        rootRef = ref(db, 'compteDiscordeRooms');
+      }
+      return true;
+    }
 
     const $app = document.querySelector('#app');
 
@@ -221,11 +242,41 @@
      * Gestion des rooms
      **********************************************************************/
 
+    async function createNamedRoom(pseudo) {
+      local.pseudo = sanitizePseudo(pseudo);
+      localStorage.setItem('lcd_pseudo', local.pseudo);
+
+      if (!initFirebaseIfReady()) {
+        renderFirebaseMissing();
+        return;
+      }
+
+      const roomCode = generateRoomCode();
+      local.roomId = roomCode;
+      await set(ref(db, `compteDiscordeRooms/${roomCode}`), createInitialRoom(local.pseudo));
+      replaceUrlWithRoom(roomCode);
+      subscribeRoom();
+    }
+
+    function generateRoomCode() {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      return code;
+    }
+
     async function findOrCreateRoom(pseudo) {
       local.pseudo = sanitizePseudo(pseudo);
       localStorage.setItem('lcd_pseudo', local.pseudo);
 
       // Si une room est présente dans l'URL, on tente de la rejoindre directement.
+      if (!initFirebaseIfReady()) {
+        renderFirebaseMissing();
+        return;
+      }
+
       if (local.roomId) {
         await joinRoom(local.roomId);
         return;
@@ -516,9 +567,10 @@
           <section class="w-full max-w-xl glass rounded-[2rem] p-8 md:p-10 soft-glow text-center floaty">
             <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-4">Jeu de duel moral</p>
             <h1 class="text-4xl md:text-6xl font-black leading-tight mb-4">Le Compte de la Discorde</h1>
-            <p class="text-slate-300 mb-8">Deux joueurs, dix dilemmes, un seul pactole. Accepte, refuse, trahis ou partage.</p>
+            <p class="text-slate-300 mb-8">Deux joueurs, dix dilemmes, un seul pactole. Crée un salon ou rejoins celui de ton adversaire.</p>
 
-            <form id="joinForm" class="space-y-4">
+            <form id="roomForm" class="space-y-4 text-left">
+              <label class="block text-sm font-bold text-slate-300">Pseudo</label>
               <input
                 id="pseudoInput"
                 class="w-full rounded-2xl bg-slate-950/70 border border-slate-700 px-5 py-4 outline-none focus:ring-2 focus:ring-cyan-400"
@@ -527,20 +579,56 @@
                 value="${local.pseudo}"
                 required
               />
-              <button class="w-full btn-primary rounded-2xl px-5 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
-                Entrer dans l'arène
-              </button>
+
+              <div class="grid md:grid-cols-2 gap-3 pt-2">
+                <button id="createRoomBtn" type="button" class="btn-primary rounded-2xl px-5 py-4 font-black uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition">
+                  Créer un salon
+                </button>
+                <button id="autoJoinBtn" type="button" class="btn-neutral rounded-2xl px-5 py-4 font-black uppercase tracking-wide hover:bg-slate-700 transition">
+                  Rejoindre auto
+                </button>
+              </div>
+
+              <div class="pt-4 border-t border-slate-700/70">
+                <label class="block text-sm font-bold text-slate-300 mb-2">Code du salon</label>
+                <div class="flex gap-2">
+                  <input
+                    id="roomCodeInput"
+                    class="flex-1 rounded-2xl bg-slate-950/70 border border-slate-700 px-5 py-4 outline-none focus:ring-2 focus:ring-cyan-400 uppercase"
+                    placeholder="Ex: ABC123"
+                    value="${local.roomId || ''}"
+                  />
+                  <button id="joinCodeBtn" type="button" class="btn-primary rounded-2xl px-5 py-4 font-black hover:scale-[1.02] active:scale-[0.98] transition">
+                    OK
+                  </button>
+                </div>
+              </div>
             </form>
 
-            <p class="text-xs text-slate-500 mt-6">Le premier joueur crée une room. Le second rejoint automatiquement la première room disponible.</p>
+            <p class="text-xs text-slate-500 mt-6">Conseil : le joueur 1 crée un salon, copie le code affiché, puis le joueur 2 entre ce code.</p>
           </section>
         </main>
       `;
 
-      document.querySelector('#joinForm').addEventListener('submit', async event => {
-        event.preventDefault();
+      const pseudoInput = document.querySelector('#pseudoInput');
+      const roomCodeInput = document.querySelector('#roomCodeInput');
+
+      document.querySelector('#createRoomBtn').addEventListener('click', async () => {
+        renderLoading('Création du salon...');
+        await createNamedRoom(pseudoInput.value);
+      });
+
+      document.querySelector('#joinCodeBtn').addEventListener('click', async () => {
+        const code = roomCodeInput.value.trim().toUpperCase();
+        if (!code) return toast('Entre un code de salon.');
+        renderLoading('Connexion au salon...');
+        local.roomId = code;
+        await joinRoom(code);
+      });
+
+      document.querySelector('#autoJoinBtn').addEventListener('click', async () => {
         renderLoading('Recherche ou création de partie...');
-        await findOrCreateRoom(document.querySelector('#pseudoInput').value);
+        await findOrCreateRoom(pseudoInput.value);
       });
     }
 
@@ -553,9 +641,15 @@
           <div>
             <p class="text-cyan-300 uppercase tracking-[0.35em] text-xs font-bold mb-3">Salle ouverte</p>
             <h2 class="text-3xl md:text-5xl font-black mb-3">En attente d'un adversaire</h2>
-            <p class="text-slate-300">Partage le lien ou laisse le second joueur rejoindre automatiquement.</p>
+            <p class="text-slate-300">Donne ce code au second joueur ou partage le lien complet.</p>
           </div>
-          <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4 text-sm break-all text-slate-300">${location.href}</div>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4">
+              <p class="text-xs uppercase tracking-[0.25em] text-slate-500 mb-2">Code salon</p>
+              <p class="text-3xl font-black tracking-widest">${local.roomId}</p>
+            </div>
+            <div class="rounded-2xl bg-slate-950/60 border border-slate-700 p-4 text-sm break-all text-slate-300">${location.href}</div>
+          </div>
           <button id="copyLink" class="btn-neutral rounded-2xl px-5 py-3 font-bold hover:bg-slate-700 transition">Copier le lien</button>
         </div>
       `);
@@ -736,6 +830,30 @@
           </section>
         </main>
       `;
+    }
+
+    function renderFirebaseMissing() {
+      $app.innerHTML = `
+        <main class="min-h-screen flex items-center justify-center px-4 py-10">
+          <section class="w-full max-w-2xl glass rounded-[2rem] p-8 md:p-10 soft-glow">
+            <p class="text-rose-300 uppercase tracking-[0.3em] text-xs font-bold mb-4">Configuration requise</p>
+            <h1 class="text-3xl md:text-5xl font-black mb-4">Firebase n'est pas encore configuré</h1>
+            <p class="text-slate-300 mb-6">
+              L'écran vide venait du fait que le script essayait d'initialiser Firebase avec une configuration vide.
+              Remplis la constante <code class="text-cyan-200">firebaseConfig</code>, puis recharge le fichier.
+            </p>
+            <div class="rounded-2xl bg-slate-950/70 border border-slate-700 p-5 text-sm text-slate-300 space-y-2">
+              <p>Dans Firebase Console :</p>
+              <p>1. Crée un projet.</p>
+              <p>2. Ajoute une application Web.</p>
+              <p>3. Active Realtime Database.</p>
+              <p>4. Copie la config Web dans <code class="text-cyan-200">firebaseConfig</code>.</p>
+            </div>
+            <button id="backHomeBtn" class="mt-6 btn-neutral rounded-2xl px-5 py-3 font-bold hover:bg-slate-700 transition">Retour</button>
+          </section>
+        </main>
+      `;
+      document.querySelector('#backHomeBtn').addEventListener('click', renderHome);
     }
 
     function renderFullRoom() {
