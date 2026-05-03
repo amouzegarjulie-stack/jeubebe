@@ -151,7 +151,24 @@
           <div id="roleBadge" class="rounded-2xl bg-violet-200 px-3 py-2 text-right text-xs font-black neo-soft">...</div>
         </div>
 
+        <div class="mb-3 flex items-center justify-between rounded-2xl bg-neutral-50 px-3 py-2 text-xs font-black neo-soft">
+          <span>Manche</span>
+          <span id="roundInfo">1 / 5</span>
+        </div>
+
         <div class="grid grid-cols-6 gap-1.5" id="attemptDots"></div>
+      </div>
+
+      <!-- Score global sur 5 manches -->
+      <div class="grid grid-cols-2 gap-3 fade-up">
+        <div class="rounded-[1.5rem] bg-yellow-100 p-3 text-center neo-soft">
+          <p class="text-xs font-black uppercase tracking-[.18em] text-neutral-500">Joueur 1</p>
+          <p id="hostScore" class="mt-1 text-3xl font-black">0</p>
+        </div>
+        <div class="rounded-[1.5rem] bg-emerald-100 p-3 text-center neo-soft">
+          <p class="text-xs font-black uppercase tracking-[.18em] text-neutral-500">Joueur 2</p>
+          <p id="guesserScore" class="mt-1 text-3xl font-black">0</p>
+        </div>
       </div>
 
       <!-- Zone maître du jeu -->
@@ -223,7 +240,7 @@
         <h2 id="endTitle" class="mt-3 text-center text-3xl font-black leading-tight">Victoire !</h2>
         <p id="endMessage" class="mt-3 text-center text-base font-bold text-neutral-700">...</p>
         <div class="mt-5 grid grid-cols-2 gap-3">
-          <button id="newRoundBtn" class="pressable rounded-[1.4rem] bg-yellow-200 px-4 py-4 font-black neo-soft" type="button">Nouveau nom</button>
+          <button id="newRoundBtn" class="pressable rounded-[1.4rem] bg-yellow-200 px-4 py-4 font-black neo-soft" type="button">Manche suivante</button>
           <button id="backHomeBtn" class="pressable rounded-[1.4rem] bg-violet-200 px-4 py-4 font-black neo-soft" type="button">Accueil</button>
         </div>
       </div>
@@ -239,7 +256,7 @@
        Remplace les valeurs ci-dessous par celles de ta console Firebase.
        Active aussi Realtime Database dans Firebase.
        ========================================================= */
-  const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -248,6 +265,7 @@
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
       getDatabase,
@@ -278,6 +296,7 @@
     ];
 
     const MAX_ATTEMPTS = 6;
+    const MAX_ROUNDS = 5;
 
     /* =========================================================
        3. État local
@@ -309,6 +328,9 @@
       copyRoomBtn: $("copyRoomBtn"),
       roleBadge: $("roleBadge"),
       attemptDots: $("attemptDots"),
+      roundInfo: $("roundInfo"),
+      hostScore: $("hostScore"),
+      guesserScore: $("guesserScore"),
       hostPanel: $("hostPanel"),
       guesserPanel: $("guesserPanel"),
       waitingPanel: $("waitingPanel"),
@@ -414,7 +436,11 @@
         createdAt: Date.now(),
         updatedAt: serverTimestamp(),
         round: 1,
+        maxRounds: MAX_ROUNDS,
+        hostScore: 0,
+        guesserScore: 0,
         winner: null,
+        matchWinner: null,
         pendingGuessId: null,
         lastFeedback: null,
         guesses: {}
@@ -491,6 +517,12 @@
       const attemptsAfterSubmit = nonExactAttempts(currentRoom) + (exact ? 0 : 1);
       const winner = exact ? "guesser" : attemptsAfterSubmit >= MAX_ATTEMPTS ? "host" : null;
       const status = winner ? "ended" : "playing";
+      const nextHostScore = (currentRoom.hostScore || 0) + (winner === "host" ? 1 : 0);
+      const nextGuesserScore = (currentRoom.guesserScore || 0) + (winner === "guesser" ? 1 : 0);
+      const isMatchFinished = Boolean(winner) && (currentRoom.round || 1) >= MAX_ROUNDS;
+      const matchWinner = isMatchFinished
+        ? nextGuesserScore > nextHostScore ? "guesser" : nextHostScore > nextGuesserScore ? "host" : "draw"
+        : null;
 
       const guess = {
         id,
@@ -506,6 +538,9 @@
         pendingGuessId: exact || winner ? null : id,
         winner,
         status,
+        hostScore: nextHostScore,
+        guesserScore: nextGuesserScore,
+        matchWinner,
         updatedAt: serverTimestamp(),
         lastFeedback: exact ? "exact" : winner ? "timeout" : null
       };
@@ -535,8 +570,11 @@
     }
 
     async function newRound() {
-      if (!currentRoom || currentRole !== "host") {
-        showToast("Seul le joueur 1 relance");
+      if (!currentRoom || currentRoom.status !== "ended") return;
+
+      const round = currentRoom.round || 1;
+      if (round >= MAX_ROUNDS) {
+        await restartMatch();
         return;
       }
 
@@ -544,15 +582,37 @@
         secretName: pickCelebrity(currentRoom.secretName),
         status: currentRoom.guesserId ? "playing" : "waiting",
         winner: null,
+        matchWinner: null,
         pendingGuessId: null,
         lastFeedback: null,
         guesses: {},
-        round: (currentRoom.round || 1) + 1,
+        round: round + 1,
         updatedAt: serverTimestamp()
       });
 
       hide(els.endModal);
-      showToast("Nouveau nom lancé");
+      showToast("Manche suivante lancée");
+    }
+
+    async function restartMatch() {
+      if (!currentRoom) return;
+
+      await update(roomRef(), {
+        secretName: pickCelebrity(currentRoom.secretName),
+        status: currentRoom.guesserId ? "playing" : "waiting",
+        winner: null,
+        matchWinner: null,
+        hostScore: 0,
+        guesserScore: 0,
+        pendingGuessId: null,
+        lastFeedback: null,
+        guesses: {},
+        round: 1,
+        updatedAt: serverTimestamp()
+      });
+
+      hide(els.endModal);
+      showToast("Nouvelle partie lancée");
     }
 
     function leaveLocal() {
@@ -580,7 +640,11 @@
       els.roleBadge.className = `rounded-2xl px-3 py-2 text-right text-xs font-black whitespace-pre-line neo-soft ${currentRole === "host" ? "bg-yellow-200" : "bg-emerald-200"}`;
 
       const attempts = nonExactAttempts(currentRoom);
+      const round = Math.min(currentRoom.round || 1, MAX_ROUNDS);
       els.attemptCount.textContent = `${attempts} / ${MAX_ATTEMPTS}`;
+      els.roundInfo.textContent = `${round} / ${MAX_ROUNDS}`;
+      els.hostScore.textContent = currentRoom.hostScore || 0;
+      els.guesserScore.textContent = currentRoom.guesserScore || 0;
       renderAttemptDots(attempts);
       renderHistory(currentRoom);
 
@@ -663,11 +727,25 @@
 
     function renderEndModal() {
       const guesserWon = currentRoom.winner === "guesser";
-      els.endEmoji.textContent = guesserWon ? "🎉" : "👑";
-      els.endTitle.textContent = guesserWon ? "Joueur 2 gagne !" : "Joueur 1 gagne !";
-      els.endMessage.textContent = guesserWon
-        ? `La réponse était bien ${currentRoom.secretName}.`
-        : `La personnalité était ${currentRoom.secretName}. Les 6 tentatives sont écoulées.`;
+      const round = currentRoom.round || 1;
+      const matchFinished = round >= MAX_ROUNDS;
+      const scoreText = `Score : Joueur 1 ${currentRoom.hostScore || 0} - ${currentRoom.guesserScore || 0} Joueur 2`;
+
+      if (matchFinished) {
+        const matchWinner = currentRoom.matchWinner;
+        els.endEmoji.textContent = matchWinner === "draw" ? "🤝" : matchWinner === "guesser" ? "🎉" : "👑";
+        els.endTitle.textContent = matchWinner === "draw" ? "Égalité finale !" : matchWinner === "guesser" ? "Joueur 2 remporte la partie !" : "Joueur 1 remporte la partie !";
+        els.endMessage.textContent = `Fin des ${MAX_ROUNDS} manches. La dernière personnalité était ${currentRoom.secretName}. ${scoreText}`;
+        els.newRoundBtn.textContent = "Recommencer";
+      } else {
+        els.endEmoji.textContent = guesserWon ? "🎉" : "👑";
+        els.endTitle.textContent = guesserWon ? "Manche pour Joueur 2 !" : "Manche pour Joueur 1 !";
+        els.endMessage.textContent = guesserWon
+          ? `La réponse était bien ${currentRoom.secretName}. ${scoreText}`
+          : `La personnalité était ${currentRoom.secretName}. Les 6 tentatives sont écoulées. ${scoreText}`;
+        els.newRoundBtn.textContent = "Manche suivante";
+      }
+
       show(els.endModal);
     }
 
