@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#c4b5fd" />
+  <title>Qui est-ce ? Duo</title>
+
+  <!-- Tailwind CSS via CDN, parfait pour un prototype single-file. -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style>
+    :root {
+      --lilas: #c4b5fd;
+      --menthe: #bbf7d0;
+      --jaune: #fde68a;
+      --rose: #fbcfe8;
+      --encre: #171717;
+      --papier: #fffdf7;
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+
+    body {
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(196, 181, 253, .85), transparent 34%),
+        radial-gradient(circle at 85% 4%, rgba(187, 247, 208, .9), transparent 32%),
+        radial-gradient(circle at 75% 88%, rgba(253, 230, 138, .8), transparent 30%),
+        var(--papier);
+      color: var(--encre);
+      overflow-x: hidden;
+    }
+
+    .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    .safe-top { padding-top: max(1rem, env(safe-area-inset-top)); }
+
+    .neo {
+      border: 2px solid #171717;
+      box-shadow: 5px 5px 0 #171717;
+    }
+
+    .neo-soft {
+      border: 2px solid rgba(23, 23, 23, .85);
+      box-shadow: 3px 3px 0 rgba(23, 23, 23, .9);
+    }
+
+    .pressable {
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    }
+
+    .pressable:active {
+      transform: translate(3px, 3px) scale(.99);
+      box-shadow: 1px 1px 0 #171717;
+      filter: saturate(1.15);
+    }
+
+    .fade-up { animation: fadeUp .35s ease both; }
+    .pop { animation: pop .32s cubic-bezier(.2, 1.35, .4, 1) both; }
+    .wiggle { animation: wiggle .45s ease both; }
+    .pulse-ring { animation: pulseRing 1.15s ease-in-out infinite; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: scale(.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-1.5deg); }
+      75% { transform: rotate(1.5deg); }
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(196, 181, 253, .75), 5px 5px 0 #171717; }
+      50% { box-shadow: 0 0 0 8px rgba(196, 181, 253, 0), 5px 5px 0 #171717; }
+    }
+
+    .hide { display: none !important; }
+  </style>
+</head>
+
+<body class="font-sans antialiased selection:bg-violet-200">
+  <main class="mx-auto flex min-h-svh w-full max-w-[430px] flex-col px-4 safe-top safe-bottom">
+
+    <!-- Header -->
+    <header class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-black uppercase tracking-[.25em] text-neutral-600">Duo party</p>
+        <h1 class="text-3xl font-black leading-none tracking-tight">Qui est-ce ?</h1>
+      </div>
+      <button id="resetLocalBtn" class="pressable rounded-2xl bg-white px-3 py-2 text-xs font-black neo-soft" type="button">
+        Quitter
+      </button>
+    </header>
+
+    <!-- Connexion Firebase manquante -->
+    <section id="configWarning" class="mb-4 rounded-[1.75rem] bg-amber-100 p-4 text-sm font-bold neo fade-up hide">
+      Firebase n'est pas encore configuré. Remplace <code class="rounded bg-white px-1">firebaseConfig</code> dans le code avec tes clés Firebase, puis recharge la page.
+    </section>
+
+    <!-- Écran accueil -->
+    <section id="homeScreen" class="flex flex-1 flex-col gap-4 fade-up">
+      <div class="rounded-[2rem] bg-white/90 p-5 neo">
+        <div class="mb-5 grid grid-cols-2 gap-3">
+          <div class="rounded-[1.5rem] bg-violet-200 p-4 neo-soft">
+            <p class="text-4xl">🎭</p>
+            <p class="mt-2 text-sm font-black">1 maître du jeu</p>
+          </div>
+          <div class="rounded-[1.5rem] bg-emerald-200 p-4 neo-soft">
+            <p class="text-4xl">🕵️</p>
+            <p class="mt-2 text-sm font-black">1 joueur qui devine</p>
+          </div>
+        </div>
+
+        <button id="createRoomBtn" class="pressable mb-4 w-full rounded-[1.5rem] bg-yellow-200 px-5 py-4 text-lg font-black neo" type="button">
+          Créer une room
+        </button>
+
+        <div class="rounded-[1.5rem] bg-neutral-50 p-3 neo-soft">
+          <label for="roomInput" class="mb-2 block text-xs font-black uppercase tracking-[.2em] text-neutral-500">Rejoindre avec ID</label>
+          <div class="flex gap-2">
+            <input id="roomInput" class="min-w-0 flex-1 rounded-2xl border-2 border-neutral-900 bg-white px-4 py-3 text-center text-lg font-black uppercase outline-none focus:ring-4 focus:ring-violet-200" maxlength="6" placeholder="AB12CD" autocomplete="off" />
+            <button id="joinRoomBtn" class="pressable rounded-2xl bg-violet-200 px-4 py-3 font-black neo-soft" type="button">OK</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-[2rem] bg-pink-100 p-4 text-sm font-bold leading-relaxed neo-soft">
+        Le joueur 1 crée la room et reçoit une personnalité secrète. Le joueur 2 rejoint, pose ses questions à l'oral, puis tape ses propositions.
+      </div>
+    </section>
+
+    <!-- Écran jeu -->
+    <section id="gameScreen" class="hide flex flex-1 flex-col gap-4">
+      <!-- Room / statut -->
+      <div class="rounded-[2rem] bg-white/90 p-4 neo fade-up">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[.22em] text-neutral-500">Room</p>
+            <div class="mt-1 flex items-center gap-2">
+              <h2 id="roomCode" class="text-3xl font-black tracking-wider">------</h2>
+              <button id="copyRoomBtn" class="pressable rounded-xl bg-emerald-200 px-3 py-2 text-xs font-black neo-soft" type="button">Copier</button>
+            </div>
+          </div>
+          <div id="roleBadge" class="rounded-2xl bg-violet-200 px-3 py-2 text-right text-xs font-black neo-soft">...</div>
+        </div>
+
+        <div class="grid grid-cols-6 gap-1.5" id="attemptDots"></div>
+      </div>
+
+      <!-- Zone maître du jeu -->
+      <div id="hostPanel" class="hide flex flex-1 flex-col gap-4">
+        <div class="rounded-[2rem] bg-yellow-200 p-5 neo pop">
+          <p class="text-xs font-black uppercase tracking-[.22em] text-neutral-600">Personnalité secrète</p>
+          <h3 id="secretName" class="mt-2 text-4xl font-black leading-none">...</h3>
+          <p class="mt-4 text-sm font-bold">Fais deviner ce nom uniquement en répondant oralement aux questions.</p>
+        </div>
+
+        <div id="pendingGuessCard" class="hide rounded-[2rem] bg-white p-4 neo pulse-ring">
+          <p class="text-xs font-black uppercase tracking-[.22em] text-neutral-500">Proposition reçue</p>
+          <p id="pendingGuessText" class="mt-2 break-words text-3xl font-black">...</p>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button id="almostBtn" class="pressable rounded-[1.4rem] bg-emerald-200 px-4 py-4 text-base font-black neo-soft" type="button">Presque</button>
+            <button id="nopeBtn" class="pressable rounded-[1.4rem] bg-pink-200 px-4 py-4 text-base font-black neo-soft" type="button">Pas du tout</button>
+          </div>
+        </div>
+
+        <div id="waitingGuess" class="rounded-[2rem] bg-violet-100 p-5 text-center neo-soft">
+          <p class="text-5xl">👂</p>
+          <p class="mt-3 text-lg font-black">En attente d'une proposition...</p>
+          <p class="mt-1 text-sm font-bold text-neutral-600">Le joueur 2 écrit sa réponse depuis son téléphone.</p>
+        </div>
+      </div>
+
+      <!-- Zone joueur qui devine -->
+      <div id="guesserPanel" class="hide flex flex-1 flex-col gap-4">
+        <div class="rounded-[2rem] bg-emerald-200 p-5 neo pop">
+          <p class="text-5xl">🕵️</p>
+          <h3 class="mt-3 text-2xl font-black leading-tight">Pose tes questions à l'oral</h3>
+          <p class="mt-2 text-sm font-bold">Puis tente le nom exact. Les accents et majuscules ne comptent pas.</p>
+        </div>
+
+        <div class="rounded-[2rem] bg-white p-4 neo-soft">
+          <label for="guessInput" class="mb-2 block text-xs font-black uppercase tracking-[.22em] text-neutral-500">Ta proposition</label>
+          <input id="guessInput" class="w-full rounded-[1.3rem] border-2 border-neutral-900 bg-neutral-50 px-4 py-4 text-xl font-black outline-none focus:bg-white focus:ring-4 focus:ring-emerald-200" placeholder="Ex: Beyoncé" autocomplete="off" />
+          <button id="sendGuessBtn" class="pressable mt-3 w-full rounded-[1.5rem] bg-violet-200 px-5 py-4 text-lg font-black neo" type="button">
+            Valider ma réponse
+          </button>
+        </div>
+
+        <div id="feedbackCard" class="rounded-[2rem] bg-yellow-100 p-4 text-center font-black neo-soft">
+          <p id="feedbackText">Aucun feedback pour l'instant.</p>
+        </div>
+      </div>
+
+      <!-- Zone attente -->
+      <div id="waitingPanel" class="hide rounded-[2rem] bg-white p-5 text-center neo fade-up">
+        <p class="text-6xl">⏳</p>
+        <h3 class="mt-4 text-2xl font-black">En attente du deuxième joueur</h3>
+        <p class="mt-2 text-sm font-bold text-neutral-600">Partage l'ID de room affiché en haut.</p>
+      </div>
+
+      <!-- Historique -->
+      <div class="rounded-[2rem] bg-white/85 p-4 neo-soft">
+        <div class="mb-3 flex items-center justify-between">
+          <p class="text-xs font-black uppercase tracking-[.22em] text-neutral-500">Historique</p>
+          <p id="attemptCount" class="rounded-full bg-neutral-900 px-3 py-1 text-xs font-black text-white">0 / 6</p>
+        </div>
+        <div id="historyList" class="flex max-h-44 flex-col gap-2 overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+    <!-- Modal fin de partie -->
+    <div id="endModal" class="hide fixed inset-0 z-20 flex items-end justify-center bg-black/35 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-[430px] rounded-[2rem] bg-white p-5 neo pop safe-bottom">
+        <p id="endEmoji" class="text-center text-6xl">🏆</p>
+        <h2 id="endTitle" class="mt-3 text-center text-3xl font-black leading-tight">Victoire !</h2>
+        <p id="endMessage" class="mt-3 text-center text-base font-bold text-neutral-700">...</p>
+        <div class="mt-5 grid grid-cols-2 gap-3">
+          <button id="newRoundBtn" class="pressable rounded-[1.4rem] bg-yellow-200 px-4 py-4 font-black neo-soft" type="button">Nouveau nom</button>
+          <button id="backHomeBtn" class="pressable rounded-[1.4rem] bg-violet-200 px-4 py-4 font-black neo-soft" type="button">Accueil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="pointer-events-none fixed left-1/2 top-5 z-30 hidden -translate-x-1/2 rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-black text-white shadow-xl"></div>
+  </main>
+
+  <script type="module">
+    /* =========================================================
+       1. Firebase setup
+       Remplace les valeurs ci-dessous par celles de ta console Firebase.
+       Active aussi Realtime Database dans Firebase.
+       ========================================================= */
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      set,
+      update,
+      onValue,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+    /* =========================================================
+       2. Données du jeu
+       Liste interne de 50 personnalités publiques.
+       Tu peux remplacer ou compléter cette liste facilement.
+       ========================================================= */
+    const CELEBRITIES = [
+      "Taylor Swift", "Beyoncé", "Cristiano Ronaldo", "Lionel Messi", "Rihanna",
+      "Elon Musk", "Barack Obama", "Oprah Winfrey", "Ariana Grande", "Kylian Mbappé",
+      "Lady Gaga", "Tom Cruise", "Zendaya", "Dwayne Johnson", "Shakira",
+      "Billie Eilish", "Drake", "Ed Sheeran", "Kim Kardashian", "Brad Pitt",
+      "Angelina Jolie", "Leonardo DiCaprio", "Greta Thunberg", "Neymar", "Emma Watson",
+      "Will Smith", "Snoop Dogg", "Meryl Streep", "Keanu Reeves", "Serena Williams",
+      "Roger Federer", "Lewis Hamilton", "Madonna", "Justin Bieber", "Dua Lipa",
+      "Adele", "Selena Gomez", "Harry Styles", "Jennifer Lopez", "Eminem",
+      "Céline Dion", "Omar Sy", "Marion Cotillard", "Stromae", "David Guetta",
+      "Zinedine Zidane", "Albert Einstein", "Marilyn Monroe", "Steve Jobs", "Walt Disney"
+    ];
+
+    const MAX_ATTEMPTS = 6;
+
+    /* =========================================================
+       3. État local
+       playerId reste stable sur l'appareil via sessionStorage.
+       ========================================================= */
+    const playerId = sessionStorage.getItem("qe_player_id") || crypto.randomUUID();
+    sessionStorage.setItem("qe_player_id", playerId);
+
+    let app = null;
+    let db = null;
+    let currentRoomId = sessionStorage.getItem("qe_room_id") || "";
+    let currentRoom = null;
+    let currentRole = null;
+    let unsubscribeRoom = null;
+
+    /* =========================================================
+       4. Helpers DOM
+       ========================================================= */
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+      configWarning: $("configWarning"),
+      homeScreen: $("homeScreen"),
+      gameScreen: $("gameScreen"),
+      createRoomBtn: $("createRoomBtn"),
+      joinRoomBtn: $("joinRoomBtn"),
+      roomInput: $("roomInput"),
+      roomCode: $("roomCode"),
+      copyRoomBtn: $("copyRoomBtn"),
+      roleBadge: $("roleBadge"),
+      attemptDots: $("attemptDots"),
+      hostPanel: $("hostPanel"),
+      guesserPanel: $("guesserPanel"),
+      waitingPanel: $("waitingPanel"),
+      secretName: $("secretName"),
+      pendingGuessCard: $("pendingGuessCard"),
+      pendingGuessText: $("pendingGuessText"),
+      waitingGuess: $("waitingGuess"),
+      guessInput: $("guessInput"),
+      sendGuessBtn: $("sendGuessBtn"),
+      almostBtn: $("almostBtn"),
+      nopeBtn: $("nopeBtn"),
+      feedbackText: $("feedbackText"),
+      historyList: $("historyList"),
+      attemptCount: $("attemptCount"),
+      endModal: $("endModal"),
+      endEmoji: $("endEmoji"),
+      endTitle: $("endTitle"),
+      endMessage: $("endMessage"),
+      newRoundBtn: $("newRoundBtn"),
+      backHomeBtn: $("backHomeBtn"),
+      resetLocalBtn: $("resetLocalBtn"),
+      toast: $("toast")
+    };
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.remove("hidden");
+      els.toast.classList.add("pop");
+      setTimeout(() => {
+        els.toast.classList.add("hidden");
+        els.toast.classList.remove("pop");
+      }, 1700);
+    }
+
+    function show(el) { el.classList.remove("hide"); }
+    function hide(el) { el.classList.add("hide"); }
+
+    function isFirebaseConfigured() {
+      return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("YOUR_") && firebaseConfig.databaseURL && !firebaseConfig.databaseURL.includes("YOUR_");
+    }
+
+    function normalizeText(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+    }
+
+    function makeRoomId() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    }
+
+    function pickCelebrity(excludeName = "") {
+      const choices = CELEBRITIES.filter(name => normalizeText(name) !== normalizeText(excludeName));
+      return choices[Math.floor(Math.random() * choices.length)];
+    }
+
+    function roomRef(roomId = currentRoomId) {
+      return ref(db, `rooms/${roomId}`);
+    }
+
+    function guessHistory(room) {
+      return Object.values(room?.guesses || {}).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    }
+
+    function nonExactAttempts(room) {
+      return guessHistory(room).filter(g => !g.exact).length;
+    }
+
+    /* =========================================================
+       5. Initialisation Firebase
+       ========================================================= */
+    function initFirebase() {
+      if (!isFirebaseConfigured()) {
+        show(els.configWarning);
+        return false;
+      }
+
+      app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+      hide(els.configWarning);
+      return true;
+    }
+
+    /* =========================================================
+       6. Rooms et synchronisation realtime
+       ========================================================= */
+    async function createRoom() {
+      if (!db) return showToast("Configure Firebase d'abord");
+
+      const id = makeRoomId();
+      const secret = pickCelebrity();
+
+      await set(roomRef(id), {
+        id,
+        status: "waiting",
+        secretName: secret,
+        hostId: playerId,
+        guesserId: null,
+        createdAt: Date.now(),
+        updatedAt: serverTimestamp(),
+        round: 1,
+        winner: null,
+        pendingGuessId: null,
+        lastFeedback: null,
+        guesses: {}
+      });
+
+      enterRoom(id);
+      showToast("Room créée");
+    }
+
+    async function joinRoom() {
+      if (!db) return showToast("Configure Firebase d'abord");
+
+      const id = els.roomInput.value.trim().toUpperCase();
+      if (id.length < 4) return showToast("ID trop court");
+
+      const snap = await get(roomRef(id));
+      if (!snap.exists()) return showToast("Room introuvable");
+
+      const room = snap.val();
+      const patch = { updatedAt: serverTimestamp() };
+
+      if (room.hostId === playerId || room.guesserId === playerId) {
+        enterRoom(id);
+        return;
+      }
+
+      if (!room.guesserId) {
+        patch.guesserId = playerId;
+        patch.status = "playing";
+        await update(roomRef(id), patch);
+        enterRoom(id);
+        showToast("Room rejointe");
+        return;
+      }
+
+      showToast("Room déjà pleine");
+    }
+
+    function enterRoom(id) {
+      currentRoomId = id;
+      sessionStorage.setItem("qe_room_id", id);
+      els.roomCode.textContent = id;
+      hide(els.homeScreen);
+      show(els.gameScreen);
+      listenRoom(id);
+    }
+
+    function listenRoom(id) {
+      if (unsubscribeRoom) unsubscribeRoom();
+      unsubscribeRoom = onValue(roomRef(id), (snap) => {
+        if (!snap.exists()) {
+          leaveLocal();
+          showToast("Room supprimée ou inaccessible");
+          return;
+        }
+        currentRoom = snap.val();
+        renderGame();
+      });
+    }
+
+    /* =========================================================
+       7. Actions de jeu
+       ========================================================= */
+    async function sendGuess() {
+      if (!currentRoom || currentRole !== "guesser") return;
+      if (currentRoom.status !== "playing") return showToast("La partie n'est pas active");
+      if (currentRoom.pendingGuessId) return showToast("Attends le feedback du maître");
+
+      const text = els.guessInput.value.trim();
+      if (!text) return showToast("Écris une proposition");
+
+      const exact = normalizeText(text) === normalizeText(currentRoom.secretName);
+      const id = crypto.randomUUID();
+      const attemptsAfterSubmit = nonExactAttempts(currentRoom) + (exact ? 0 : 1);
+      const winner = exact ? "guesser" : attemptsAfterSubmit >= MAX_ATTEMPTS ? "host" : null;
+      const status = winner ? "ended" : "playing";
+
+      const guess = {
+        id,
+        text,
+        exact,
+        feedback: exact ? "exact" : null,
+        createdAt: Date.now(),
+        by: playerId
+      };
+
+      const patch = {
+        [`guesses/${id}`]: guess,
+        pendingGuessId: exact || winner ? null : id,
+        winner,
+        status,
+        updatedAt: serverTimestamp(),
+        lastFeedback: exact ? "exact" : winner ? "timeout" : null
+      };
+
+      await update(roomRef(), patch);
+      els.guessInput.value = "";
+      els.sendGuessBtn.classList.add("wiggle");
+      setTimeout(() => els.sendGuessBtn.classList.remove("wiggle"), 480);
+
+      if (exact) showToast("Réponse exacte !");
+    }
+
+    async function sendFeedback(kind) {
+      if (!currentRoom || currentRole !== "host" || !currentRoom.pendingGuessId) return;
+
+      const label = kind === "almost" ? "Presque" : "Pas du tout";
+      const guessId = currentRoom.pendingGuessId;
+
+      await update(roomRef(), {
+        [`guesses/${guessId}/feedback`]: kind,
+        pendingGuessId: null,
+        lastFeedback: kind,
+        updatedAt: serverTimestamp()
+      });
+
+      showToast(label);
+    }
+
+    async function newRound() {
+      if (!currentRoom || currentRole !== "host") {
+        showToast("Seul le joueur 1 relance");
+        return;
+      }
+
+      await update(roomRef(), {
+        secretName: pickCelebrity(currentRoom.secretName),
+        status: currentRoom.guesserId ? "playing" : "waiting",
+        winner: null,
+        pendingGuessId: null,
+        lastFeedback: null,
+        guesses: {},
+        round: (currentRoom.round || 1) + 1,
+        updatedAt: serverTimestamp()
+      });
+
+      hide(els.endModal);
+      showToast("Nouveau nom lancé");
+    }
+
+    function leaveLocal() {
+      currentRoomId = "";
+      currentRoom = null;
+      currentRole = null;
+      sessionStorage.removeItem("qe_room_id");
+      if (unsubscribeRoom) unsubscribeRoom();
+      unsubscribeRoom = null;
+      hide(els.gameScreen);
+      hide(els.endModal);
+      show(els.homeScreen);
+    }
+
+    /* =========================================================
+       8. Rendu UI
+       ========================================================= */
+    function renderGame() {
+      if (!currentRoom) return;
+
+      currentRole = currentRoom.hostId === playerId ? "host" : currentRoom.guesserId === playerId ? "guesser" : "spectator";
+
+      els.roomCode.textContent = currentRoom.id;
+      els.roleBadge.textContent = currentRole === "host" ? "Joueur 1\nMaître" : currentRole === "guesser" ? "Joueur 2\nDevine" : "Spectateur";
+      els.roleBadge.className = `rounded-2xl px-3 py-2 text-right text-xs font-black whitespace-pre-line neo-soft ${currentRole === "host" ? "bg-yellow-200" : "bg-emerald-200"}`;
+
+      const attempts = nonExactAttempts(currentRoom);
+      els.attemptCount.textContent = `${attempts} / ${MAX_ATTEMPTS}`;
+      renderAttemptDots(attempts);
+      renderHistory(currentRoom);
+
+      hide(els.hostPanel);
+      hide(els.guesserPanel);
+      hide(els.waitingPanel);
+
+      if (currentRoom.status === "waiting") {
+        show(els.waitingPanel);
+      }
+
+      if (currentRole === "host") {
+        show(els.hostPanel);
+        els.secretName.textContent = currentRoom.secretName;
+        renderHostPendingGuess();
+      }
+
+      if (currentRole === "guesser") {
+        show(els.guesserPanel);
+        renderGuesserFeedback();
+      }
+
+      if (currentRoom.status === "ended") {
+        renderEndModal();
+      } else {
+        hide(els.endModal);
+      }
+    }
+
+    function renderAttemptDots(attempts) {
+      els.attemptDots.innerHTML = "";
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        const dot = document.createElement("div");
+        dot.className = `h-3 rounded-full border-2 border-neutral-900 ${i < attempts ? "bg-pink-300" : "bg-white"}`;
+        els.attemptDots.appendChild(dot);
+      }
+    }
+
+    function renderHostPendingGuess() {
+      const pending = currentRoom.pendingGuessId ? currentRoom.guesses?.[currentRoom.pendingGuessId] : null;
+      if (pending) {
+        els.pendingGuessText.textContent = pending.text;
+        show(els.pendingGuessCard);
+        hide(els.waitingGuess);
+      } else {
+        hide(els.pendingGuessCard);
+        show(els.waitingGuess);
+      }
+    }
+
+    function renderGuesserFeedback() {
+      const feedback = currentRoom.lastFeedback;
+      const map = {
+        almost: "🟢 Presque ! Continue dans cette direction.",
+        nope: "🔴 Pas du tout. Change de piste.",
+        exact: "🏆 Exact ! Tu as gagné.",
+        timeout: "⏱️ 6 tentatives utilisées. Le maître gagne."
+      };
+      els.feedbackText.textContent = map[feedback] || "Aucun feedback pour l'instant.";
+    }
+
+    function renderHistory(room) {
+      const items = guessHistory(room).reverse();
+      els.historyList.innerHTML = "";
+
+      if (!items.length) {
+        els.historyList.innerHTML = `<p class="rounded-2xl bg-neutral-100 px-3 py-3 text-sm font-bold text-neutral-500">Aucune proposition.</p>`;
+        return;
+      }
+
+      for (const guess of items) {
+        const chip = document.createElement("div");
+        const feedback = guess.exact ? "Exact" : guess.feedback === "almost" ? "Presque" : guess.feedback === "nope" ? "Pas du tout" : "En attente";
+        const bg = guess.exact ? "bg-emerald-200" : guess.feedback === "almost" ? "bg-yellow-100" : guess.feedback === "nope" ? "bg-pink-100" : "bg-violet-100";
+        chip.className = `flex items-center justify-between gap-3 rounded-2xl ${bg} px-3 py-3 text-sm font-black border-2 border-neutral-900`;
+        chip.innerHTML = `<span class="min-w-0 truncate">${escapeHtml(guess.text)}</span><span class="shrink-0 text-xs">${feedback}</span>`;
+        els.historyList.appendChild(chip);
+      }
+    }
+
+    function renderEndModal() {
+      const guesserWon = currentRoom.winner === "guesser";
+      els.endEmoji.textContent = guesserWon ? "🎉" : "👑";
+      els.endTitle.textContent = guesserWon ? "Joueur 2 gagne !" : "Joueur 1 gagne !";
+      els.endMessage.textContent = guesserWon
+        ? `La réponse était bien ${currentRoom.secretName}.`
+        : `La personnalité était ${currentRoom.secretName}. Les 6 tentatives sont écoulées.`;
+      show(els.endModal);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    /* =========================================================
+       9. Événements UI
+       ========================================================= */
+    els.createRoomBtn.addEventListener("click", createRoom);
+    els.joinRoomBtn.addEventListener("click", joinRoom);
+    els.roomInput.addEventListener("input", () => {
+      els.roomInput.value = els.roomInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    });
+    els.roomInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") joinRoom();
+    });
+
+    els.sendGuessBtn.addEventListener("click", sendGuess);
+    els.guessInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") sendGuess();
+    });
+
+    els.almostBtn.addEventListener("click", () => sendFeedback("almost"));
+    els.nopeBtn.addEventListener("click", () => sendFeedback("nope"));
+    els.newRoundBtn.addEventListener("click", newRound);
+    els.backHomeBtn.addEventListener("click", leaveLocal);
+    els.resetLocalBtn.addEventListener("click", leaveLocal);
+
+    els.copyRoomBtn.addEventListener("click", async () => {
+      if (!currentRoomId) return;
+      await navigator.clipboard.writeText(currentRoomId);
+      showToast("ID copié");
+    });
+
+    /* =========================================================
+       10. Boot
+       ========================================================= */
+    const ok = initFirebase();
+    if (ok && currentRoomId) enterRoom(currentRoomId);
+  </script>
+</body>
+</html>
