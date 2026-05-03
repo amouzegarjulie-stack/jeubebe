@@ -1,196 +1,75 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jeubebe</title>
+<section class="grid">
+  <a class="game green" href="voiture.html">
+    <div class="icon">🚗</div>
+    <div class="name">1000 Bornes</div>
+    <div class="arrow">›</div>
+  </a>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  <a class="game orange" href="jeu.html">
+    <div class="icon">🤔</div>
+    <div class="name">Reflexion</div>
+    <div class="arrow">›</div>
+  </a>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, #ff5f9e, transparent 35%),
-        radial-gradient(circle at bottom right, #4f8cff, transparent 35%),
-        linear-gradient(180deg, #101020, #050510);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 22px;
-    }
+  <a class="game blue" href="wavelength.html">
+    <div class="icon">📡</div>
+    <div class="name">Wavelength</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .iphone {
-      width: 100%;
-      max-width: 430px;
-      min-height: 820px;
-      padding: 22px;
-      border-radius: 42px;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(25px);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-    }
+  <a class="game purple" href="imposteur.html">
+    <div class="icon">🕵️</div>
+    <div class="name">Imposteur</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .top {
-      text-align: center;
-      margin: 20px 0 28px;
-    }
+  <a class="game gold" href="money.html">
+    <div class="icon">💲</div>
+    <div class="name">Money</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .badge {
-      display: inline-block;
-      padding: 7px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.15);
-      font-size: 13px;
-      opacity: 0.9;
-    }
+  <a class="game gray" href="echecs.html">
+    <div class="icon">♟️</div>
+    <div class="name">Echecs</div>
+    <div class="arrow">›</div>
+  </a>
 
-    h1 {
-      margin: 18px 0 6px;
-      font-size: 38px;
-      letter-spacing: -1px;
-    }
+  <a class="game red" href="battle.html">
+    <div class="icon">♦️</div>
+    <div class="name">UNO</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .subtitle {
-      margin: 0;
-      opacity: 0.65;
-      font-size: 15px;
-    }
+  <a class="game pink" href="match.html">
+    <div class="icon">❤️‍🔥</div>
+    <div class="name">It's a Match !</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
+  <a class="game ghost" href="ghost.html">
+    <div class="icon">👻</div>
+    <div class="name">Ghost</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .game {
-      min-height: 125px;
-      padding: 16px;
-      border-radius: 26px;
-      color: white;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25),
-                  0 12px 25px rgba(0,0,0,0.28);
-      transition: transform 0.15s ease, filter 0.15s ease;
-    }
+  <!-- NOUVEAUX JEUX -->
 
-    .game:active {
-      transform: scale(0.96);
-      filter: brightness(1.15);
-    }
+  <a class="game blue" href="pantone.html">
+    <div class="icon">🎨</div>
+    <div class="name">Pantone</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .icon {
-      font-size: 34px;
-    }
+  <a class="game green" href="wasabi.html">
+    <div class="icon">🍣</div>
+    <div class="name">Wasabi</div>
+    <div class="arrow">›</div>
+  </a>
 
-    .name {
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.15;
-    }
-
-    .arrow {
-      font-size: 22px;
-      opacity: 0.7;
-      align-self: flex-end;
-    }
-
-    .green { background: linear-gradient(135deg, #28c76f, #0ca678); }
-    .orange { background: linear-gradient(135deg, #ff9f43, #ee5253); }
-    .blue { background: linear-gradient(135deg, #54a0ff, #2e86de); }
-    .purple { background: linear-gradient(135deg, #9b5de5, #5f27cd); }
-    .gold { background: linear-gradient(135deg, #feca57, #ff9f43); }
-    .gray { background: linear-gradient(135deg, #8395a7, #576574); }
-    .red { background: linear-gradient(135deg, #ff6b6b, #c0392b); }
-    .pink { background: linear-gradient(135deg, #ff4d8d, #c44569); }
-    .ghost { background: linear-gradient(135deg, #c8d6e5, #576574); }
-
-    .footer {
-      text-align: center;
-      margin-top: 26px;
-      font-size: 13px;
-      opacity: 0.5;
-    }
-  </style>
-</head>
-
-<body>
-  <main class="iphone">
-    <section class="top">
-      <div class="badge">🎮 Menu des jeux</div>
-      <h1>Jeubebe</h1>
-      <p class="subtitle">Choisis ton jeu</p>
-    </section>
-
-    <section class="grid">
-      <a class="game green" href="voiture.html">
-        <div class="icon">🚗</div>
-        <div class="name">1000 Bornes</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game orange" href="jeu.html">
-        <div class="icon">🤔</div>
-        <div class="name">Reflexion</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game blue" href="wavelength.html">
-        <div class="icon">📡</div>
-        <div class="name">Wavelength</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game purple" href="imposteur.html">
-        <div class="icon">🕵️</div>
-        <div class="name">Imposteur</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game gold" href="money.html">
-        <div class="icon">💲</div>
-        <div class="name">Money</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game gray" href="echecs.html">
-        <div class="icon">♟️</div>
-        <div class="name">Echecs</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game red" href="battle.html">
-        <div class="icon">♦️</div>
-        <div class="name">UNO</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game pink" href="match.html">
-        <div class="icon">❤️‍🔥</div>
-        <div class="name">It's a Match !</div>
-        <div class="arrow">›</div>
-      </a>
-
-      <a class="game ghost" href="ghost.html">
-        <div class="icon">👻</div>
-        <div class="name">Ghost</div>
-        <div class="arrow">›</div>
-      </a>
-    </section>
-
-    <div class="footer">
-      jeubebe.github.io ✨
-    </div>
-  </main>
-</body>
-</html>
+  <a class="game purple" href="escalando.html">
+    <div class="icon">🔢</div>
+    <div class="name">Escalando</div>
+    <div class="arrow">›</div>
+  </a>
+</section>
