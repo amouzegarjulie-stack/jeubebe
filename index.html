@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Jeubebe</title>
 
-  <!-- ICONE iPHONE INLINE (aucun fichier nécessaire) -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23ff5f9e'/><stop offset='50%25' stop-color='%239b5de5'/><stop offset='100%25' stop-color='%234f8cff'/></linearGradient></defs><rect width='180' height='180' rx='40' fill='url(%23g)'/><text x='50%25' y='54%25' font-size='72' text-anchor='middle'>🎮</text></svg>">
+  <!-- ICONE iPHONE INLINE -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%237c3aed'/><stop offset='50%25' stop-color='%23ec4899'/><stop offset='100%25' stop-color='%2306b6d4'/></linearGradient></defs><rect width='180' height='180' rx='42' fill='url(%23g)'/><text x='50%25' y='56%25' font-size='72' text-anchor='middle'>🎮</text></svg>">
 
   <!-- MODE APP -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,153 +14,508 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <style>
+    :root {
+      --bg: #0b0f1a;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text: #ffffff;
+      --muted: rgba(255, 255, 255, 0.62);
+      --soft: rgba(255, 255, 255, 0.10);
+      --shadow: rgba(0, 0, 0, 0.38);
+    }
+
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, #ff5f9e, transparent 35%),
-        radial-gradient(circle at bottom right, #4f8cff, transparent 35%),
-        linear-gradient(180deg, #101020, #050510);
-      color: white;
+      min-height: 100svh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 22px;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.42), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.28), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.24), transparent 32%),
+        linear-gradient(180deg, #111827 0%, #080b12 100%);
     }
 
-    .iphone {
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, black, transparent 75%);
+    }
+
+    .app {
+      position: relative;
       width: 100%;
-      max-width: 430px;
-      min-height: 820px;
-      padding: 22px;
-      border-radius: 42px;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(25px);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      max-width: 460px;
+      min-height: min(840px, calc(100svh - 36px));
+      padding: 20px;
+      border-radius: 34px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.045));
+      border: 1px solid var(--card-border);
+      box-shadow: 0 28px 80px var(--shadow);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      overflow: hidden;
     }
 
-    .top {
-      text-align: center;
-      margin: 20px 0 28px;
+    .app::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
     }
 
-    .badge {
-      display: inline-block;
-      padding: 7px 14px;
+    .header {
+      position: relative;
+      z-index: 1;
+      padding: 10px 4px 22px;
+    }
+
+    .pill {
+      width: fit-content;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      color: rgba(255, 255, 255, 0.82);
       font-size: 13px;
-      opacity: 0.9;
+      font-weight: 600;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      margin-top: 24px;
     }
 
     h1 {
-      margin: 18px 0 6px;
-      font-size: 38px;
-      letter-spacing: -1px;
+      margin: 0;
+      font-size: clamp(40px, 12vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -2.4px;
     }
 
     .subtitle {
-      margin: 0;
-      opacity: 0.65;
+      margin: 12px 0 0;
+      max-width: 270px;
+      color: var(--muted);
       font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .logo {
+      flex: 0 0 auto;
+      width: 62px;
+      height: 62px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)),
+        linear-gradient(135deg, #7c3aed, #ec4899, #06b6d4);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
     }
 
     .grid {
+      position: relative;
+      z-index: 1;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }
 
     .game {
-      min-height: 125px;
-      padding: 16px;
-      border-radius: 26px;
+      position: relative;
+      min-height: 118px;
+      padding: 15px;
+      border-radius: 24px;
       color: white;
       text-decoration: none;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.25),
-        0 12px 25px rgba(0,0,0,0.28);
-      transition: transform 0.15s ease, filter 0.15s ease;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
+      transition:
+        transform 0.16s ease,
+        border-color 0.16s ease,
+        background 0.16s ease,
+        filter 0.16s ease;
+    }
+
+    .game::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.95;
+      background: var(--gradient);
+      transition: opacity 0.16s ease;
+    }
+
+    .game::after {
+      content: "";
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      right: -34px;
+      top: -34px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      filter: blur(2px);
     }
 
     .game:active {
-      transform: scale(0.96);
-      filter: brightness(1.15);
+      transform: scale(0.965);
+      filter: brightness(1.08);
+    }
+
+    .game-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 18px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .icon {
-      font-size: 34px;
-    }
-
-    .name {
-      font-size: 17px;
-      font-weight: 700;
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
     }
 
     .arrow {
-      font-size: 22px;
-      opacity: 0.7;
-      align-self: flex-end;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      line-height: 1;
+      background: rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.84);
     }
 
-    .green { background: linear-gradient(135deg, #28c76f, #0ca678); }
-    .orange { background: linear-gradient(135deg, #ff9f43, #ee5253); }
-    .blue { background: linear-gradient(135deg, #54a0ff, #2e86de); }
-    .purple { background: linear-gradient(135deg, #9b5de5, #5f27cd); }
-    .gold { background: linear-gradient(135deg, #feca57, #ff9f43); }
-    .gray { background: linear-gradient(135deg, #8395a7, #576574); }
-    .red { background: linear-gradient(135deg, #ff6b6b, #c0392b); }
-    .pink { background: linear-gradient(135deg, #ff4d8d, #c44569); }
-    .ghost { background: linear-gradient(135deg, #c8d6e5, #576574); }
-    .pantone { background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5); }
-    .wasabi { background: linear-gradient(135deg, #7bed9f, #2ed573); }
-    .escalando { background: linear-gradient(135deg, #70a1ff, #3742fa); }
+    .name {
+      font-size: 16px;
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .hint {
+      margin-top: 5px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-weight: 600;
+    }
 
     .footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 22px;
+      padding: 14px 4px 4px;
       text-align: center;
-      margin-top: 26px;
+      color: rgba(255, 255, 255, 0.48);
       font-size: 13px;
-      opacity: 0.5;
+      font-weight: 600;
+    }
+
+    .green { --gradient: linear-gradient(135deg, #16a34a, #22c55e); }
+    .orange { --gradient: linear-gradient(135deg, #f97316, #ef4444); }
+    .blue { --gradient: linear-gradient(135deg, #2563eb, #06b6d4); }
+    .purple { --gradient: linear-gradient(135deg, #7c3aed, #a855f7); }
+    .gold { --gradient: linear-gradient(135deg, #f59e0b, #f97316); }
+    .gray { --gradient: linear-gradient(135deg, #475569, #1e293b); }
+    .red { --gradient: linear-gradient(135deg, #dc2626, #991b1b); }
+    .pink { --gradient: linear-gradient(135deg, #ec4899, #be185d); }
+    .ghost { --gradient: linear-gradient(135deg, #94a3b8, #475569); }
+    .pantone { --gradient: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4); }
+    .wasabi { --gradient: linear-gradient(135deg, #84cc16, #22c55e); }
+    .escalando { --gradient: linear-gradient(135deg, #3b82f6, #4338ca); }
+    .who { --gradient: linear-gradient(135deg, #14b8a6, #6366f1); }
+
+    @media (max-width: 380px) {
+      body {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .app {
+        padding: 16px;
+        border-radius: 28px;
+      }
+
+      .grid {
+        gap: 10px;
+      }
+
+      .game {
+        min-height: 108px;
+        padding: 13px;
+        border-radius: 21px;
+      }
+
+      .icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
+        font-size: 23px;
+      }
+
+      .name {
+        font-size: 15px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+
+    @media (min-width: 700px) {
+      .app {
+        max-width: 520px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
 
 <body>
-  <main class="iphone">
-    <section class="top">
-      <div class="badge">🎮 Menu des jeux</div>
-      <h1>Jeubebe</h1>
-      <p class="subtitle">Choisis ton jeu</p>
+  <main class="app">
+    <header class="header">
+      <div class="pill">🎮 Menu des jeux</div>
+
+      <div class="title-row">
+        <div>
+          <h1>Jeubebe</h1>
+          <p class="subtitle">Choisis un jeu et lance la partie en un toucher.</p>
+        </div>
+
+        <div class="logo">🎲</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Liste des jeux">
+      <a class="game green" href="voiture.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🚗</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">1000 Bornes</div>
+            <div class="hint">Course</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game orange" href="jeu.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🤔</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Réflexion</div>
+            <div class="hint">Questions</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game blue" href="wavelength.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">📡</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Wavelength</div>
+            <div class="hint">Intuition</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game purple" href="imposteur.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🕵️</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Imposteur</div>
+            <div class="hint">Bluff</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game gold" href="money.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">💲</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Money</div>
+            <div class="hint">Argent</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game gray" href="echecs.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">♟️</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Échecs</div>
+            <div class="hint">Stratégie</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game red" href="battle.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">♦️</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">UNO</div>
+            <div class="hint">Cartes</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game pink" href="match.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">❤️‍🔥</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">It's a Match !</div>
+            <div class="hint">Couple</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game ghost" href="ghost.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">👻</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Ghost</div>
+            <div class="hint">Mystère</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game pantone" href="pantone.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🎨</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Pantone</div>
+            <div class="hint">Créatif</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game wasabi" href="wasabi.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🍣</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Wasabi</div>
+            <div class="hint">Fun</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game escalando" href="escalando.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🔢</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Escalando</div>
+            <div class="hint">Nombres</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game who" href="qui-suis-je.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">👤</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Qui suis-je ?</div>
+            <div class="hint">Devine</div>
+          </div>
+        </div>
+      </a>
     </section>
 
-    <section class="grid">
-      <a class="game green" href="voiture.html"><div class="icon">🚗</div><div class="name">1000 Bornes</div><div class="arrow">›</div></a>
-      <a class="game orange" href="jeu.html"><div class="icon">🤔</div><div class="name">Reflexion</div><div class="arrow">›</div></a>
-      <a class="game blue" href="wavelength.html"><div class="icon">📡</div><div class="name">Wavelength</div><div class="arrow">›</div></a>
-      <a class="game purple" href="imposteur.html"><div class="icon">🕵️</div><div class="name">Imposteur</div><div class="arrow">›</div></a>
-      <a class="game gold" href="money.html"><div class="icon">💲</div><div class="name">Money</div><div class="arrow">›</div></a>
-      <a class="game gray" href="echecs.html"><div class="icon">♟️</div><div class="name">Echecs</div><div class="arrow">›</div></a>
-      <a class="game red" href="battle.html"><div class="icon">♦️</div><div class="name">UNO</div><div class="arrow">›</div></a>
-      <a class="game pink" href="match.html"><div class="icon">❤️‍🔥</div><div class="name">It's a Match !</div><div class="arrow">›</div></a>
-      <a class="game ghost" href="ghost.html"><div class="icon">👻</div><div class="name">Ghost</div><div class="arrow">›</div></a>
-      <a class="game pantone" href="pantone.html"><div class="icon">🎨</div><div class="name">Pantone</div><div class="arrow">›</div></a>
-      <a class="game wasabi" href="wasabi.html"><div class="icon">🍣</div><div class="name">Wasabi</div><div class="arrow">›</div></a>
-      <a class="game escalando" href="escalando.html"><div class="icon">🔢</div><div class="name">Escalando</div><div class="arrow">›</div></a>
-    </section>
-
-    <div class="footer">
+    <footer class="footer">
       jeubebe.github.io ✨
-    </div>
+    </footer>
   </main>
 </body>
 </html>
