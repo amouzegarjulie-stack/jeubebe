@@ -9,23 +9,23 @@
   <style>
     :root {
       --bg: #fff3dc;
-      --panel: #ffffff;
-      --ink: #242331;
-      --muted: #83796d;
+      --panel: rgba(255, 255, 255, 0.86);
+      --ink: #252434;
+      --muted: #80766b;
       --salmon: #ff7a59;
-      --salmon-dark: #e95e3e;
+      --salmon2: #e95e3e;
       --wasabi: #61d394;
-      --wasabi-dark: #37b872;
+      --wasabi2: #35b873;
       --egg: #ffd166;
-      --egg-dark: #f4aa32;
+      --egg2: #f2a72c;
       --rice: #fffaf0;
       --nori: #263238;
       --danger: #ff4d6d;
       --blue: #5aa9e6;
       --shadow: 0 14px 34px rgba(36, 35, 49, 0.12);
       --radius: 26px;
-      --safe-area-top: env(safe-area-inset-top);
-      --safe-area-bottom: env(safe-area-inset-bottom);
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
       font-family: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -57,16 +57,14 @@
     }
 
     .app {
-      min-height: 100dvh;
-      height: 100dvh;
       width: 100%;
+      height: 100dvh;
       overflow: hidden;
       display: flex;
       justify-content: center;
-      align-items: stretch;
       background:
-        radial-gradient(circle at top left, rgba(97, 211, 148, 0.25), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(255, 122, 89, 0.18), transparent 38%),
+        radial-gradient(circle at top left, rgba(97, 211, 148, 0.28), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(255, 122, 89, 0.2), transparent 38%),
         var(--bg);
     }
 
@@ -76,32 +74,32 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: calc(14px + var(--safe-area-top)) 14px calc(14px + var(--safe-area-bottom));
       gap: 12px;
+      padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.82);
-      border: 1px solid rgba(255, 255, 255, 0.9);
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.94);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
     }
 
     .screen {
+      display: none;
       flex: 1;
       min-height: 0;
-      display: none;
       flex-direction: column;
       gap: 12px;
-      animation: popIn 0.26s ease both;
+      animation: pop 0.24s ease both;
     }
 
     .screen.active {
       display: flex;
     }
 
-    @keyframes popIn {
+    @keyframes pop {
       from {
         opacity: 0;
         transform: translateY(8px) scale(0.98);
@@ -124,6 +122,32 @@
       text-align: center;
     }
 
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 13vw, 62px);
+      line-height: 0.88;
+      letter-spacing: -2px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(30px, 9vw, 46px);
+      line-height: 0.95;
+      letter-spacing: -1px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .subtitle {
+      max-width: 320px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
     .logo {
       width: min(74vw, 280px);
       aspect-ratio: 1.65;
@@ -139,11 +163,11 @@
       width: 78%;
       height: 50%;
       border-radius: 12px 12px 90px 90px;
-      background: #ffffff;
+      background: #fff;
       box-shadow: inset 0 -10px 0 rgba(90, 169, 230, 0.18), 0 15px 30px rgba(36, 35, 49, 0.12);
     }
 
-    .logo-bowl::before {
+    .logo-bowl:before {
       content: "";
       position: absolute;
       left: 12%;
@@ -181,7 +205,7 @@
       transform: rotate(12deg);
     }
 
-    .logo-sushi::after {
+    .logo-sushi:after {
       content: "";
       position: absolute;
       inset: 8px 10px;
@@ -189,28 +213,12 @@
       background: var(--salmon);
     }
 
-    .logo-sushi.two::after {
+    .logo-sushi.two:after {
       background: var(--egg);
     }
 
-    .logo-sushi.three::after {
+    .logo-sushi.three:after {
       background: var(--wasabi);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(42px, 13vw, 62px);
-      line-height: 0.88;
-      letter-spacing: -2px;
-      color: var(--ink);
-    }
-
-    .subtitle {
-      margin: 0 auto;
-      max-width: 300px;
-      color: var(--muted);
-      font-weight: 700;
-      line-height: 1.35;
     }
 
     .stack {
@@ -221,20 +229,20 @@
 
     .row {
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
     }
 
     .btn {
       border: 0;
-      border-radius: 20px;
       min-height: 54px;
+      border-radius: 20px;
       padding: 0 18px;
-      font-weight: 900;
       color: #fff;
       background: var(--ink);
+      font-weight: 1000;
       box-shadow: 0 10px 22px rgba(36, 35, 49, 0.18);
-      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
+      transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
       cursor: pointer;
     }
 
@@ -242,12 +250,17 @@
       transform: scale(0.96);
     }
 
+    .btn:disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
     .btn.primary {
       background: linear-gradient(135deg, var(--salmon), var(--danger));
     }
 
     .btn.green {
-      background: linear-gradient(135deg, var(--wasabi), var(--wasabi-dark));
+      background: linear-gradient(135deg, var(--wasabi), var(--wasabi2));
     }
 
     .btn.blue {
@@ -261,37 +274,32 @@
       border: 2px solid rgba(36, 35, 49, 0.08);
     }
 
-    .btn:disabled {
-      opacity: 0.48;
-      pointer-events: none;
-    }
-
     .input {
       width: 100%;
       border: 0;
       outline: 0;
-      background: #fff;
       min-height: 54px;
       border-radius: 20px;
       padding: 0 16px;
-      font-weight: 900;
-      text-align: center;
+      background: #fff;
       color: var(--ink);
-      box-shadow: inset 0 0 0 2px rgba(36, 35, 49, 0.07);
+      font-weight: 1000;
+      text-align: center;
       text-transform: uppercase;
+      box-shadow: inset 0 0 0 2px rgba(36, 35, 49, 0.07);
     }
 
     .textarea {
       width: 100%;
-      min-height: 150px;
+      min-height: 140px;
       resize: none;
       border: 0;
       outline: 0;
-      background: #fff;
       border-radius: 22px;
       padding: 16px;
-      font-weight: 800;
+      background: #fff;
       color: var(--ink);
+      font-weight: 900;
       box-shadow: inset 0 0 0 2px rgba(36, 35, 49, 0.07);
       user-select: text;
     }
@@ -321,27 +329,27 @@
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .pill {
-      border-radius: 999px;
-      min-width: 72px;
+      min-width: 76px;
       min-height: 44px;
+      border-radius: 999px;
       padding: 0 12px;
       display: grid;
       place-items: center;
-      background: var(--ink);
       color: #fff;
+      background: var(--ink);
       font-size: 18px;
       font-weight: 1000;
     }
 
     .pill.green {
-      background: var(--wasabi-dark);
+      background: var(--wasabi2);
     }
 
     .pill.red {
@@ -365,7 +373,31 @@
     .mini {
       color: var(--muted);
       font-size: 12px;
-      font-weight: 850;
+      font-weight: 900;
+    }
+
+    .scorebar {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .score-box {
+      min-height: 50px;
+      border-radius: 18px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 1000;
+      color: var(--muted);
+    }
+
+    .score-box strong {
+      display: block;
+      color: var(--ink);
+      font-size: 18px;
     }
 
     .board-wrap {
@@ -384,8 +416,8 @@
       text-align: center;
       padding: 0 10px;
       color: var(--muted);
-      font-weight: 900;
       font-size: 13px;
+      font-weight: 900;
       line-height: 1.25;
     }
 
@@ -404,11 +436,11 @@
       padding: 0;
       border-radius: 20px;
       background: #fff;
-      box-shadow: inset 0 -5px 0 rgba(36, 35, 49, 0.04), 0 8px 14px rgba(36, 35, 49, 0.07);
       display: grid;
       place-items: center;
       overflow: hidden;
-      transition: transform 0.15s ease, opacity 0.22s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      box-shadow: inset 0 -5px 0 rgba(36, 35, 49, 0.04), 0 8px 14px rgba(36, 35, 49, 0.07);
+      transition: transform 0.15s ease, opacity 0.22s ease, box-shadow 0.15s ease, background 0.15s ease;
       cursor: pointer;
     }
 
@@ -421,7 +453,7 @@
       box-shadow: inset 0 0 0 3px var(--wasabi), 0 8px 14px rgba(55, 184, 114, 0.16);
     }
 
-    .sushi-btn.selected::after {
+    .sushi-btn.selected:after {
       content: "W";
       position: absolute;
       right: 6px;
@@ -429,7 +461,7 @@
       width: 22px;
       height: 22px;
       border-radius: 999px;
-      background: var(--wasabi-dark);
+      background: var(--wasabi2);
       color: #fff;
       display: grid;
       place-items: center;
@@ -453,13 +485,12 @@
       width: 76%;
       max-width: 62px;
       height: auto;
-      display: block;
       filter: drop-shadow(0 7px 6px rgba(36, 35, 49, 0.08));
     }
 
     .bottom-panel {
-      padding: 12px;
       min-height: 86px;
+      padding: 12px;
       display: grid;
       gap: 9px;
     }
@@ -474,11 +505,10 @@
       height: 12px;
       border-radius: 999px;
       background: rgba(36, 35, 49, 0.1);
-      overflow: hidden;
     }
 
     .dot.on {
-      background: var(--wasabi-dark);
+      background: var(--wasabi2);
     }
 
     .dot.bad {
@@ -487,11 +517,11 @@
 
     .meta {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       color: var(--muted);
-      font-weight: 900;
       font-size: 12px;
+      font-weight: 900;
     }
 
     .overlay-flash {
@@ -509,7 +539,7 @@
 
     .overlay-flash.show {
       display: grid;
-      animation: flashPulse 0.72s ease both;
+      animation: flash 0.74s ease both;
     }
 
     .overlay-flash.safe {
@@ -517,10 +547,10 @@
     }
 
     .overlay-flash.wasabi {
-      background: rgba(255, 77, 109, 0.9);
+      background: rgba(255, 77, 109, 0.92);
     }
 
-    @keyframes flashPulse {
+    @keyframes flash {
       0% {
         opacity: 0;
         transform: scale(0.92);
@@ -548,49 +578,19 @@
       text-align: center;
     }
 
-    .end-title {
-      margin: 0;
-      font-size: clamp(34px, 11vw, 54px);
-      letter-spacing: -1.5px;
-      line-height: 0.95;
-    }
-
     .gage-box {
+      min-height: 180px;
       border-radius: 26px;
       background: #fff;
       padding: 20px 16px;
-      min-height: 180px;
       display: grid;
       place-items: center;
+      color: var(--danger);
       font-size: clamp(26px, 8vw, 40px);
       font-weight: 1000;
-      color: var(--danger);
       line-height: 1.05;
       box-shadow: inset 0 0 0 2px rgba(255, 77, 109, 0.12);
-    }
-
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(16px + var(--safe-area-bottom));
-      z-index: 40;
-      transform: translateX(-50%) translateY(14px);
-      max-width: min(360px, calc(100% - 28px));
-      opacity: 0;
-      pointer-events: none;
-      background: var(--ink);
-      color: #fff;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-size: 13px;
-      font-weight: 900;
-      transition: opacity 0.18s ease, transform 0.18s ease;
-      text-align: center;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      user-select: text;
     }
 
     .loader {
@@ -598,7 +598,7 @@
       height: 38px;
       border-radius: 999px;
       border: 5px solid rgba(36, 35, 49, 0.1);
-      border-top-color: var(--wasabi-dark);
+      border-top-color: var(--wasabi2);
       animation: spin 0.8s linear infinite;
       margin: 0 auto;
     }
@@ -609,10 +609,34 @@
       }
     }
 
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(16px + var(--safe-bottom));
+      z-index: 40;
+      max-width: min(360px, calc(100% - 28px));
+      transform: translateX(-50%) translateY(14px);
+      opacity: 0;
+      pointer-events: none;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     @media (max-height: 680px) {
       .phone {
-        padding-top: calc(8px + var(--safe-area-top));
-        padding-bottom: calc(8px + var(--safe-area-bottom));
+        padding-top: calc(8px + var(--safe-top));
+        padding-bottom: calc(8px + var(--safe-bottom));
         gap: 8px;
       }
 
@@ -668,7 +692,7 @@
 
           <div>
             <h1>WASABI</h1>
-            <p class="subtitle">Piège 3 sushis en secret. Fais tomber ton adversaire. Envoie le gage.</p>
+            <p class="subtitle">3 manches. Piège 3 sushis. Le premier qui pioche 3 Wasabi perd la manche.</p>
           </div>
 
           <div class="stack">
@@ -693,14 +717,20 @@
         <div class="hero card">
           <div class="loader"></div>
           <div>
-            <h2 style="margin: 12px 0 6px; font-size: 30px;">En attente</h2>
-            <p id="lobbyText" class="subtitle">Partage l’ID avec ton adversaire.</p>
+            <h2>En attente</h2>
+            <p id="lobbyText" class="subtitle" style="margin-top: 10px;">Partage l’ID avec ton adversaire.</p>
           </div>
           <button id="leaveLobbyBtn" class="btn ghost">Quitter</button>
         </div>
       </div>
 
       <div id="prepScreen" class="screen">
+        <div class="scorebar card">
+          <div class="score-box"><span>Manche</span><strong id="prepRoundText">1/3</strong></div>
+          <div class="score-box"><span>Toi</span><strong id="prepMyScore">0</strong></div>
+          <div class="score-box"><span>Lui</span><strong id="prepOppScore">0</strong></div>
+        </div>
+
         <div class="topbar card">
           <div class="title">
             <strong>Préparation secrète</strong>
@@ -710,7 +740,7 @@
         </div>
 
         <div class="board-wrap card">
-          <div class="status" id="prepStatus">Tape 3 sushis. Ton adversaire ne voit pas tes choix.</div>
+          <div class="status" id="prepStatus">Tape 3 sushis. Validation automatique après 3 choix.</div>
           <div id="prepBoard" class="board"></div>
         </div>
 
@@ -720,15 +750,24 @@
             <div id="prepDot1" class="dot"></div>
             <div id="prepDot2" class="dot"></div>
           </div>
-          <button id="readyBtn" class="btn green" disabled>Valider mes 3 pièges</button>
+          <div class="meta">
+            <span>Pièges choisis</span>
+            <span id="prepCountText">0/3</span>
+          </div>
         </div>
       </div>
 
       <div id="gameScreen" class="screen">
+        <div class="scorebar card">
+          <div class="score-box"><span>Manche</span><strong id="gameRoundText">1/3</strong></div>
+          <div class="score-box"><span>Toi</span><strong id="gameMyScore">0</strong></div>
+          <div class="score-box"><span>Lui</span><strong id="gameOppScore">0</strong></div>
+        </div>
+
         <div class="topbar card">
           <div class="title">
             <strong id="turnTitle">À toi de jouer</strong>
-            <span id="gameHint">Évite les 3 Wasabi cachés par l’autre joueur.</span>
+            <span id="gameHint">Tous les pièges comptent contre celui qui les pioche.</span>
           </div>
           <div id="foundPill" class="pill red">0/3</div>
         </div>
@@ -740,7 +779,7 @@
 
         <div class="bottom-panel card">
           <div class="meta">
-            <span>Wasabi trouvés</span>
+            <span>Tes Wasabi piochés</span>
             <span id="roomMini">Salle</span>
           </div>
           <div class="progress">
@@ -751,20 +790,34 @@
         </div>
       </div>
 
+      <div id="roundEndScreen" class="screen">
+        <div class="scorebar card">
+          <div class="score-box"><span>Manche</span><strong id="roundEndRoundText">1/3</strong></div>
+          <div class="score-box"><span>Toi</span><strong id="roundEndMyScore">0</strong></div>
+          <div class="score-box"><span>Lui</span><strong id="roundEndOppScore">0</strong></div>
+        </div>
+
+        <div class="end-card card">
+          <h2 id="roundEndTitle">Manche terminée</h2>
+          <p id="roundEndText" class="subtitle">Prépare la manche suivante.</p>
+          <button id="nextRoundBtn" class="btn green">Manche suivante</button>
+        </div>
+      </div>
+
       <div id="endScreen" class="screen">
         <div class="end-card card">
-          <h2 id="endTitle" class="end-title">Partie terminée</h2>
-          <p id="endText" class="subtitle">Résultat de la partie.</p>
+          <h2 id="endTitle">Match terminé</h2>
+          <p id="endText" class="subtitle">Résultat final.</p>
 
           <div id="winnerPanel" class="stack" style="display: none;">
             <textarea id="gageInput" class="textarea" maxlength="120" placeholder="Écris le gage du perdant..."></textarea>
             <button id="sendGageBtn" class="btn primary">Envoyer le gage</button>
-            <button id="restartWinnerBtn" class="btn ghost">Rejouer</button>
+            <button id="restartWinnerBtn" class="btn ghost">Rejouer 3 manches</button>
           </div>
 
           <div id="loserPanel" class="stack" style="display: none;">
             <div id="gageBox" class="gage-box">En attente du gage...</div>
-            <button id="restartLoserBtn" class="btn green">Rejouer</button>
+            <button id="restartLoserBtn" class="btn green">Rejouer 3 manches</button>
           </div>
         </div>
       </div>
@@ -789,7 +842,7 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
- const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -802,6 +855,7 @@
     const PREP_SECONDS = 30;
     const SUSHI_COUNT = 20;
     const TRAPS_TO_PICK = 3;
+    const TOTAL_ROUNDS = 3;
 
     let app;
     let db;
@@ -813,6 +867,7 @@
     let selectedTraps = new Set();
     let prepInterval = null;
     let localFlashLock = false;
+    let autoSubmitting = false;
 
     const $ = (id) => document.getElementById(id);
 
@@ -821,6 +876,7 @@
       lobby: $("lobbyScreen"),
       prep: $("prepScreen"),
       game: $("gameScreen"),
+      roundEnd: $("roundEndScreen"),
       end: $("endScreen")
     };
 
@@ -832,17 +888,33 @@
       copyRoomBtn: $("copyRoomBtn"),
       leaveLobbyBtn: $("leaveLobbyBtn"),
       lobbyText: $("lobbyText"),
+
+      prepRoundText: $("prepRoundText"),
+      prepMyScore: $("prepMyScore"),
+      prepOppScore: $("prepOppScore"),
       prepBoard: $("prepBoard"),
       prepTimer: $("prepTimer"),
       prepStatus: $("prepStatus"),
       prepHint: $("prepHint"),
-      readyBtn: $("readyBtn"),
+      prepCountText: $("prepCountText"),
+
+      gameRoundText: $("gameRoundText"),
+      gameMyScore: $("gameMyScore"),
+      gameOppScore: $("gameOppScore"),
       gameBoard: $("gameBoard"),
       gameStatus: $("gameStatus"),
       turnTitle: $("turnTitle"),
       gameHint: $("gameHint"),
       foundPill: $("foundPill"),
       roomMini: $("roomMini"),
+
+      roundEndRoundText: $("roundEndRoundText"),
+      roundEndMyScore: $("roundEndMyScore"),
+      roundEndOppScore: $("roundEndOppScore"),
+      roundEndTitle: $("roundEndTitle"),
+      roundEndText: $("roundEndText"),
+      nextRoundBtn: $("nextRoundBtn"),
+
       endTitle: $("endTitle"),
       endText: $("endText"),
       winnerPanel: $("winnerPanel"),
@@ -852,6 +924,7 @@
       gageBox: $("gageBox"),
       restartWinnerBtn: $("restartWinnerBtn"),
       restartLoserBtn: $("restartLoserBtn"),
+
       flash: $("flash"),
       toast: $("toast")
     };
@@ -863,8 +936,8 @@
         app = initializeApp(firebaseConfig);
         db = getDatabase(app);
       } catch (error) {
-        toast("Firebase non configuré. Remplis firebaseConfig.");
         console.error(error);
+        toast("Firebase non configuré. Remplis firebaseConfig.");
       }
 
       els.createRoomBtn.addEventListener("click", createRoom);
@@ -872,12 +945,13 @@
       els.joinInput.addEventListener("input", () => {
         els.joinInput.value = els.joinInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
       });
+
       els.copyRoomBtn.addEventListener("click", copyRoomId);
       els.leaveLobbyBtn.addEventListener("click", leaveRoom);
-      els.readyBtn.addEventListener("click", submitTraps);
+      els.nextRoundBtn.addEventListener("click", nextRound);
       els.sendGageBtn.addEventListener("click", sendGage);
-      els.restartWinnerBtn.addEventListener("click", restartGame);
-      els.restartLoserBtn.addEventListener("click", restartGame);
+      els.restartWinnerBtn.addEventListener("click", restartMatch);
+      els.restartLoserBtn.addEventListener("click", restartMatch);
 
       window.addEventListener("beforeunload", () => {
         if (roomUnsub && roomRef) off(roomRef, "value", roomUnsub);
@@ -913,7 +987,7 @@
       window.clearTimeout(els.toast._timer);
       els.toast._timer = window.setTimeout(() => {
         els.toast.classList.remove("show");
-      }, 2100);
+      }, 2200);
     }
 
     function vibrate(pattern = 18) {
@@ -961,7 +1035,12 @@
         hostId: uid,
         guestId: "",
         createdAt: serverTimestamp(),
+        round: 1,
+        maxRounds: TOTAL_ROUNDS,
         board: makeBoard(),
+        scores: {
+          [uid]: 0
+        },
         players: {
           [uid]: {
             role: "host",
@@ -971,8 +1050,10 @@
           }
         },
         currentTurn: "",
-        winnerId: "",
-        loserId: "",
+        roundWinnerId: "",
+        roundLoserId: "",
+        matchWinnerId: "",
+        matchLoserId: "",
         gage: ""
       });
 
@@ -999,6 +1080,7 @@
       }
 
       const data = snap.val();
+
       if (data.guestId && data.guestId !== uid && data.hostId !== uid) {
         toast("Cette salle est déjà pleine.");
         return;
@@ -1009,6 +1091,7 @@
       selectedTraps = new Set();
 
       const updates = {};
+
       if (data.hostId !== uid) {
         updates.guestId = uid;
         updates["players/" + uid] = {
@@ -1017,6 +1100,7 @@
           ready: false,
           found: 0
         };
+        updates["scores/" + uid] = data.scores?.[uid] || 0;
       }
 
       if (data.status === "lobby" && data.hostId && data.hostId !== uid) {
@@ -1049,11 +1133,10 @@
 
       els.roomIdText.textContent = room.id || roomId || "------";
       els.roomMini.textContent = "Salle " + (room.id || roomId || "");
-      const opponent = getOpponentId();
 
       if (room.status === "lobby") {
         showScreen("lobby");
-        els.lobbyText.textContent = opponent
+        els.lobbyText.textContent = getOpponentId()
           ? "Adversaire connecté. Lancement..."
           : "Partage l’ID avec ton adversaire.";
         return;
@@ -1071,9 +1154,15 @@
         return;
       }
 
-      if (room.status === "end") {
+      if (room.status === "roundEnd") {
+        showScreen("roundEnd");
+        renderRoundEnd();
+        return;
+      }
+
+      if (room.status === "matchEnd") {
         showScreen("end");
-        renderEnd();
+        renderMatchEnd();
       }
     }
 
@@ -1092,19 +1181,35 @@
       return room?.players?.[oid] || {};
     }
 
+    function myScore() {
+      return room?.scores?.[uid] || 0;
+    }
+
+    function opponentScore() {
+      const oid = getOpponentId();
+      return room?.scores?.[oid] || 0;
+    }
+
+    function updateScoreLabels(prefix) {
+      $(prefix + "RoundText").textContent = (room.round || 1) + "/" + TOTAL_ROUNDS;
+      $(prefix + "MyScore").textContent = myScore();
+      $(prefix + "OppScore").textContent = opponentScore();
+    }
+
     function renderPrep() {
       startPrepTimer();
+      updateScoreLabels("prep");
 
       const player = getPlayer();
-      const count = selectedTraps.size || (player.traps ? player.traps.length : 0);
+      const lockedChoices = Array.isArray(player.traps) ? player.traps : [];
       const isReady = Boolean(player.ready);
+      const count = isReady ? lockedChoices.length : selectedTraps.size;
 
       els.prepHint.textContent = isReady ? "Validé. En attente de l’autre joueur." : "Choisis 3 pièges Wasabi.";
       els.prepStatus.textContent = isReady
-        ? "Tes pièges sont verrouillés. Patience..."
-        : "Tape 3 sushis. Ton adversaire ne voit pas tes choix.";
-      els.readyBtn.disabled = count !== TRAPS_TO_PICK || isReady;
-      els.readyBtn.textContent = isReady ? "Pièges validés" : "Valider mes 3 pièges";
+        ? "Tes pièges sont verrouillés. La manche démarre quand l’autre joueur est prêt."
+        : "Tape 3 sushis. Validation automatique après 3 choix.";
+      els.prepCountText.textContent = Math.min(count, TRAPS_TO_PICK) + "/" + TRAPS_TO_PICK;
 
       for (let i = 0; i < TRAPS_TO_PICK; i++) {
         $("prepDot" + i).classList.toggle("on", i < count);
@@ -1112,7 +1217,7 @@
 
       renderBoard(els.prepBoard, {
         mode: "prep",
-        selected: selectedTraps,
+        selected: isReady ? new Set(lockedChoices) : selectedTraps,
         disabled: isReady,
         onPick: toggleTrap
       });
@@ -1122,6 +1227,7 @@
 
     function startPrepTimer() {
       if (prepInterval) return;
+
       prepInterval = window.setInterval(() => {
         if (!room || room.status !== "prep") {
           window.clearInterval(prepInterval);
@@ -1141,7 +1247,7 @@
 
     function toggleTrap(id) {
       const player = getPlayer();
-      if (player.ready) return;
+      if (player.ready || autoSubmitting) return;
 
       vibrate(12);
 
@@ -1154,10 +1260,17 @@
       }
 
       renderPrep();
+
+      if (selectedTraps.size === TRAPS_TO_PICK) {
+        submitTraps();
+      }
     }
 
     async function submitTraps() {
-      if (!roomRef || selectedTraps.size !== TRAPS_TO_PICK) return;
+      if (!roomRef || autoSubmitting) return;
+      if (selectedTraps.size !== TRAPS_TO_PICK) return;
+
+      autoSubmitting = true;
       vibrate([12, 40, 12]);
 
       await update(roomRef, {
@@ -1165,12 +1278,13 @@
         ["players/" + uid + "/ready"]: true
       });
 
+      autoSubmitting = false;
       tryStartGame();
     }
 
     async function autoFillAndSubmit() {
       const player = getPlayer();
-      if (!roomRef || player.ready) return;
+      if (!roomRef || player.ready || autoSubmitting) return;
 
       const ids = Array.from(selectedTraps);
       const available = (room.board || [])
@@ -1193,14 +1307,19 @@
       const guestReady = room.players?.[room.guestId]?.ready;
 
       if (hostReady && guestReady && !room.currentTurn) {
+        const starter = (room.round || 1) % 2 === 1 ? room.hostId : room.guestId;
         await update(roomRef, {
           status: "play",
-          currentTurn: room.hostId
+          currentTurn: starter,
+          roundWinnerId: "",
+          roundLoserId: ""
         });
       }
     }
 
     function renderGame() {
+      updateScoreLabels("game");
+
       const myFound = getPlayer().found || 0;
       const myTurn = room.currentTurn === uid;
       const opponent = getOpponentId();
@@ -1208,10 +1327,10 @@
       els.foundPill.textContent = myFound + "/3";
       els.turnTitle.textContent = myTurn ? "À toi de jouer" : "Tour adverse";
       els.gameStatus.textContent = myTurn
-        ? "Choisis un sushi. S’il cache du Wasabi, tu t’approches du gage."
+        ? "Choisis un sushi. Si c’est un Wasabi, il compte contre toi."
         : "Ton adversaire choisit un sushi...";
       els.gameHint.textContent = opponent
-        ? "Évite les 3 pièges cachés par l’autre joueur."
+        ? "Les Wasabi posés par les deux joueurs sont actifs pour tout le monde."
         : "Adversaire absent.";
 
       for (let i = 0; i < TRAPS_TO_PICK; i++) {
@@ -1225,6 +1344,17 @@
       });
     }
 
+    function getAllTraps() {
+      const all = new Set();
+
+      Object.values(room.players || {}).forEach((player) => {
+        const traps = Array.isArray(player.traps) ? player.traps : [];
+        traps.forEach((id) => all.add(id));
+      });
+
+      return all;
+    }
+
     async function playSushi(id) {
       if (!roomRef || !room || room.status !== "play") return;
       if (room.currentTurn !== uid || localFlashLock) return;
@@ -1233,34 +1363,43 @@
       const item = board.find((sushi) => sushi.id === id);
       if (!item || item.eaten) return;
 
-      const opponentId = getOpponentId();
-      const opponentTraps = room.players?.[opponentId]?.traps || [];
-      const isWasabi = opponentTraps.includes(id);
+      const allTraps = getAllTraps();
+      const isWasabi = allTraps.has(id);
       const currentFound = getPlayer().found || 0;
       const nextFound = isWasabi ? currentFound + 1 : currentFound;
+      const opponentId = getOpponentId();
 
       localFlashLock = true;
       vibrate(isWasabi ? [40, 30, 60] : 18);
-      flash(isWasabi ? "WASABI !" : "SAFE !", isWasabi ? "wasabi" : "safe");
+      showFlash(isWasabi ? "WASABI !" : "SAFE !", isWasabi ? "wasabi" : "safe");
 
-      const boardUpdates = {};
-      boardUpdates["board/" + id + "/eaten"] = true;
-      boardUpdates["board/" + id + "/revealedWasabi"] = isWasabi;
+      const updates = {};
+      updates["board/" + id + "/eaten"] = true;
+      updates["board/" + id + "/revealedWasabi"] = isWasabi;
 
       if (isWasabi) {
-        boardUpdates["players/" + uid + "/found"] = nextFound;
+        updates["players/" + uid + "/found"] = nextFound;
       }
 
       if (nextFound >= TRAPS_TO_PICK) {
-        boardUpdates.status = "end";
-        boardUpdates.loserId = uid;
-        boardUpdates.winnerId = opponentId;
-        boardUpdates.currentTurn = "";
+        const nextScore = (room.scores?.[opponentId] || 0) + 1;
+        updates["scores/" + opponentId] = nextScore;
+        updates.roundLoserId = uid;
+        updates.roundWinnerId = opponentId;
+        updates.currentTurn = "";
+
+        if ((room.round || 1) >= TOTAL_ROUNDS) {
+          updates.status = "matchEnd";
+          updates.matchWinnerId = opponentId;
+          updates.matchLoserId = uid;
+        } else {
+          updates.status = "roundEnd";
+        }
       } else {
-        boardUpdates.currentTurn = opponentId;
+        updates.currentTurn = opponentId;
       }
 
-      await update(roomRef, boardUpdates);
+      await update(roomRef, updates);
 
       window.setTimeout(() => {
         localFlashLock = false;
@@ -1268,54 +1407,35 @@
       }, 760);
     }
 
-    function renderEnd() {
-      const isWinner = room.winnerId === uid;
-      const isLoser = room.loserId === uid;
+    function renderRoundEnd() {
+      updateScoreLabels("roundEnd");
 
-      els.winnerPanel.style.display = isWinner ? "flex" : "none";
-      els.loserPanel.style.display = isLoser ? "flex" : "none";
+      const won = room.roundWinnerId === uid;
 
-      if (isWinner) {
-        els.endTitle.textContent = "Victoire !";
-        els.endText.textContent = "Ton adversaire a découvert tes 3 Wasabi. Écris son gage.";
-      } else if (isLoser) {
-        els.endTitle.textContent = "Perdu !";
-        els.endText.textContent = "Tu as croqué les 3 Wasabi. Prépare-toi.";
-        els.gageBox.textContent = room.gage || "En attente du gage...";
-      } else {
-        els.endTitle.textContent = "Partie terminée";
-        els.endText.textContent = "La partie est terminée.";
-      }
+      els.roundEndTitle.textContent = won ? "Manche gagnée !" : "Manche perdue !";
+      els.roundEndText.textContent = won
+        ? "Ton adversaire a pioché 3 Wasabi. Encore une manche."
+        : "Tu as pioché 3 Wasabi. Revanche à la manche suivante.";
+      els.nextRoundBtn.textContent = "Lancer la manche " + ((room.round || 1) + 1);
     }
 
-    async function sendGage() {
-      if (!roomRef) return;
-
-      const value = els.gageInput.value.trim();
-      if (!value) {
-        toast("Écris un gage avant d’envoyer.");
-        return;
-      }
-
-      vibrate([20, 30, 20]);
-      await update(roomRef, { gage: value });
-      toast("Gage envoyé.");
-    }
-
-    async function restartGame() {
-      if (!roomRef || !room) return;
+    async function nextRound() {
+      if (!roomRef || !room || room.status !== "roundEnd") return;
       vibrate();
 
       selectedTraps = new Set();
+      autoSubmitting = false;
 
-      const board = makeBoard();
+      const next = (room.round || 1) + 1;
+
       const updates = {
         status: "prep",
-        board,
+        round: next,
+        board: makeBoard(),
         prepStartedAt: Date.now(),
         currentTurn: "",
-        winnerId: "",
-        loserId: "",
+        roundWinnerId: "",
+        roundLoserId: "",
         gage: ""
       };
 
@@ -1334,14 +1454,85 @@
       await update(roomRef, updates);
     }
 
+    function renderMatchEnd() {
+      const isWinner = room.matchWinnerId === uid;
+      const isLoser = room.matchLoserId === uid;
+
+      els.winnerPanel.style.display = isWinner ? "flex" : "none";
+      els.loserPanel.style.display = isLoser ? "flex" : "none";
+
+      if (isWinner) {
+        els.endTitle.textContent = "Victoire finale !";
+        els.endText.textContent = "Tu as gagné les 3 manches. Écris le gage du perdant.";
+      } else if (isLoser) {
+        els.endTitle.textContent = "Défaite finale !";
+        els.endText.textContent = "Le gagnant choisit ton gage.";
+        els.gageBox.textContent = room.gage || "En attente du gage...";
+      } else {
+        els.endTitle.textContent = "Match terminé";
+        els.endText.textContent = "La partie est terminée.";
+      }
+    }
+
+    async function sendGage() {
+      if (!roomRef) return;
+
+      const value = els.gageInput.value.trim();
+      if (!value) {
+        toast("Écris un gage avant d’envoyer.");
+        return;
+      }
+
+      vibrate([20, 30, 20]);
+      await update(roomRef, { gage: value });
+      toast("Gage envoyé.");
+    }
+
+    async function restartMatch() {
+      if (!roomRef || !room) return;
+      vibrate();
+
+      selectedTraps = new Set();
+      autoSubmitting = false;
+
+      const updates = {
+        status: "prep",
+        round: 1,
+        board: makeBoard(),
+        prepStartedAt: Date.now(),
+        currentTurn: "",
+        roundWinnerId: "",
+        roundLoserId: "",
+        matchWinnerId: "",
+        matchLoserId: "",
+        gage: ""
+      };
+
+      if (room.hostId) {
+        updates["scores/" + room.hostId] = 0;
+        updates["players/" + room.hostId + "/traps"] = [];
+        updates["players/" + room.hostId + "/ready"] = false;
+        updates["players/" + room.hostId + "/found"] = 0;
+      }
+
+      if (room.guestId) {
+        updates["scores/" + room.guestId] = 0;
+        updates["players/" + room.guestId + "/traps"] = [];
+        updates["players/" + room.guestId + "/ready"] = false;
+        updates["players/" + room.guestId + "/found"] = 0;
+      }
+
+      await update(roomRef, updates);
+    }
+
     function renderBoard(container, options) {
       const board = room?.board || [];
       container.innerHTML = "";
 
       board.forEach((item) => {
         const btn = document.createElement("button");
-        btn.className = "sushi-btn";
         btn.type = "button";
+        btn.className = "sushi-btn";
         btn.setAttribute("aria-label", "Sushi " + (item.id + 1));
 
         if (options.mode === "prep" && options.selected?.has(item.id)) {
@@ -1403,9 +1594,10 @@
       `;
     }
 
-    function flash(text, kind) {
+    function showFlash(text, kind) {
       els.flash.textContent = text;
       els.flash.className = "overlay-flash show " + kind;
+
       window.clearTimeout(els.flash._timer);
       els.flash._timer = window.setTimeout(() => {
         els.flash.className = "overlay-flash";
@@ -1451,6 +1643,7 @@
       room = null;
       selectedTraps = new Set();
       localFlashLock = false;
+      autoSubmitting = false;
     }
   </script>
 </body>
