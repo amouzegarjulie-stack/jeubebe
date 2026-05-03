@@ -286,28 +286,16 @@
       runTransaction
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-    /*
-      =========================================================
-      FIREBASE CONFIGURATION
-      Remplace les valeurs ci-dessous par celles de ton projet.
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
-      Firebase Console > Paramètres du projet > Tes applications > SDK Web
-
-      Active aussi :
-      1. Authentication > Sign-in method > Anonymous
-      2. Realtime Database
-      3. Des règles adaptées avant production
-      =========================================================
-    */
-const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
     const MAX_ATTEMPTS = 5;
     const WIN_SCORE = 96;
     const NEXT_ROUND_DELAY = 2600;
@@ -438,24 +426,106 @@ const firebaseConfig = {
 
     function generatePalette(seedText) {
       const random = seededRandom(hashSeed(seedText));
-      const baseHue = Math.floor(random() * 360);
       const palette = [];
       const used = new Set();
 
-      for (let i = 0; i < COLOR_COUNT; i++) {
-        const hueStep = (360 / COLOR_COUNT) * i;
-        const hueNoise = (random() - 0.5) * 16;
-        const hue = (baseHue + hueStep + hueNoise + 360) % 360;
-        const saturation = 50 + random() * 34;
-        const lightness = 36 + random() * 34;
-        let hex = hslToHex(hue, saturation, lightness);
+      const colorFamilies = [
+        { h: 220, s: [64, 88], l: [18, 30] },
+        { h: 232, s: [74, 96], l: [38, 52] },
+        { h: 205, s: [68, 90], l: [58, 76] },
+        { h: 188, s: [76, 96], l: [40, 56] },
+        { h: 172, s: [66, 90], l: [34, 52] },
+        { h: 210, s: [24, 44], l: [44, 68] },
 
-        while (used.has(hex)) {
-          hex = hslToHex((hue + random() * 12) % 360, saturation, lightness);
+        { h: 260, s: [62, 90], l: [30, 56] },
+        { h: 285, s: [56, 86], l: [38, 64] },
+        { h: 325, s: [64, 92], l: [48, 72] },
+        { h: 345, s: [68, 94], l: [36, 58] },
+        { h: 4, s: [68, 96], l: [34, 56] },
+        { h: 24, s: [74, 98], l: [40, 62] },
+
+        { h: 42, s: [70, 96], l: [50, 74] },
+        { h: 58, s: [68, 94], l: [54, 78] },
+        { h: 88, s: [58, 88], l: [44, 66] },
+        { h: 125, s: [50, 82], l: [32, 56] },
+        { h: 150, s: [58, 88], l: [30, 54] },
+
+        { h: 20, s: [34, 62], l: [22, 42] },
+        { h: 36, s: [30, 58], l: [62, 82] },
+        { h: 250, s: [10, 28], l: [30, 76] }
+      ];
+
+      function randBetween(min, max) {
+        return min + random() * (max - min);
+      }
+
+      function hexDistance(hexA, hexB) {
+        const a = rgbToLab(hexToRgb(hexA));
+        const b = rgbToLab(hexToRgb(hexB));
+
+        return Math.sqrt(
+          Math.pow(a.l - b.l, 2) +
+          Math.pow(a.a - b.a, 2) +
+          Math.pow(a.b - b.b, 2)
+        );
+      }
+
+      function isDifferentEnough(hex) {
+        return palette.every(existingHex => hexDistance(hex, existingHex) >= 17);
+      }
+
+      let safety = 0;
+
+      while (palette.length < COLOR_COUNT && safety < 15000) {
+        safety++;
+
+        const family = colorFamilies[palette.length % colorFamilies.length];
+
+        const hue = (family.h + randBetween(-12, 12) + 360) % 360;
+        let saturation = randBetween(family.s[0], family.s[1]);
+        let lightness = randBetween(family.l[0], family.l[1]);
+
+        const contrastMode = Math.floor(random() * 5);
+
+        if (contrastMode === 0) {
+          saturation = Math.min(98, saturation + 16);
+          lightness = Math.max(18, lightness - 14);
         }
+
+        if (contrastMode === 1) {
+          saturation = Math.max(18, saturation - 18);
+          lightness = Math.min(84, lightness + 16);
+        }
+
+        if (contrastMode === 2) {
+          saturation = Math.min(98, saturation + 10);
+          lightness = Math.min(80, lightness + 10);
+        }
+
+        if (contrastMode === 3) {
+          saturation = Math.max(22, saturation - 10);
+          lightness = Math.max(20, lightness - 10);
+        }
+
+        const hex = hslToHex(hue, saturation, lightness);
+
+        if (used.has(hex)) continue;
+        if (!isDifferentEnough(hex)) continue;
 
         used.add(hex);
         palette.push(hex);
+      }
+
+      while (palette.length < COLOR_COUNT) {
+        const hue = (palette.length * 137.508 + random() * 28) % 360;
+        const saturation = 34 + random() * 62;
+        const lightness = 20 + random() * 62;
+        const hex = hslToHex(hue, saturation, lightness);
+
+        if (!used.has(hex)) {
+          used.add(hex);
+          palette.push(hex);
+        }
       }
 
       return palette.sort(() => random() - 0.5);
