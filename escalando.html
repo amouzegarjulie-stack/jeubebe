@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>DUO ESCALADE</title>
   <style>
     :root {
@@ -581,23 +581,345 @@
     }
 
     @media (max-width: 640px) {
-      .topbar,
-      .room-bar,
-      .actions,
+      body {
+        min-height: 100svh;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body::after {
+        width: 280px;
+        height: 280px;
+        right: -120px;
+        bottom: -120px;
+      }
+
+      .app {
+        width: min(100% - 20px, 430px);
+        padding: max(12px, env(safe-area-inset-top)) 0 max(22px, env(safe-area-inset-bottom));
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .brand {
+        gap: 10px;
+      }
+
+      .logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 15px;
+        font-size: 22px;
+        box-shadow: 0 10px 28px rgba(80, 24, 0, 0.16);
+      }
+
+      h1 {
+        font-size: clamp(27px, 10vw, 40px);
+        letter-spacing: -0.065em;
+      }
+
+      .subtitle {
+        margin-top: 3px;
+        font-size: 12px;
+        line-height: 1.15;
+      }
+
+      .pill {
+        justify-content: center;
+        padding: 7px 10px;
+        font-size: 12px;
+        border-radius: 14px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        box-shadow: 0 0 0 4px rgba(255, 49, 95, 0.14);
+      }
+
+      .glass {
+        border-radius: 22px;
+        box-shadow: 0 14px 36px rgba(80, 24, 0, 0.18);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .setup-grid,
+      .game-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .hero-copy {
+        min-height: auto;
+        padding: 16px;
+      }
+
+      .hero-copy::after {
+        display: none;
+      }
+
+      .hero-title {
+        font-size: clamp(28px, 10vw, 42px);
+        line-height: 0.95;
+      }
+
+      .hero-text {
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .form-card {
+        min-height: auto;
+        gap: 10px;
+      }
+
+      .form-card h2,
+      .game-card h2,
+      .mini-title {
+        font-size: 19px;
+      }
+
+      label {
+        gap: 6px;
+        font-size: 13px;
+      }
+
+      input {
+        min-height: 46px;
+        border-radius: 15px;
+        padding: 11px 12px;
+        font-size: 16px;
+      }
+
+      .btn {
+        min-height: 46px;
+        border-radius: 15px;
+        padding: 11px 13px;
+        font-size: 15px;
+        box-shadow: 0 10px 22px rgba(88, 48, 0, 0.14);
+      }
+
+      .btn:hover:not(:disabled),
+      .num-btn:hover:not(:disabled) {
+        transform: none;
+      }
+
+      .hint {
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .alert {
+        border-radius: 15px;
+        padding: 10px 11px;
+        font-size: 12px;
+      }
+
+      .game-shell {
+        gap: 10px;
+      }
+
+      .room-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 12px;
+      }
+
+      .room-code {
+        min-width: auto;
+        padding: 8px 10px;
+        border-radius: 14px;
+        font-size: 17px;
+      }
+
+      .game-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+      }
+
+      .game-grid .player-card:first-child {
+        order: 1;
+      }
+
+      .game-grid .player-card:last-child {
+        order: 2;
+      }
+
+      .center-card {
+        order: 3;
+        grid-column: 1 / -1;
+        min-height: auto;
+        padding: 14px;
+        gap: 11px;
+      }
+
+      .player-card {
+        min-height: auto;
+        padding: 12px;
+        border-radius: 18px;
+      }
+
+      .player-name {
+        margin-bottom: 4px;
+        font-size: 15px;
+        line-height: 1.05;
+      }
+
+      .score {
+        margin-top: 6px;
+        padding: 7px 9px;
+        border-radius: 13px;
+        gap: 4px;
+      }
+
+      .score strong {
+        font-size: 24px;
+      }
+
+      .status-line {
+        margin-top: 7px;
+        font-size: 11px;
+        line-height: 1.2;
+      }
+
+      .phase-chip {
+        padding: 6px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 1.1;
+      }
+
+      .question-card {
+        padding: 15px;
+        border-radius: 20px;
+      }
+
+      .question-label {
+        margin-bottom: 5px;
+        font-size: 10px;
+      }
+
+      .question {
+        font-size: clamp(24px, 8vw, 34px);
+        line-height: 1;
+        letter-spacing: -0.06em;
+      }
+
+      .secret-number {
+        width: min(138px, 44vw);
+        border-radius: 30px;
+        margin: 2px auto;
+        font-size: 74px;
+        padding-right: 8px;
+        box-shadow: 0 14px 30px rgba(26, 92, 36, 0.16);
+      }
+
+      .clue-form {
+        gap: 9px;
+      }
+
       .clues,
       .reveal-grid {
         grid-template-columns: 1fr;
-        flex-direction: column;
-        align-items: stretch;
+        gap: 9px;
+      }
+
+      .clue-card,
+      .reveal-card {
+        padding: 12px;
+        border-radius: 18px;
+      }
+
+      .clue-owner {
+        margin-bottom: 5px;
+        font-size: 9px;
+        letter-spacing: 0.07em;
+      }
+
+      .clue-text {
+        font-size: 20px;
+        line-height: 1.05;
+      }
+
+      .guess-zone {
+        gap: 9px;
       }
 
       .number-row {
         grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
       }
 
-      .hero-copy,
-      .form-card {
-        min-height: auto;
+      .num-btn {
+        min-height: 44px;
+        border-radius: 13px;
+        font-size: 18px;
+        touch-action: manipulation;
+      }
+
+      .num-btn.selected {
+        transform: none;
+      }
+
+      .big-mini {
+        font-size: 42px;
+      }
+
+      .points-badge {
+        margin-top: 8px;
+        padding: 6px 9px;
+        font-size: 13px;
+      }
+
+      .footer-note {
+        margin-top: 10px;
+        font-size: 11px;
+        line-height: 1.25;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .app {
+        width: min(100% - 14px, 380px);
+      }
+
+      .hero-title {
+        font-size: 30px;
+      }
+
+      .question {
+        font-size: 25px;
+      }
+
+      .center-card,
+      .panel {
+        padding: 12px;
+      }
+
+      .room-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .room-code {
+        justify-self: start;
+      }
+
+      .num-btn {
+        min-height: 41px;
       }
     }
   </style>
@@ -672,7 +994,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getDatabase, ref, set, update, get, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
-  const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
