@@ -6,458 +6,457 @@
   <title>Longueur d'Onde</title>
 
   <style>
-:root {
-  --bg: #18051f;
-  --ink: #11111f;
-  --text: #fff8fb;
-  --muted: rgba(255,248,251,.68);
-  --paper: rgba(255,255,255,.86);
-  --paper-soft: rgba(255,255,255,.58);
-  --line: rgba(255,255,255,.38);
-  --navy: #16162a;
-  --yellow: #ffd166;
-  --orange: #ff9f68;
-  --red: #ff4d6d;
-  --cyan: #7bdff2;
-  --mint: #b2f7ef;
-  --pink: #f6a6d8;
-  --lavender: #b8b5ff;
-  --shadow: 0 24px 70px rgba(26, 5, 45, .34);
-  --shadow-soft: 0 18px 38px rgba(255, 77, 109, .18);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+    :root {
+      --bg: #18051f;
+      --ink: #11111f;
+      --text: #fff8fb;
+      --muted: rgba(255,248,251,.68);
+      --paper: rgba(255,255,255,.86);
+      --paper-soft: rgba(255,255,255,.58);
+      --line: rgba(255,255,255,.38);
+      --navy: #16162a;
+      --yellow: #ffd166;
+      --orange: #ff9f68;
+      --red: #ff4d6d;
+      --cyan: #7bdff2;
+      --mint: #b2f7ef;
+      --pink: #f6a6d8;
+      --lavender: #b8b5ff;
+      --shadow: 0 24px 70px rgba(26, 5, 45, .34);
+      --shadow-soft: 0 18px 38px rgba(255, 77, 109, .18);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
-  margin: 0;
-  min-height: 100svh;
-  color: var(--text);
-  background:
-    radial-gradient(circle at 16% 8%, rgba(255,209,102,.58), transparent 18%),
-    radial-gradient(circle at 74% 14%, rgba(123,223,242,.46), transparent 20%),
-    radial-gradient(circle at 78% 82%, rgba(178,247,239,.38), transparent 24%),
-    linear-gradient(180deg, #5e0b3d 0%, #b8205f 35%, #ef7d8d 68%, #beece9 100%);
-  display: grid;
-  place-items: center;
-  overflow-x: hidden;
-  position: relative;
-}
+    body {
+      margin: 0;
+      min-height: 100svh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 8%, rgba(255,209,102,.58), transparent 18%),
+        radial-gradient(circle at 74% 14%, rgba(123,223,242,.46), transparent 20%),
+        radial-gradient(circle at 78% 82%, rgba(178,247,239,.38), transparent 24%),
+        linear-gradient(180deg, #5e0b3d 0%, #b8205f 35%, #ef7d8d 68%, #beece9 100%);
+      display: grid;
+      place-items: center;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: -15vmax;
-  pointer-events: none;
-  background:
-    repeating-conic-gradient(
-      from -18deg at 50% 74%,
-      rgba(255,255,255,.22) 0 6deg,
-      transparent 6deg 15deg,
-      rgba(255,209,102,.18) 15deg 22deg,
-      transparent 22deg 32deg
-    );
-  opacity: .46;
-  mask-image: radial-gradient(circle at 50% 74%, black 0 48%, transparent 72%);
-}
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -15vmax;
+      pointer-events: none;
+      background:
+        repeating-conic-gradient(
+          from -18deg at 50% 74%,
+          rgba(255,255,255,.22) 0 6deg,
+          transparent 6deg 15deg,
+          rgba(255,209,102,.18) 15deg 22deg,
+          transparent 22deg 32deg
+        );
+      opacity: .46;
+      mask-image: radial-gradient(circle at 50% 74%, black 0 48%, transparent 72%);
+    }
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px),
-    radial-gradient(circle, rgba(255,255,255,.38) 0 1px, transparent 1.5px);
-  background-size: 54px 54px, 91px 91px;
-  background-position: 8px 12px, 34px 28px;
-  opacity: .42;
-}
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(255,255,255,.38) 0 1px, transparent 1.5px);
+      background-size: 54px 54px, 91px 91px;
+      background-position: 8px 12px, 34px 28px;
+      opacity: .42;
+    }
 
-button, input, select { font: inherit; }
-button { touch-action: manipulation; }
+    button, input, select { font: inherit; }
+    button { touch-action: manipulation; }
 
-.app {
-  width: min(100%, 430px);
-  min-height: 100svh;
-  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  position: relative;
-  z-index: 1;
-}
+    .app {
+      width: min(100%, 430px);
+      min-height: 100svh;
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 2px 2px;
-}
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 2px 2px;
+    }
 
-h1, h2, p { margin: 0; }
+    h1, h2, p { margin: 0; }
 
-h1 {
-  font-size: 32px;
-  line-height: .9;
-  max-width: 230px;
-  letter-spacing: -.075em;
-  font-weight: 950;
-  text-shadow: 0 10px 28px rgba(0,0,0,.18);
-}
+    h1 {
+      font-size: 32px;
+      line-height: .9;
+      max-width: 230px;
+      letter-spacing: -.075em;
+      font-weight: 950;
+      text-shadow: 0 10px 28px rgba(0,0,0,.18);
+    }
 
-h2 {
-  font-size: 28px;
-  line-height: .96;
-  letter-spacing: -.07em;
-  font-weight: 950;
-}
+    h2 {
+      font-size: 28px;
+      line-height: .96;
+      letter-spacing: -.07em;
+      font-weight: 950;
+    }
 
-small {
-  display: inline-flex;
-  margin-top: 8px;
-  color: rgba(255,255,255,.82);
-  font-weight: 900;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  font-size: 11px;
-}
+    small {
+      display: inline-flex;
+      margin-top: 8px;
+      color: rgba(255,255,255,.82);
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
 
-.icon-btn {
-  width: 48px;
-  height: 48px;
-  border: 3px solid rgba(255,255,255,.72);
-  border-radius: 18px;
-  color: var(--navy);
-  background: rgba(255,255,255,.86);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  box-shadow: 0 12px 28px rgba(22,22,42,.18);
-  position: relative;
-  z-index: 5;
-}
+    .icon-btn {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255,255,255,.72);
+      border-radius: 18px;
+      color: var(--navy);
+      background: rgba(255,255,255,.86);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(22,22,42,.18);
+      position: relative;
+      z-index: 5;
+    }
 
-.card {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.52)),
-    linear-gradient(135deg, rgba(255,209,102,.18), rgba(123,223,242,.18));
-  border: 3px solid rgba(255,255,255,.72);
-  border-radius: 34px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(22px) saturate(1.35);
-  color: var(--navy);
-  position: relative;
-  overflow: hidden;
-}
+    .card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.52)),
+        linear-gradient(135deg, rgba(255,209,102,.18), rgba(123,223,242,.18));
+      border: 3px solid rgba(255,255,255,.72);
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(1.35);
+      color: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
 
-.card::before {
-  content: "";
-  position: absolute;
-  inset: auto -20% -42% -20%;
-  height: 64%;
-  background:
-    radial-gradient(circle at 18% 40%, rgba(123,223,242,.42), transparent 28%),
-    radial-gradient(circle at 82% 32%, rgba(255,77,109,.28), transparent 30%),
-    linear-gradient(135deg, rgba(178,247,239,.28), rgba(255,209,102,.18));
-  transform: rotate(-7deg);
-  pointer-events: none;
-}
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: auto -20% -42% -20%;
+      height: 64%;
+      background:
+        radial-gradient(circle at 18% 40%, rgba(123,223,242,.42), transparent 28%),
+        radial-gradient(circle at 82% 32%, rgba(255,77,109,.28), transparent 30%),
+        linear-gradient(135deg, rgba(178,247,239,.28), rgba(255,209,102,.18));
+      transform: rotate(-7deg);
+      pointer-events: none;
+    }
 
-.view {
-  padding: 22px;
-  display: grid;
-  gap: 15px;
-}
+    .view {
+      padding: 22px;
+      display: grid;
+      gap: 15px;
+    }
 
-.view > *, .game-card > *, .final > *, .modal-card > * {
-  position: relative;
-  z-index: 1;
-}
+    .view > *, .game-card > *, .final > *, .modal-card > * {
+      position: relative;
+      z-index: 1;
+    }
 
-.btn {
-  border: 0;
-  border-radius: 20px;
-  padding: 15px 18px;
-  min-height: 54px;
-  font-weight: 950;
-  letter-spacing: -.035em;
-  color: #16162a;
-  background: linear-gradient(135deg, var(--mint), var(--cyan));
-  cursor: pointer;
-  box-shadow: 0 16px 28px rgba(123,223,242,.28), inset 0 0 0 2px rgba(255,255,255,.62);
-}
+    .btn {
+      border: 0;
+      border-radius: 20px;
+      padding: 15px 18px;
+      min-height: 54px;
+      font-weight: 950;
+      letter-spacing: -.035em;
+      color: #16162a;
+      background: linear-gradient(135deg, var(--mint), var(--cyan));
+      cursor: pointer;
+      box-shadow: 0 16px 28px rgba(123,223,242,.28), inset 0 0 0 2px rgba(255,255,255,.62);
+    }
 
-.btn:active { transform: scale(.98); }
+    .btn:active { transform: scale(.98); }
 
-.btn.secondary {
-  color: var(--navy);
-  background: rgba(255,255,255,.58);
-  box-shadow: inset 0 0 0 2px rgba(22,22,42,.12), 0 12px 22px rgba(22,22,42,.08);
-}
+    .btn.secondary {
+      color: var(--navy);
+      background: rgba(255,255,255,.58);
+      box-shadow: inset 0 0 0 2px rgba(22,22,42,.12), 0 12px 22px rgba(22,22,42,.08);
+    }
 
-.btn.warning { background: linear-gradient(135deg, var(--yellow), var(--orange)); }
-.btn.danger { background: linear-gradient(135deg, var(--red), var(--orange)); color: white; }
+    .btn.warning { background: linear-gradient(135deg, var(--yellow), var(--orange)); }
+    .btn.danger { background: linear-gradient(135deg, var(--red), var(--orange)); color: white; }
 
-input, select {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  color: var(--navy);
-  background: rgba(255,255,255,.68);
-  border-radius: 20px;
-  padding: 15px 16px;
-  box-shadow: inset 0 0 0 2px rgba(22,22,42,.1), 0 10px 22px rgba(22,22,42,.06);
-  font-weight: 850;
-}
+    input, select {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: var(--navy);
+      background: rgba(255,255,255,.68);
+      border-radius: 20px;
+      padding: 15px 16px;
+      box-shadow: inset 0 0 0 2px rgba(22,22,42,.1), 0 10px 22px rgba(22,22,42,.06);
+      font-weight: 850;
+    }
 
-option { color: #111; }
-input::placeholder { color: rgba(22,22,42,.42); }
+    option { color: #111; }
+    input::placeholder { color: rgba(22,22,42,.42); }
 
-.hint {
-  color: rgba(22,22,42,.62);
-  font-size: 13px;
-  line-height: 1.45;
-  text-align: center;
-  font-weight: 750;
-}
+    .hint {
+      color: rgba(22,22,42,.62);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+      font-weight: 750;
+    }
 
-.error {
-  color: #8b2140;
-  font-size: 13px;
-  text-align: center;
-  line-height: 1.45;
-  font-weight: 850;
-}
+    .error {
+      color: #8b2140;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.45;
+      font-weight: 850;
+    }
 
-.game-card {
-  padding: 16px;
-  display: grid;
-  gap: 12px;
-  overflow: hidden;
-}
+    .game-card {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      overflow: hidden;
+    }
 
-.status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: rgba(22,22,42,.62);
-  font-size: 13px;
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: .02em;
-}
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: rgba(22,22,42,.62);
+      font-size: 13px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.64);
-  color: var(--navy);
-  min-width: 78px;
-  box-shadow: inset 0 0 0 2px rgba(22,22,42,.1);
-}
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.64);
+      color: var(--navy);
+      min-width: 78px;
+      box-shadow: inset 0 0 0 2px rgba(22,22,42,.1);
+    }
 
-.wheel-wrap {
-  position: relative;
-  aspect-ratio: 1.45 / 1;
-  width: 100%;
-  display: grid;
-  place-items: end center;
-  padding: 10px 6px 0;
-  user-select: none;
-  touch-action: none;
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at 50% 100%, rgba(22,22,42,.98) 0 27%, transparent 28%),
-    linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12));
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.38);
-}
+    .wheel-wrap {
+      position: relative;
+      aspect-ratio: 1.45 / 1;
+      width: 100%;
+      display: grid;
+      place-items: end center;
+      padding: 10px 6px 0;
+      user-select: none;
+      touch-action: none;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 50% 100%, rgba(22,22,42,.98) 0 27%, transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12));
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.38);
+    }
 
-svg { width: 100%; height: 100%; overflow: visible; }
+    svg { width: 100%; height: 100%; overflow: visible; }
 
-#dialBg {
-  fill: rgba(22,22,42,.96);
-  stroke: rgba(255,255,255,.82);
-  stroke-width: 3;
-  filter: drop-shadow(0 18px 16px rgba(22,22,42,.2));
-}
+    #dialBg {
+      fill: rgba(22,22,42,.96);
+      stroke: rgba(255,255,255,.82);
+      stroke-width: 3;
+      filter: drop-shadow(0 18px 16px rgba(22,22,42,.2));
+    }
 
-.needle {
-  stroke: #f8f7ff;
-  stroke-width: 4.2;
-  stroke-linecap: round;
-  filter: drop-shadow(0 7px 7px rgba(0,0,0,.42));
-}
+    .needle {
+      stroke: #f8f7ff;
+      stroke-width: 4.2;
+      stroke-linecap: round;
+      filter: drop-shadow(0 7px 7px rgba(0,0,0,.42));
+    }
 
-.hub {
-  fill: #ff2f5f;
-  stroke: rgba(255,255,255,.7);
-  stroke-width: 2;
-  filter: drop-shadow(0 7px 12px rgba(0,0,0,.35));
-}
+    .hub {
+      fill: #ff2f5f;
+      stroke: rgba(255,255,255,.7);
+      stroke-width: 2;
+      filter: drop-shadow(0 7px 12px rgba(0,0,0,.35));
+    }
 
-#targetZones { transition: opacity .25s ease; }
-#targetZones.hidden-target { opacity: 0; }
+    #targetZones { transition: opacity .25s ease; }
+    #targetZones.hidden-target { opacity: 0; }
 
-.clue-card {
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-  background: rgba(255,255,255,.52);
-  border-radius: 28px;
-  border: 2px solid rgba(255,255,255,.62);
-  box-shadow: inset 0 0 0 1px rgba(22,22,42,.06);
-}
+    .clue-card {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      background: rgba(255,255,255,.52);
+      border-radius: 28px;
+      border: 2px solid rgba(255,255,255,.62);
+      box-shadow: inset 0 0 0 1px rgba(22,22,42,.06);
+    }
 
-.spectrum {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: rgba(22,22,42,.66);
-  font-size: 13px;
-  font-weight: 950;
-}
+    .spectrum {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: rgba(22,22,42,.66);
+      font-size: 13px;
+      font-weight: 950;
+    }
 
-.spectrum span {
-  padding: 10px 10px;
-  background: rgba(22,22,42,.08);
-  border-radius: 16px;
-  flex: 1;
-  text-align: center;
-}
+    .spectrum span {
+      padding: 10px 10px;
+      background: rgba(22,22,42,.08);
+      border-radius: 16px;
+      flex: 1;
+      text-align: center;
+    }
 
-.clue {
-  min-height: 56px;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  font-size: 25px;
-  font-weight: 950;
-  letter-spacing: -.055em;
-  color: var(--navy);
-}
+    .clue {
+      min-height: 56px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 25px;
+      font-weight: 950;
+      letter-spacing: -.055em;
+      color: var(--navy);
+    }
 
-#bigCode {
-  font-size: 46px;
-  min-height: 78px;
-  border-radius: 26px;
-  background: rgba(22,22,42,.94);
-  color: white;
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.12);
-}
+    #bigCode {
+      font-size: 46px;
+      min-height: 78px;
+      border-radius: 26px;
+      background: rgba(22,22,42,.94);
+      color: white;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.12);
+    }
 
-.controls { display: grid; gap: 10px; }
-.master-grid { display: grid; gap: 10px; }
+    .controls { display: grid; gap: 10px; }
+    .master-grid { display: grid; gap: 10px; }
 
-.score-strip {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 7px;
-}
+    .score-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+    }
 
-.score-box {
-  height: 44px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  font-weight: 950;
-  background: rgba(255,255,255,.46);
-  color: rgba(22,22,42,.52);
-  border: 2px solid rgba(255,255,255,.52);
-}
+    .score-box {
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+      background: rgba(255,255,255,.46);
+      color: rgba(22,22,42,.52);
+      border: 2px solid rgba(255,255,255,.52);
+    }
 
-.score-box.done {
-  color: #16162a;
-  background: linear-gradient(135deg, var(--mint), var(--yellow));
-  box-shadow: 0 12px 18px rgba(255,209,102,.18);
-}
+    .score-box.done {
+      color: #16162a;
+      background: linear-gradient(135deg, var(--mint), var(--yellow));
+      box-shadow: 0 12px 18px rgba(255,209,102,.18);
+    }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: none;
-  place-items: center;
-  padding: 16px;
-  background: rgba(24,5,31,.46);
-  backdrop-filter: blur(12px);
-}
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(24,5,31,.46);
+      backdrop-filter: blur(12px);
+    }
 
-.modal.show { display: grid; }
-.modal-card { width: min(100%, 390px); padding: 20px; display: grid; gap: 14px; }
+    .modal.show { display: grid; }
+    .modal-card { width: min(100%, 390px); padding: 20px; display: grid; gap: 14px; }
 
-.final {
-  text-align: center;
-  padding: 28px 18px;
-  display: none;
-  gap: 16px;
-  animation: pop .7s cubic-bezier(.2,.8,.2,1);
-}
+    .final {
+      text-align: center;
+      padding: 28px 18px;
+      display: none;
+      gap: 16px;
+      animation: pop .7s cubic-bezier(.2,.8,.2,1);
+    }
 
-.final.show { display: grid; }
-.final .big { font-size: 64px; font-weight: 950; letter-spacing: -.08em; }
+    .final.show { display: grid; }
+    .final .big { font-size: 64px; font-weight: 950; letter-spacing: -.08em; }
 
-.match-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: rgba(24,5,31,.38);
-  backdrop-filter: blur(10px);
-}
+    .match-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      background: rgba(24,5,31,.38);
+      backdrop-filter: blur(10px);
+    }
 
-.match-card {
-  width: min(88vw, 340px);
-  padding: 30px 18px;
-  text-align: center;
-  border-radius: 34px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.62)),
-    linear-gradient(135deg, rgba(255,209,102,.22), rgba(123,223,242,.22));
-  border: 3px solid rgba(255,255,255,.72);
-  box-shadow: var(--shadow);
-  animation: matchPop .75s cubic-bezier(.2,.9,.2,1);
-  color: var(--navy);
-}
+    .match-card {
+      width: min(88vw, 340px);
+      padding: 30px 18px;
+      text-align: center;
+      border-radius: 34px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.62)),
+        linear-gradient(135deg, rgba(255,209,102,.22), rgba(123,223,242,.22));
+      border: 3px solid rgba(255,255,255,.72);
+      box-shadow: var(--shadow);
+      animation: matchPop .75s cubic-bezier(.2,.9,.2,1);
+      color: var(--navy);
+    }
 
-.match-emoji { font-size: 64px; }
+    .match-emoji { font-size: 64px; }
 
-.match-title {
-  font-size: 36px;
-  font-weight: 950;
-  letter-spacing: -.07em;
-}
+    .match-title {
+      font-size: 36px;
+      font-weight: 950;
+      letter-spacing: -.07em;
+    }
 
-.match-sub {
-  margin-top: 8px;
-  color: rgba(22,22,42,.62);
-  font-weight: 850;
-}
+    .match-sub {
+      margin-top: 8px;
+      color: rgba(22,22,42,.62);
+      font-weight: 850;
+    }
 
-@keyframes pop {
-  from { opacity: 0; transform: scale(.92) translateY(14px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
+    @keyframes pop {
+      from { opacity: 0; transform: scale(.92) translateY(14px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
 
-@keyframes matchPop {
-  0% { opacity: 0; transform: scale(.75) rotate(-4deg); }
-  60% { opacity: 1; transform: scale(1.08) rotate(2deg); }
-  100% { transform: scale(1) rotate(0); }
-}
+    @keyframes matchPop {
+      0% { opacity: 0; transform: scale(.75) rotate(-4deg); }
+      60% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
 
-.hidden { display: none !important; }
+    .hidden { display: none !important; }
 
-@media (max-width: 380px) {
-  h1 { font-size: 29px; }
-  h2 { font-size: 25px; }
-  .clue { font-size: 22px; }
-  .app { padding-inline: 12px; }
-}
-
+    @media (max-width: 380px) {
+      h1 { font-size: 29px; }
+      h2 { font-size: 25px; }
+      .clue { font-size: 22px; }
+      .app { padding-inline: 12px; }
+    }
   </style>
 </head>
 
@@ -629,102 +628,102 @@ svg { width: 100%; height: 100%; overflow: visible; }
       ["Tolérance", "Laxisme"],
       ["Force de caractère", "Orgueil"],
       ["Prudent", "Peureux"],
-      ["Courageux", "Inconscient"]
+      ["Courageux", "Inconscient"],
       ["Vraie excuse", "Fausse excuse"],
-["Trop tôt", "Trop tard"],
-["Bon conseil", "Mauvais conseil"],
-["Amitié sincère", "Amitié intéressée"],
-["Secret mignon", "Secret inquiétant"],
-["Surprise réussie", "Surprise gênante"],
-["Humour fin", "Humour limite"],
-["Charme naturel", "Forceur"],
-["Confiant", "Arrogant"],
-["Discret", "Invisible"],
-["Sensible", "Fragile"],
-["Passionné", "Intense"],
-["Raisonnable", "Ennuyeux"],
-["Simple", "Basique"],
-["Original", "Bizarre"],
-["Cool", "Froid"],
-["Attachant", "Collant"],
-["Disponible", "Dépendant"],
-["Indépendant", "Distant"],
-["Romantique", "Niais"],
-["Direct", "Brutal"],
-["Poli", "Hypocrite"],
-["Honnête", "Trop honnête"],
-["Calme", "Mou"],
-["Énergique", "Épuisant"],
-["Positif", "Déconnecté"],
-["Réaliste", "Pessimiste"],
-["Optimiste", "Naïf"],
-["Sérieux", "Coincé"],
-["Léger", "Superficiel"],
-["Profond", "Prise de tête"],
-["Curieux", "Intrusif"],
-["Attentionné", "Envahissant"],
-["Loyal", "Aveugle"],
-["Fidèle", "Possessif"],
-["Franc", "Méchant"],
-["Gentleman", "Vieux jeu"],
-["Classe", "Prétentieux"],
-["Sobre", "Fade"],
-["Audacieux", "Ridicule"],
-["Mature", "Blasé"],
-["Enfantin", "Touchant"],
-["Rassurant", "Prévisible"],
-["Excitant", "Instable"],
-["Sécurité", "Prison"],
-["Liberté", "Solitude"],
-["Compromis", "Sacrifice"],
-["Patience", "Passivité"],
-["Persévérance", "Obstination"],
-["Respect", "Distance"],
-["Jalousie mignonne", "Jalousie toxique"],
-["Flirt innocent", "Manque de respect"],
-["Petit mensonge", "Trahison"],
-["Vérité nécessaire", "Vérité inutile"],
-["Message mignon", "Message gênant"],
-["Silence paisible", "Silence pesant"],
-["Débat intéressant", "Dispute inutile"],
-["Critique constructive", "Attaque personnelle"],
-["Ambiance chill", "Malaise total"],
-["Soirée réussie", "Soirée interminable"],
-["Bonne habitude", "Obsession"],
-["Routine rassurante", "Routine morte"],
-["Risque calculé", "Folie pure"],
-["Plan romantique", "Plan cringe"],
-["Cadeau touchant", "Cadeau nul"],
-["Compliment sincère", "Compliment forcé"],
-["Preuve de maturité", "Manque de fun"],
-["Aventure", "Galère"],
-["Souvenir drôle", "Trauma"],
-["Problème de couple", "Détail sans importance"],
-["Green flag rare", "Red flag caché"],
-["Attitude sexy", "Attitude gênante"],
-["Personne solaire", "Personne épuisante"],
-["Bonne énergie", "Mauvais mood"],
-["Charismatique", "Insupportable"],
-["Respectueux", "Trop distant"],
-["Présent", "Étouflant"],
-["Détaché", "Indifférent"],
-["Passé romantique", "Passé suspect"],
-["Excuse valable", "Excuse bidon"],
-["Priorité saine", "Égoïsme"],
-["Franchise", "Manque de tact"],
-["Mentalité de gagnant", "Mentalité toxique"],
-["Rêve ambitieux", "Délire irréaliste"],
-["Choix responsable", "Choix triste"],
-["Peur légitime", "Blocage inutile"],
-["Besoin normal", "Caprice"],
-["Limite saine", "Mur émotionnel"],
-["Vulnérabilité", "Besoin d’attention"],
-["Élégant", "Trop sérieux"],
-["Fun", "Fatigant"],
-["Mignon au début", "Insupportable après"],
-["Bonne surprise", "Mauvais signe"],
-["Tension sexy", "Malaise"],
-["Petit défaut", "Gros problème"]
+      ["Trop tôt", "Trop tard"],
+      ["Bon conseil", "Mauvais conseil"],
+      ["Amitié sincère", "Amitié intéressée"],
+      ["Secret mignon", "Secret inquiétant"],
+      ["Surprise réussie", "Surprise gênante"],
+      ["Humour fin", "Humour limite"],
+      ["Charme naturel", "Forceur"],
+      ["Confiant", "Arrogant"],
+      ["Discret", "Invisible"],
+      ["Sensible", "Fragile"],
+      ["Passionné", "Intense"],
+      ["Raisonnable", "Ennuyeux"],
+      ["Simple", "Basique"],
+      ["Original", "Bizarre"],
+      ["Cool", "Froid"],
+      ["Attachant", "Collant"],
+      ["Disponible", "Dépendant"],
+      ["Indépendant", "Distant"],
+      ["Romantique", "Niais"],
+      ["Direct", "Brutal"],
+      ["Poli", "Hypocrite"],
+      ["Honnête", "Trop honnête"],
+      ["Calme", "Mou"],
+      ["Énergique", "Épuisant"],
+      ["Positif", "Déconnecté"],
+      ["Réaliste", "Pessimiste"],
+      ["Optimiste", "Naïf"],
+      ["Sérieux", "Coincé"],
+      ["Léger", "Superficiel"],
+      ["Profond", "Prise de tête"],
+      ["Curieux", "Intrusif"],
+      ["Attentionné", "Envahissant"],
+      ["Loyal", "Aveugle"],
+      ["Fidèle", "Possessif"],
+      ["Franc", "Méchant"],
+      ["Gentleman", "Vieux jeu"],
+      ["Classe", "Prétentieux"],
+      ["Sobre", "Fade"],
+      ["Audacieux", "Ridicule"],
+      ["Mature", "Blasé"],
+      ["Enfantin", "Touchant"],
+      ["Rassurant", "Prévisible"],
+      ["Excitant", "Instable"],
+      ["Sécurité", "Prison"],
+      ["Liberté", "Solitude"],
+      ["Compromis", "Sacrifice"],
+      ["Patience", "Passivité"],
+      ["Persévérance", "Obstination"],
+      ["Respect", "Distance"],
+      ["Jalousie mignonne", "Jalousie toxique"],
+      ["Flirt innocent", "Manque de respect"],
+      ["Petit mensonge", "Trahison"],
+      ["Vérité nécessaire", "Vérité inutile"],
+      ["Message mignon", "Message gênant"],
+      ["Silence paisible", "Silence pesant"],
+      ["Débat intéressant", "Dispute inutile"],
+      ["Critique constructive", "Attaque personnelle"],
+      ["Ambiance chill", "Malaise total"],
+      ["Soirée réussie", "Soirée interminable"],
+      ["Bonne habitude", "Obsession"],
+      ["Routine rassurante", "Routine morte"],
+      ["Risque calculé", "Folie pure"],
+      ["Plan romantique", "Plan cringe"],
+      ["Cadeau touchant", "Cadeau nul"],
+      ["Compliment sincère", "Compliment forcé"],
+      ["Preuve de maturité", "Manque de fun"],
+      ["Aventure", "Galère"],
+      ["Souvenir drôle", "Trauma"],
+      ["Problème de couple", "Détail sans importance"],
+      ["Green flag rare", "Red flag caché"],
+      ["Attitude sexy", "Attitude gênante"],
+      ["Personne solaire", "Personne épuisante"],
+      ["Bonne énergie", "Mauvais mood"],
+      ["Charismatique", "Insupportable"],
+      ["Respectueux", "Trop distant"],
+      ["Présent", "Étouflant"],
+      ["Détaché", "Indifférent"],
+      ["Passé romantique", "Passé suspect"],
+      ["Excuse valable", "Excuse bidon"],
+      ["Priorité saine", "Égoïsme"],
+      ["Franchise", "Manque de tact"],
+      ["Mentalité de gagnant", "Mentalité toxique"],
+      ["Rêve ambitieux", "Délire irréaliste"],
+      ["Choix responsable", "Choix triste"],
+      ["Peur légitime", "Blocage inutile"],
+      ["Besoin normal", "Caprice"],
+      ["Limite saine", "Mur émotionnel"],
+      ["Vulnérabilité", "Besoin d’attention"],
+      ["Élégant", "Trop sérieux"],
+      ["Fun", "Fatigant"],
+      ["Mignon au début", "Insupportable après"],
+      ["Bonne surprise", "Mauvais signe"],
+      ["Tension sexy", "Malaise"],
+      ["Petit défaut", "Gros problème"]
     ];
 
     const $ = id => document.getElementById(id);
@@ -857,12 +856,17 @@ svg { width: 100%; height: 100%; overflow: visible; }
       }
     }
 
-    function showMatchAnimation(win, points) {
-      els.matchEmoji.textContent = win ? "💘" : "😅";
-      els.matchTitle.textContent = win ? "It's a match!" : "Oups!";
-      els.matchSub.textContent = win
+    function showMatchAnimation(points) {
+      const perfect = points === 4;
+      const close = points > 0 && points < 4;
+
+      els.matchEmoji.textContent = perfect ? "💘" : close ? "✨" : "😅";
+      els.matchTitle.textContent = perfect ? "Gagné !" : close ? "Pas mal !" : "Oups !";
+      els.matchSub.textContent = perfect
         ? "Parfait, vous êtes sur la même longueur d’onde."
-        : "Score de la manche : " + points + " point" + (points > 1 ? "s" : "") + ".";
+        : close
+          ? "Vous êtes quand même sur la bonne longueur d’onde."
+          : "Vous êtes complètement à côté cette fois.";
 
       els.matchOverlay.classList.remove("hidden");
 
@@ -1153,16 +1157,22 @@ svg { width: 100%; height: 100%; overflow: visible; }
         }
 
         if (d.phase === "reveal") {
-          const winRound = (d.lastScore || 0) === 4;
-          const animationKey = d.round + "-" + d.lastScore;
+          const points = d.lastScore || 0;
+          const perfect = points === 4;
+          const close = points > 0 && points < 4;
+          const animationKey = d.round + "-" + points;
 
           phoneNotify(
-            winRound ? "It's a match!" : "Oups!",
-            winRound ? "Vous avez parfaitement deviné." : "La manche est terminée."
+            perfect ? "Gagné !" : close ? "Pas mal !" : "Oups !",
+            perfect
+              ? "Vous avez parfaitement deviné."
+              : close
+                ? "Vous êtes quand même sur la longueur d’onde."
+                : "Vous êtes complètement à côté cette fois."
           );
 
           if (lastAnimationKey !== animationKey) {
-            showMatchAnimation(winRound, d.lastScore || 0);
+            showMatchAnimation(points);
             lastAnimationKey = animationKey;
           }
         }
