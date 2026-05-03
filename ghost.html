@@ -138,7 +138,7 @@
             Le Mot Fantôme
           </div>
           <h1 class="mt-4 text-4xl font-black tracking-tight text-ink sm:text-6xl">Ghost</h1>
-          <p class="mt-2 max-w-xl text-base font-medium text-gray-600 sm:text-lg">10 manches. Les joueurs commencent à tour de rôle. Écris un mot, valide-le, et gagne le point si le mot existe.</p>
+          <p class="mt-2 max-w-xl text-base font-medium text-gray-600 sm:text-lg">10 manches. Les joueurs commencent à tour de rôle. Ajoute une seule lettre, puis valide le mot au bon moment.</p>
         </div>
 
         <button id="resetBtn" class="pressable hidden rounded-full bg-white/70 px-5 py-3 text-sm font-extrabold text-gray-700 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white">
@@ -311,7 +311,7 @@
               </div>
               <div>
                 <h2 class="text-3xl font-black tracking-tight text-ink sm:text-4xl">Créer une partie</h2>
-                <p class="mt-3 max-w-md text-base font-semibold leading-7 text-gray-600">Génère un code de 4 lettres. La partie se joue en ${TOTAL_ROUNDS} manches avec alternance du premier joueur.</p>
+                <p class="mt-3 max-w-md text-base font-semibold leading-7 text-gray-600">Génère un code de 4 lettres. La partie se joue en ${TOTAL_ROUNDS} manches, une lettre par joueur et par tour.</p>
               </div>
             </div>
           </button>
@@ -342,8 +342,8 @@
 
         <div class="mt-5 grid gap-5 md:grid-cols-3">
           <div class="glass rounded-[28px] p-5">
-            <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="keyboard" class="h-5 w-5 text-coral"></i> Plusieurs lettres</div>
-            <p class="mt-2 text-sm font-semibold leading-6 text-gray-500">Chaque joueur peut composer le mot qu'il veut pendant son tour.</p>
+            <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="keyboard" class="h-5 w-5 text-coral"></i> Une lettre par tour</div>
+            <p class="mt-2 text-sm font-semibold leading-6 text-gray-500">Le tour passe automatiquement après chaque lettre ajoutée.</p>
           </div>
           <div class="glass rounded-[28px] p-5">
             <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="database" class="h-5 w-5 text-violet"></i> Dico en ligne</div>
@@ -570,7 +570,7 @@
         : roundResult
           ? roundResult.reason
           : isMyTurn
-            ? 'Compose un mot avec autant de lettres que tu veux, puis valide.'
+            ? 'Ajoute une seule lettre, ou valide le mot si tu penses qu’il existe.'
             : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}.`;
 
       return `
@@ -601,7 +601,7 @@
                 ${scoreRow(room, 'p2')}
               </div>
               <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font-semibold leading-6 text-gray-600">
-                Le joueur qui valide un mot existant gagne 1 point. Si le mot n'existe pas, il perd la manche et l'autre joueur gagne 1 point.
+                Chaque joueur ajoute une seule lettre. Le joueur qui valide un mot existant gagne 1 point. Si le mot n'existe pas, l'autre joueur gagne 1 point.
               </div>
             </div>
 
@@ -645,7 +645,7 @@
         <div>
           <div class="mb-4 flex items-center justify-between gap-3">
             <p class="text-sm font-black uppercase tracking-[0.22em] text-gray-400">Clavier</p>
-            <p class="text-sm font-extrabold ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Ajoute autant de lettres que tu veux' : 'Verrouillé'}</p>
+            <p class="text-sm font-extrabold ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Ajoute une seule lettre' : 'Verrouillé'}</p>
           </div>
           <div class="keyboard-grid">
             ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => `
@@ -653,14 +653,8 @@
             `).join('')}
           </div>
 
-          <div class="mt-5 grid gap-3 sm:grid-cols-3">
-            <button id="backspaceBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-white/75 px-5 py-4 text-base font-black text-gray-700 ring-1 ring-white/80 transition hover:bg-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400">
-              Effacer
-            </button>
-            <button id="clearBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-white/75 px-5 py-4 text-base font-black text-gray-700 ring-1 ring-white/80 transition hover:bg-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400">
-              Vider
-            </button>
-            <button id="validateBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-coral px-5 py-4 text-base font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
+          <div class="mt-5">
+            <button id="validateBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable w-full rounded-[24px] bg-coral px-5 py-4 text-base font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
               Valider le mot
             </button>
           </div>
@@ -702,8 +696,6 @@
         button.addEventListener('click', () => addLetter(button.dataset.letter));
       });
 
-      document.getElementById('backspaceBtn')?.addEventListener('click', backspaceLetter);
-      document.getElementById('clearBtn')?.addEventListener('click', clearWord);
       document.getElementById('validateBtn')?.addEventListener('click', validateWord);
       document.getElementById('nextRoundBtn')?.addEventListener('click', nextRound);
       document.getElementById('restartMatchBtn')?.addEventListener('click', restartMatch);
@@ -719,24 +711,20 @@
         return;
       }
 
+      const playerSlot = getSlotById(currentRoom, localPlayerId);
+      const opponentSlot = getOpponentSlot(playerSlot);
+      const opponentId = currentRoom.players?.[opponentSlot]?.id;
+      if (!opponentId) return;
+
       const nextWord = normalizeWord((currentRoom.currentWord || '') + letter);
       await roomRef.update({
         currentWord: nextWord,
-        lastAction: `${getPlayerById(currentRoom, localPlayerId)?.name || 'Un joueur'} compose son mot.`,
+        turn: opponentId,
+        lastAction: `${getPlayerById(currentRoom, localPlayerId)?.name || 'Un joueur'} a ajouté la lettre ${letter}.`,
         updatedAt: Date.now()
       });
     }
 
-    async function backspaceLetter() {
-      if (!currentRoom || currentRoom.turn !== localPlayerId || currentRoom.roundResult || currentRoom.matchWinner) return;
-      const nextWord = normalizeWord(currentRoom.currentWord || '').slice(0, -1);
-      await roomRef.update({ currentWord: nextWord, updatedAt: Date.now() });
-    }
-
-    async function clearWord() {
-      if (!currentRoom || currentRoom.turn !== localPlayerId || currentRoom.roundResult || currentRoom.matchWinner) return;
-      await roomRef.update({ currentWord: '', updatedAt: Date.now() });
-    }
 
     async function validateWord() {
       if (!currentRoom || currentRoom.roundResult || currentRoom.matchWinner || isCheckingWord) return;
