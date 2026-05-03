@@ -24,9 +24,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui']
-          },
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
           colors: {
             cream: '#F8F9FA',
             violet: '#7C3AED',
@@ -44,9 +42,7 @@
   </script>
 
   <style>
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { -webkit-tap-highlight-color: transparent; }
 
     body {
       min-height: 100vh;
@@ -78,27 +74,14 @@
       box-shadow: 0 32px 90px rgba(17, 24, 39, 0.14);
     }
 
-    .pressable {
-      transition: transform 120ms ease, opacity 180ms ease, box-shadow 180ms ease;
-    }
+    .pressable { transition: transform 120ms ease, opacity 180ms ease, box-shadow 180ms ease; }
+    .pressable:active { transform: scale(0.96); }
 
-    .pressable:active {
-      transform: scale(0.96);
-    }
-
-    .screen {
-      animation: fadeSlide 360ms ease both;
-    }
+    .screen { animation: fadeSlide 360ms ease both; }
 
     @keyframes fadeSlide {
-      from {
-        opacity: 0;
-        transform: translateY(18px) scale(0.985);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(18px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .active-player {
@@ -123,8 +106,8 @@
     }
 
     .letter-space {
-      letter-spacing: 0.18em;
-      text-indent: 0.18em;
+      letter-spacing: 0.12em;
+      text-indent: 0.12em;
     }
 
     .keyboard-grid {
@@ -134,15 +117,10 @@
     }
 
     @media (max-width: 520px) {
-      .keyboard-grid {
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-      }
+      .keyboard-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
     }
 
-    .toast {
-      animation: toastIn 220ms ease both;
-    }
-
+    .toast { animation: toastIn 220ms ease both; }
     @keyframes toastIn {
       from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
@@ -155,16 +133,16 @@
     <section class="w-full max-w-5xl">
       <header class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-sm font700 text-gray-700 shadow-sm backdrop-blur-xl">
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-sm font-bold text-gray-700 shadow-sm backdrop-blur-xl">
             <i data-lucide="ghost" class="h-4 w-4 text-violet"></i>
             Le Mot Fantôme
           </div>
           <h1 class="mt-4 text-4xl font-black tracking-tight text-ink sm:text-6xl">Ghost</h1>
-          <p class="mt-2 max-w-xl text-base font-medium text-gray-600 sm:text-lg">Ajoute une lettre sans compléter un mot. Bluffe, piège et défie au bon moment.</p>
+          <p class="mt-2 max-w-xl text-base font-medium text-gray-600 sm:text-lg">10 manches. Les joueurs commencent à tour de rôle. Écris un mot, valide-le, et gagne le point si le mot existe.</p>
         </div>
 
-        <button id="resetBtn" class="pressable hidden rounded-full bg-white/70 px-5 py-3 text-sm font800 text-gray-700 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white">
-          Réinitialiser
+        <button id="resetBtn" class="pressable hidden rounded-full bg-white/70 px-5 py-3 text-sm font-extrabold text-gray-700 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white">
+          Quitter
         </button>
       </header>
 
@@ -172,14 +150,14 @@
     </section>
   </main>
 
-  <div id="toast" class="fixed bottom-5 left-1/2 z-50 hidden w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border border-white/70 bg-white/80 p-4 text-center text-sm font700 text-gray-700 shadow-glass backdrop-blur-xl"></div>
+  <div id="toast" class="fixed bottom-5 left-1/2 z-50 hidden w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border border-white/70 bg-white/80 p-4 text-center text-sm font-bold text-gray-700 shadow-glass backdrop-blur-xl"></div>
 
   <script>
     /************************************************************
      * 1. CONFIGURATION FIREBASE
      * Remplace ces placeholders par ta configuration Firebase.
      ************************************************************/
-const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -201,44 +179,57 @@ const firebaseConfig = {
     }
 
     /************************************************************
-     * 2. PETIT DICTIONNAIRE DE DÉMO
-     * Remplace ou complète cette liste. Les mots sont en minuscules.
+     * 2. DICTIONNAIRE EXTERNE EN LIGNE
+     * Ici on utilise l'API publique MediaWiki du Wiktionnaire FR.
+     * Avantage : pas de liste locale limitée.
+     * Limite : cela vérifie l'existence d'une page Wiktionnaire, pas un dictionnaire arbitral officiel.
+     * Tu peux remplacer cette fonction par ta propre API plus tard.
      ************************************************************/
-    const DICTIONARY = [
-      'avoir','etre','faire','dire','aller','voir','savoir','pouvoir','falloir','vouloir',
-      'venir','prendre','trouver','donner','parler','aimer','passer','mettre','demander','tenir',
-      'sembler','laisser','rester','penser','entendre','regarder','repondre','rendre','connaitre','croire',
-      'porter','montrer','continuer','suivre','appeler','vivre','jouer','attendre','perdre','sentir',
-      'servir','recevoir','partir','arriver','comprendre','devenir','tenir','mourir','ouvrir','lire',
-      'ecrire','changer','travailler','marcher','creer','chercher','entrer','payer','tomber','gagner',
-      'courir','acheter','choisir','apprendre','expliquer','manger','boire','dormir','ecouter','sortir',
-      'maison','temps','jour','homme','femme','enfant','ville','pays','monde','main',
-      'oeil','ami','vie','nuit','porte','voix','coeur','place','travail','question',
-      'moment','raison','histoire','famille','route','guerre','eau','feu','terre','air'
-    ];
+    const wordValidityCache = new Map();
 
     function normalizeWord(value) {
       return String(value || '')
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z]/g, '');
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zœæ]/g, '')
+        .replaceAll('œ', 'oe')
+        .replaceAll('æ', 'ae');
     }
 
-    function checkValidity(word) {
+    async function checkValidity(word) {
       const normalized = normalizeWord(word);
-      return DICTIONARY.includes(normalized);
-    }
+      if (!normalized || normalized.length < 2) return false;
 
-    function hasPossibleContinuation(fragment) {
-      const normalized = normalizeWord(fragment);
-      if (!normalized) return true;
-      return DICTIONARY.some(word => word.startsWith(normalized));
+      if (wordValidityCache.has(normalized)) {
+        return wordValidityCache.get(normalized);
+      }
+
+      const url = 'https://fr.wiktionary.org/w/api.php?' + new URLSearchParams({
+        action: 'query',
+        format: 'json',
+        origin: '*',
+        titles: normalized
+      });
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Réponse API invalide');
+        const data = await response.json();
+        const pages = data?.query?.pages || {};
+        const exists = Object.values(pages).some(page => !page.missing && page.pageid);
+        wordValidityCache.set(normalized, exists);
+        return exists;
+      } catch (error) {
+        console.warn('Erreur dictionnaire externe :', error);
+        throw new Error('Le dictionnaire en ligne ne répond pas. Réessaie dans quelques secondes.');
+      }
     }
 
     /************************************************************
      * 3. ÉTAT LOCAL
      ************************************************************/
+    const TOTAL_ROUNDS = 10;
     const app = document.getElementById('app');
     const resetBtn = document.getElementById('resetBtn');
     const toast = document.getElementById('toast');
@@ -248,6 +239,7 @@ const firebaseConfig = {
     let roomRef = null;
     let unsubscribeRoom = null;
     let currentRoom = null;
+    let isCheckingWord = false;
 
     function getOrCreateLocalId() {
       const key = 'ghostPlayerId';
@@ -261,7 +253,7 @@ const firebaseConfig = {
 
     function showToast(message, type = 'info') {
       toast.textContent = message;
-      toast.className = 'fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border p-4 text-center text-sm font800 shadow-glass backdrop-blur-xl toast ' +
+      toast.className = 'fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border p-4 text-center text-sm font-extrabold shadow-glass backdrop-blur-xl toast ' +
         (type === 'error'
           ? 'border-coral/30 bg-rose-50/90 text-rose-700'
           : type === 'success'
@@ -269,7 +261,7 @@ const firebaseConfig = {
             : 'border-white/70 bg-white/80 text-gray-700');
       toast.classList.remove('hidden');
       clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.add('hidden'), 3200);
+      showToast.timer = setTimeout(() => toast.classList.add('hidden'), 3400);
     }
 
     function setScreen(html) {
@@ -315,11 +307,11 @@ const firebaseConfig = {
                 <div class="rounded-[28px] bg-violet p-4 text-white shadow-glow">
                   <i data-lucide="sparkles" class="h-8 w-8"></i>
                 </div>
-                <span class="rounded-full bg-violet/10 px-4 py-2 text-sm font900 text-violet">Host</span>
+                <span class="rounded-full bg-violet/10 px-4 py-2 text-sm font-black text-violet">Host</span>
               </div>
               <div>
                 <h2 class="text-3xl font-black tracking-tight text-ink sm:text-4xl">Créer une partie</h2>
-                <p class="mt-3 max-w-md text-base font600 leading-7 text-gray-600">Génère un code de 4 lettres et invite un deuxième joueur à rejoindre le lobby.</p>
+                <p class="mt-3 max-w-md text-base font-semibold leading-7 text-gray-600">Génère un code de 4 lettres. La partie se joue en ${TOTAL_ROUNDS} manches avec alternance du premier joueur.</p>
               </div>
             </div>
           </button>
@@ -330,12 +322,12 @@ const firebaseConfig = {
                 <div class="rounded-[28px] bg-mint p-4 text-white shadow-lg">
                   <i data-lucide="log-in" class="h-8 w-8"></i>
                 </div>
-                <span class="rounded-full bg-mint/10 px-4 py-2 text-sm font900 text-emerald-600">Join</span>
+                <span class="rounded-full bg-mint/10 px-4 py-2 text-sm font-black text-emerald-600">Join</span>
               </div>
 
               <div>
                 <h2 class="text-3xl font-black tracking-tight text-ink">Rejoindre</h2>
-                <p class="mt-3 text-base font600 leading-7 text-gray-600">Entre le code reçu.</p>
+                <p class="mt-3 text-base font-semibold leading-7 text-gray-600">Entre le code reçu.</p>
               </div>
 
               <div class="flex gap-3">
@@ -350,16 +342,16 @@ const firebaseConfig = {
 
         <div class="mt-5 grid gap-5 md:grid-cols-3">
           <div class="glass rounded-[28px] p-5">
-            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="keyboard" class="h-5 w-5 text-coral"></i> Clavier intégré</div>
-            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Aucune saisie native nécessaire pendant la partie.</p>
+            <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="keyboard" class="h-5 w-5 text-coral"></i> Plusieurs lettres</div>
+            <p class="mt-2 text-sm font-semibold leading-6 text-gray-500">Chaque joueur peut composer le mot qu'il veut pendant son tour.</p>
           </div>
           <div class="glass rounded-[28px] p-5">
-            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="radio-tower" class="h-5 w-5 text-violet"></i> Temps réel</div>
-            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Synchronisation via Firebase Realtime Database.</p>
+            <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="database" class="h-5 w-5 text-violet"></i> Dico en ligne</div>
+            <p class="mt-2 text-sm font-semibold leading-6 text-gray-500">Validation via Wiktionnaire français, sans liste locale limitée.</p>
           </div>
           <div class="glass rounded-[28px] p-5">
-            <div class="flex items-center gap-3 text-sm font900 text-gray-700"><i data-lucide="swords" class="h-5 w-5 text-mint"></i> Défis</div>
-            <p class="mt-2 text-sm font600 leading-6 text-gray-500">Conteste un fragment impossible ou un mot terminé.</p>
+            <div class="flex items-center gap-3 text-sm font-black text-gray-700"><i data-lucide="trophy" class="h-5 w-5 text-mint"></i> 10 manches</div>
+            <p class="mt-2 text-sm font-semibold leading-6 text-gray-500">Le score final départage les joueurs après la dixième manche.</p>
           </div>
         </div>
       `);
@@ -387,13 +379,16 @@ const firebaseConfig = {
         roomId,
         currentWord: '',
         turn: localPlayerId,
-        winner: null,
+        round: 1,
+        totalRounds: TOTAL_ROUNDS,
+        starterSlot: 'p1',
+        scores: { p1: 0, p2: 0 },
+        roundResult: null,
+        matchWinner: null,
         status: 'lobby',
         lastAction: 'Partie créée.',
         createdAt: Date.now(),
-        players: {
-          p1: makePlayer('p1')
-        }
+        players: { p1: makePlayer('p1') }
       };
 
       await roomRef.set(room);
@@ -465,9 +460,14 @@ const firebaseConfig = {
       return Object.values(room.players || {}).find(player => player.id === playerId);
     }
 
-    function getOpponent(room) {
-      const mySlot = getMySlot(room);
-      return room.players?.[getOpponentSlot(mySlot)];
+    function getSlotById(room, playerId) {
+      if (room?.players?.p1?.id === playerId) return 'p1';
+      if (room?.players?.p2?.id === playerId) return 'p2';
+      return null;
+    }
+
+    function getPlayerLabel(room, slot) {
+      return room.players?.[slot]?.name || (slot === 'p1' ? 'Joueur 1' : 'Joueur 2');
     }
 
     /************************************************************
@@ -489,20 +489,18 @@ const firebaseConfig = {
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div class="flex flex-wrap items-center gap-3">
-                <span class="rounded-full bg-ink px-4 py-2 text-sm font900 text-white">Code ${room.roomId}</span>
-                <button id="copyCodeBtn" class="pressable rounded-full bg-white/75 px-4 py-2 text-sm font800 text-gray-700 ring-1 ring-white/80 hover:bg-white">
-                  Copier le code
-                </button>
+                <span class="rounded-full bg-ink px-4 py-2 text-sm font-black text-white">Code ${room.roomId}</span>
+                <button id="copyCodeBtn" class="pressable rounded-full bg-white/75 px-4 py-2 text-sm font-extrabold text-gray-700 ring-1 ring-white/80 hover:bg-white">Copier le code</button>
               </div>
               <h2 class="mt-5 text-3xl font-black tracking-tight text-ink sm:text-4xl">
-                ${isPlaying ? 'La partie est lancée' : 'Lobby'}
+                ${room.matchWinner ? 'Match terminé' : isPlaying ? `Manche ${room.round}/${room.totalRounds || TOTAL_ROUNDS}` : 'Lobby'}
               </h2>
-              <p class="mt-2 text-base font600 text-gray-600">${escapeHtml(room.lastAction || 'En attente...')}</p>
+              <p class="mt-2 text-base font-semibold text-gray-600">${escapeHtml(room.lastAction || 'En attente...')}</p>
             </div>
 
             <div class="grid min-w-full gap-3 sm:grid-cols-2 lg:min-w-[420px]">
-              ${playerCard(room.players?.p1, 'Joueur 1', room.turn)}
-              ${playerCard(room.players?.p2, 'Joueur 2', room.turn)}
+              ${playerCard(room, 'p1', room.turn)}
+              ${playerCard(room, 'p2', room.turn)}
             </div>
           </div>
 
@@ -516,23 +514,27 @@ const firebaseConfig = {
         showToast('Code copié.', 'success');
       });
 
-      if (isPlaying && amInRoom && !room.winner) bindGameEvents(room, isMyTurn);
+      if (isPlaying && amInRoom && !room.matchWinner) bindGameEvents(room, isMyTurn);
     }
 
-    function playerCard(player, fallback, activeId) {
+    function playerCard(room, slot, activeId) {
+      const player = room.players?.[slot];
       const connected = Boolean(player);
-      const active = connected && player.id === activeId;
-      const badgeColor = fallback.endsWith('1') ? 'bg-violet/10 text-violet' : 'bg-mint/10 text-emerald-600';
+      const active = connected && player.id === activeId && !room.roundResult && !room.matchWinner;
+      const score = room.scores?.[slot] || 0;
+      const label = slot === 'p1' ? 'Joueur 1' : 'Joueur 2';
+      const badgeColor = slot === 'p1' ? 'bg-violet/10 text-violet' : 'bg-mint/10 text-emerald-600';
 
       return `
         <div class="${active ? 'active-player' : ''} relative rounded-[26px] border border-white/80 bg-white/62 p-4 backdrop-blur transition">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <div class="text-xs font900 uppercase tracking-[0.22em] text-gray-400">${fallback}</div>
+              <div class="text-xs font-black uppercase tracking-[0.22em] text-gray-400">${label}</div>
               <div class="mt-1 text-lg font-black text-ink">${connected ? escapeHtml(player.name) : 'En attente'}</div>
             </div>
-            <div class="rounded-full ${connected ? badgeColor : 'bg-gray-100 text-gray-400'} px-3 py-2 text-xs font900">
-              ${connected ? (active ? 'À jouer' : 'Connecté') : 'Vide'}
+            <div class="text-right">
+              <div class="rounded-full ${connected ? badgeColor : 'bg-gray-100 text-gray-400'} px-3 py-2 text-xs font-black">${connected ? (active ? 'À jouer' : 'Connecté') : 'Vide'}</div>
+              <div class="mt-2 text-sm font-black text-gray-600">${score} pt${score > 1 ? 's' : ''}</div>
             </div>
           </div>
         </div>
@@ -541,7 +543,7 @@ const firebaseConfig = {
 
     function spectatorNotice() {
       return `
-        <div class="mt-6 rounded-[28px] border border-coral/20 bg-rose-50/70 p-5 text-sm font800 text-rose-700">
+        <div class="mt-6 rounded-[28px] border border-coral/20 bg-rose-50/70 p-5 text-sm font-extrabold text-rose-700">
           Cette partie est complète. Tu peux la regarder, mais pas jouer.
         </div>
       `;
@@ -554,209 +556,339 @@ const firebaseConfig = {
             <i data-lucide="users" class="h-8 w-8"></i>
           </div>
           <h3 class="mt-5 text-2xl font-black text-ink">En attente du deuxième joueur</h3>
-          <p class="mx-auto mt-3 max-w-lg text-base font600 leading-7 text-gray-600">Partage le code <span class="font-black text-violet">${room.roomId}</span>. La partie démarre automatiquement dès que Joueur 2 rejoint.</p>
+          <p class="mx-auto mt-3 max-w-lg text-base font-semibold leading-7 text-gray-600">Partage le code <span class="font-black text-violet">${room.roomId}</span>. La partie démarre automatiquement dès que Joueur 2 rejoint.</p>
         </div>
       `;
     }
 
     function gameContent(room, isMyTurn, activePlayer, word) {
-      const winner = room.winner;
+      const matchWinner = room.matchWinner;
+      const roundResult = room.roundResult;
       const displayWord = word ? word.toUpperCase() : '· · ·';
-      const turnText = winner
-        ? winner.reason
-        : isMyTurn
-          ? 'À toi de poser une lettre.'
-          : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}. Tu peux défier si tu penses que le fragment est impossible.`;
+      const statusText = matchWinner
+        ? matchWinner.reason
+        : roundResult
+          ? roundResult.reason
+          : isMyTurn
+            ? 'Compose un mot avec autant de lettres que tu veux, puis valide.'
+            : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}.`;
 
       return `
         <div class="mt-8 grid gap-5 lg:grid-cols-5">
           <section class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70 lg:col-span-3">
             <div class="flex items-center justify-between gap-4">
               <div>
-                <p class="text-sm font900 uppercase tracking-[0.22em] text-gray-400">Fragment actuel</p>
-                <p class="mt-2 text-base font800 text-gray-600">${turnText}</p>
+                <p class="text-sm font-black uppercase tracking-[0.22em] text-gray-400">Mot proposé</p>
+                <p class="mt-2 text-base font-extrabold text-gray-600">${escapeHtml(statusText)}</p>
               </div>
-              <div class="rounded-full ${isMyTurn ? 'bg-violet/10 text-violet' : 'bg-coral/10 text-coral'} px-4 py-2 text-sm font900">
-                ${winner ? 'Terminé' : isMyTurn ? 'Ton tour' : 'Défense'}
+              <div class="rounded-full ${isMyTurn ? 'bg-violet/10 text-violet' : 'bg-coral/10 text-coral'} px-4 py-2 text-sm font-black">
+                ${matchWinner ? 'Final' : roundResult ? 'Point attribué' : isMyTurn ? 'Ton tour' : 'Attente'}
               </div>
             </div>
 
             <div class="my-10 flex min-h-[150px] items-center justify-center rounded-[32px] border border-white/80 bg-white/65 px-5 py-8 shadow-inner">
-              <div class="letter-space break-all text-center text-5xl font-black uppercase tracking-[0.18em] text-ink sm:text-7xl lg:text-8xl">${escapeHtml(displayWord)}</div>
+              <div class="letter-space break-all text-center text-4xl font-black uppercase tracking-[0.12em] text-ink sm:text-6xl lg:text-7xl">${escapeHtml(displayWord)}</div>
             </div>
 
-            ${winner ? winnerContent(room) : keyboardContent(isMyTurn)}
+            ${matchWinner ? matchWinnerContent(room) : roundResult ? roundResultContent(room) : turnControls(isMyTurn, word)}
           </section>
 
           <aside class="flex flex-col gap-5 lg:col-span-2">
             <div class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70">
-              <div class="flex items-center gap-3">
-                <div class="rounded-[22px] bg-coral/10 p-3 text-coral"><i data-lucide="swords" class="h-6 w-6"></i></div>
-                <div>
-                  <h3 class="text-xl font-black text-ink">Défier !</h3>
-                  <p class="text-sm font700 text-gray-500">À utiliser quand ce n'est pas ton tour.</p>
-                </div>
+              <h3 class="text-xl font-black text-ink">Score</h3>
+              <div class="mt-5 space-y-3">
+                ${scoreRow(room, 'p1')}
+                ${scoreRow(room, 'p2')}
               </div>
-
-              <button id="challengeBtn" ${isMyTurn || winner ? 'disabled' : ''} class="pressable mt-6 w-full rounded-[28px] bg-coral px-5 py-5 text-lg font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
-                Défier !
-              </button>
-
-              <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font600 leading-6 text-gray-600">
-                Si le fragment ne peut mener à aucun mot, le joueur précédent perd. Si le fragment est déjà un mot de plus de 3 lettres, le joueur précédent perd aussi.
+              <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font-semibold leading-6 text-gray-600">
+                Le joueur qui valide un mot existant gagne 1 point. Si le mot n'existe pas, il perd la manche et l'autre joueur gagne 1 point.
               </div>
             </div>
 
             <div class="rounded-[34px] bg-white/50 p-6 ring-1 ring-white/70">
-              <h3 class="text-lg font-black text-ink">Rappel des règles</h3>
-              <ul class="mt-4 space-y-3 text-sm font700 leading-6 text-gray-600">
-                <li class="flex gap-3"><span class="text-violet">01</span> Chaque joueur ajoute une lettre.</li>
-                <li class="flex gap-3"><span class="text-violet">02</span> Il ne faut pas terminer un mot de plus de 3 lettres.</li>
-                <li class="flex gap-3"><span class="text-violet">03</span> Un défi vérifie le fragment avec le dictionnaire.</li>
-              </ul>
+              <div class="flex items-center gap-3">
+                <div class="rounded-[22px] bg-violet/10 p-3 text-violet"><i data-lucide="repeat-2" class="h-6 w-6"></i></div>
+                <div>
+                  <h3 class="text-lg font-black text-ink">Alternance</h3>
+                  <p class="text-sm font-bold text-gray-500">La manche suivante commence avec l'autre joueur.</p>
+                </div>
+              </div>
+              <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font-semibold leading-6 text-gray-600">
+                Manche ${room.round}/${room.totalRounds || TOTAL_ROUNDS}. Départ de cette manche : ${escapeHtml(getPlayerLabel(room, room.starterSlot || 'p1'))}.
+              </div>
             </div>
           </aside>
         </div>
       `;
     }
 
-    function keyboardContent(isMyTurn) {
-      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    function scoreRow(room, slot) {
+      const score = room.scores?.[slot] || 0;
+      const name = getPlayerLabel(room, slot);
+      const color = slot === 'p1' ? 'bg-violet' : 'bg-mint';
+      const percent = Math.min(100, (score / Math.ceil((room.totalRounds || TOTAL_ROUNDS) / 2)) * 100);
       return `
-        <div>
-          <div class="mb-4 flex items-center justify-between gap-3">
-            <p class="text-sm font900 uppercase tracking-[0.22em] text-gray-400">Clavier</p>
-            <p class="text-sm font800 ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Choisis une lettre' : 'Verrouillé'}</p>
+        <div class="rounded-[24px] bg-white/60 p-4 ring-1 ring-white/80">
+          <div class="flex items-center justify-between gap-3 text-sm font-black text-gray-700">
+            <span>${escapeHtml(name)}</span>
+            <span>${score}</span>
           </div>
-          <div class="keyboard-grid">
-            ${letters.map(letter => `
-              <button data-letter="${letter}" ${isMyTurn ? '' : 'disabled'} class="pressable aspect-square rounded-[18px] bg-ink text-sm font-black text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none sm:text-base">
-                ${letter}
-              </button>
-            `).join('')}
+          <div class="mt-3 h-3 overflow-hidden rounded-full bg-gray-100">
+            <div class="h-full ${color} rounded-full transition-all" style="width:${percent}%"></div>
           </div>
         </div>
       `;
     }
 
-    function winnerContent(room) {
-      const winner = getPlayerById(room, room.winner?.playerId);
+    function turnControls(isMyTurn, word) {
+      return `
+        <div>
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <p class="text-sm font-black uppercase tracking-[0.22em] text-gray-400">Clavier</p>
+            <p class="text-sm font-extrabold ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Ajoute autant de lettres que tu veux' : 'Verrouillé'}</p>
+          </div>
+          <div class="keyboard-grid">
+            ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => `
+              <button data-letter="${letter}" ${isMyTurn ? '' : 'disabled'} class="pressable aspect-square rounded-[18px] bg-ink text-sm font-black text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none sm:text-base">${letter}</button>
+            `).join('')}
+          </div>
+
+          <div class="mt-5 grid gap-3 sm:grid-cols-3">
+            <button id="backspaceBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-white/75 px-5 py-4 text-base font-black text-gray-700 ring-1 ring-white/80 transition hover:bg-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400">
+              Effacer
+            </button>
+            <button id="clearBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-white/75 px-5 py-4 text-base font-black text-gray-700 ring-1 ring-white/80 transition hover:bg-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400">
+              Vider
+            </button>
+            <button id="validateBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable rounded-[24px] bg-coral px-5 py-4 text-base font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
+              Valider le mot
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function roundResultContent(room) {
+      const winnerSlot = room.roundResult?.pointSlot;
       return `
         <div class="rounded-[32px] border border-mint/20 bg-emerald-50/80 p-6 text-center">
           <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-mint text-white shadow-lg">
+            <i data-lucide="badge-check" class="h-8 w-8"></i>
+          </div>
+          <h3 class="mt-5 text-3xl font-black text-ink">Point pour ${escapeHtml(getPlayerLabel(room, winnerSlot))}</h3>
+          <p class="mt-2 text-base font-bold text-emerald-700">${escapeHtml(room.roundResult?.reason || 'Manche terminée.')}</p>
+          <button id="nextRoundBtn" class="pressable mt-6 rounded-[28px] bg-ink px-6 py-4 text-base font-black text-white shadow-lg hover:opacity-90">Manche suivante</button>
+        </div>
+      `;
+    }
+
+    function matchWinnerContent(room) {
+      const winnerSlot = room.matchWinner?.winnerSlot;
+      const isDraw = winnerSlot === 'draw';
+      return `
+        <div class="rounded-[32px] border border-violet/20 bg-violet/10 p-6 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-violet text-white shadow-lg">
             <i data-lucide="trophy" class="h-8 w-8"></i>
           </div>
-          <h3 class="mt-5 text-3xl font-black text-ink">${escapeHtml(winner?.name || 'Un joueur')} gagne !</h3>
-          <p class="mt-2 text-base font700 text-emerald-700">${escapeHtml(room.winner?.reason || 'Partie terminée.')}</p>
-          <button id="newRoundBtn" class="pressable mt-6 rounded-[28px] bg-ink px-6 py-4 text-base font-black text-white shadow-lg hover:opacity-90">Nouvelle manche</button>
+          <h3 class="mt-5 text-3xl font-black text-ink">${isDraw ? 'Égalité !' : `${escapeHtml(getPlayerLabel(room, winnerSlot))} gagne le match !`}</h3>
+          <p class="mt-2 text-base font-bold text-violet">${escapeHtml(room.matchWinner?.reason || 'Match terminé.')}</p>
+          <button id="restartMatchBtn" class="pressable mt-6 rounded-[28px] bg-ink px-6 py-4 text-base font-black text-white shadow-lg hover:opacity-90">Rejouer 10 manches</button>
         </div>
       `;
     }
 
     function bindGameEvents(room, isMyTurn) {
       document.querySelectorAll('[data-letter]').forEach(button => {
-        button.addEventListener('click', () => playLetter(button.dataset.letter));
+        button.addEventListener('click', () => addLetter(button.dataset.letter));
       });
 
-      document.getElementById('challengeBtn')?.addEventListener('click', challengeWord);
-      document.getElementById('newRoundBtn')?.addEventListener('click', newRound);
+      document.getElementById('backspaceBtn')?.addEventListener('click', backspaceLetter);
+      document.getElementById('clearBtn')?.addEventListener('click', clearWord);
+      document.getElementById('validateBtn')?.addEventListener('click', validateWord);
+      document.getElementById('nextRoundBtn')?.addEventListener('click', nextRound);
+      document.getElementById('restartMatchBtn')?.addEventListener('click', restartMatch);
     }
 
     /************************************************************
-     * 7. LOGIQUE GHOST
+     * 7. LOGIQUE DE JEU
      ************************************************************/
-    async function playLetter(letter) {
-      if (!currentRoom || currentRoom.winner) return;
+    async function addLetter(letter) {
+      if (!currentRoom || currentRoom.roundResult || currentRoom.matchWinner) return;
       if (currentRoom.turn !== localPlayerId) {
         showToast("Ce n'est pas ton tour.", 'error');
         return;
       }
 
-      const mySlot = getMySlot(currentRoom);
-      const opponent = currentRoom.players?.[getOpponentSlot(mySlot)];
-      if (!opponent) return;
-
       const nextWord = normalizeWord((currentRoom.currentWord || '') + letter);
-
-      if (nextWord.length > 3 && checkValidity(nextWord)) {
-        await roomRef.update({
-          currentWord: nextWord,
-          winner: {
-            playerId: opponent.id,
-            reason: `Mot complété : ${nextWord.toUpperCase()}.`
-          },
-          lastAction: `Mot complété : ${nextWord.toUpperCase()}.`,
-          updatedAt: Date.now()
-        });
-        return;
-      }
-
       await roomRef.update({
         currentWord: nextWord,
-        turn: opponent.id,
-        lastAction: `${currentRoom.players[mySlot].name} a ajouté une lettre.`,
+        lastAction: `${getPlayerById(currentRoom, localPlayerId)?.name || 'Un joueur'} compose son mot.`,
         updatedAt: Date.now()
       });
     }
 
-    async function challengeWord() {
-      if (!currentRoom || currentRoom.winner) return;
-      if (currentRoom.turn === localPlayerId) {
-        showToast("Tu peux défier seulement quand ce n'est pas ton tour.", 'error');
+    async function backspaceLetter() {
+      if (!currentRoom || currentRoom.turn !== localPlayerId || currentRoom.roundResult || currentRoom.matchWinner) return;
+      const nextWord = normalizeWord(currentRoom.currentWord || '').slice(0, -1);
+      await roomRef.update({ currentWord: nextWord, updatedAt: Date.now() });
+    }
+
+    async function clearWord() {
+      if (!currentRoom || currentRoom.turn !== localPlayerId || currentRoom.roundResult || currentRoom.matchWinner) return;
+      await roomRef.update({ currentWord: '', updatedAt: Date.now() });
+    }
+
+    async function validateWord() {
+      if (!currentRoom || currentRoom.roundResult || currentRoom.matchWinner || isCheckingWord) return;
+      if (currentRoom.turn !== localPlayerId) {
+        showToast("Ce n'est pas ton tour.", 'error');
         return;
       }
 
-      const fragment = normalizeWord(currentRoom.currentWord || '');
-      if (!fragment) {
-        showToast('Impossible de défier un fragment vide.', 'error');
+      const word = normalizeWord(currentRoom.currentWord || '');
+      if (!word) {
+        showToast('Compose un mot avant de valider.', 'error');
         return;
       }
 
-      const challengerId = localPlayerId;
-      const challengedId = currentRoom.turn;
-      const challenger = getPlayerById(currentRoom, challengerId);
-      const challenged = getPlayerById(currentRoom, challengedId);
+      isCheckingWord = true;
+      showToast('Vérification dans le dictionnaire en ligne...');
 
-      const isCompletedWord = fragment.length > 3 && checkValidity(fragment);
-      const canContinue = hasPossibleContinuation(fragment);
+      try {
+        const antiCheat = await checkAntiCheatWord(word);
+        if (!antiCheat.allowed) {
+          await applyRoundPoint({
+            word,
+            exists: false,
+            forcedReason: antiCheat.reason
+          });
+          return;
+        }
 
-      let winnerId;
-      let reason;
-
-      if (isCompletedWord) {
-        winnerId = challengerId;
-        reason = `${challenged?.name || 'Le joueur actif'} a laissé un mot complet : ${fragment.toUpperCase()}.`;
-      } else if (!canContinue) {
-        winnerId = challengerId;
-        reason = `${fragment.toUpperCase()} ne mène à aucun mot du dictionnaire.`;
-      } else {
-        winnerId = challengedId;
-        reason = `${fragment.toUpperCase()} est encore valide. Défi raté.`;
+        const exists = await checkValidity(word);
+        await applyRoundPoint({ word, exists });
+      } catch (error) {
+        showToast(error.message || 'Impossible de vérifier le mot.', 'error');
+      } finally {
+        isCheckingWord = false;
       }
+    }
+
+    async function applyRoundPoint({ word, exists, forcedReason = null }) {
+      const freshSnapshot = await roomRef.get();
+      const room = freshSnapshot.val() || currentRoom;
+      if (!room || room.roundResult || room.matchWinner) return;
+
+      const playerSlot = getSlotById(room, localPlayerId);
+      const opponentSlot = getOpponentSlot(playerSlot);
+      const pointSlot = exists ? playerSlot : opponentSlot;
+      const nextScores = { ...(room.scores || { p1: 0, p2: 0 }) };
+      nextScores[pointSlot] = (nextScores[pointSlot] || 0) + 1;
+
+      const reason = forcedReason || (exists
+        ? `${word.toUpperCase()} existe dans le dictionnaire. Mot validé.`
+        : `${word.toUpperCase()} est introuvable. Point donné à l'autre joueur.`);
+
+      const matchWinner = computeMatchWinner(room, nextScores);
 
       await roomRef.update({
-        winner: {
-          playerId: winnerId,
+        scores: nextScores,
+        roundResult: {
+          word,
+          valid: exists,
+          pointSlot,
+          validatorSlot: playerSlot,
           reason
         },
-        lastAction: `${challenger?.name || 'Un joueur'} a lancé un défi.`,
+        matchWinner,
+        lastAction: reason,
         updatedAt: Date.now()
       });
     }
 
-    async function newRound() {
-      if (!currentRoom) return;
-      const p1 = currentRoom.players?.p1;
-      const p2 = currentRoom.players?.p2;
-      if (!p1 || !p2) return;
+    async function checkAntiCheatWord(word) {
+      const normalized = normalizeWord(word);
 
-      const starter = currentRoom.winner?.playerId === p1.id ? p2.id : p1.id;
+      const blockedEndings = [
+        { suffix: 's', label: 'pluriel en S' },
+        { suffix: 'x', label: 'pluriel en X' },
+        { suffix: 'es', label: 'pluriel ou féminin en ES' },
+        { suffix: 'e', label: 'féminin simple en E' },
+        { suffix: 'ent', label: 'conjugaison en ENT' },
+        { suffix: 'ons', label: 'conjugaison en ONS' },
+        { suffix: 'ez', label: 'conjugaison en EZ' },
+        { suffix: 'ais', label: 'conjugaison en AIS' },
+        { suffix: 'ait', label: 'conjugaison en AIT' },
+        { suffix: 'aient', label: 'conjugaison en AIENT' },
+        { suffix: 'erai', label: 'conjugaison future en ERAI' },
+        { suffix: 'eras', label: 'conjugaison future en ERAS' },
+        { suffix: 'era', label: 'conjugaison future en ERA' },
+        { suffix: 'eront', label: 'conjugaison future en ERONT' }
+      ];
+
+      for (const rule of blockedEndings) {
+        if (normalized.length <= rule.suffix.length + 2) continue;
+        if (!normalized.endsWith(rule.suffix)) continue;
+
+        const base = normalized.slice(0, -rule.suffix.length);
+        if (base.length < 2) continue;
+
+        const baseExists = await checkValidity(base);
+        if (baseExists) {
+          return {
+            allowed: false,
+            reason: `${normalized.toUpperCase()} est bloqué : ajout de ${rule.label} à un mot déjà valide (${base.toUpperCase()}). Point donné à l'autre joueur.`
+          };
+        }
+      }
+
+      return { allowed: true };
+    }
+
+    function computeMatchWinner(room, scores) {
+      const round = room.round || 1;
+      const totalRounds = room.totalRounds || TOTAL_ROUNDS;
+      if (round < totalRounds) return null;
+
+      if ((scores.p1 || 0) > (scores.p2 || 0)) {
+        return { winnerSlot: 'p1', reason: `${getPlayerLabel(room, 'p1')} gagne ${scores.p1} à ${scores.p2}.` };
+      }
+      if ((scores.p2 || 0) > (scores.p1 || 0)) {
+        return { winnerSlot: 'p2', reason: `${getPlayerLabel(room, 'p2')} gagne ${scores.p2} à ${scores.p1}.` };
+      }
+      return { winnerSlot: 'draw', reason: `Score final : ${scores.p1} à ${scores.p2}.` };
+    }
+
+    async function nextRound() {
+      if (!currentRoom || !currentRoom.roundResult || currentRoom.matchWinner) return;
+      const nextRoundNumber = (currentRoom.round || 1) + 1;
+      const nextStarterSlot = (currentRoom.starterSlot || 'p1') === 'p1' ? 'p2' : 'p1';
+      const nextStarterId = currentRoom.players?.[nextStarterSlot]?.id;
+
+      await roomRef.update({
+        round: nextRoundNumber,
+        starterSlot: nextStarterSlot,
+        currentWord: '',
+        roundResult: null,
+        turn: nextStarterId,
+        lastAction: `Manche ${nextRoundNumber} lancée. ${getPlayerLabel(currentRoom, nextStarterSlot)} commence.`,
+        updatedAt: Date.now()
+      });
+    }
+
+    async function restartMatch() {
+      if (!currentRoom) return;
       await roomRef.update({
         currentWord: '',
-        turn: starter,
-        winner: null,
+        turn: currentRoom.players?.p1?.id,
+        round: 1,
+        totalRounds: TOTAL_ROUNDS,
+        starterSlot: 'p1',
+        scores: { p1: 0, p2: 0 },
+        roundResult: null,
+        matchWinner: null,
         status: 'playing',
-        lastAction: 'Nouvelle manche lancée.',
+        lastAction: 'Nouveau match lancé.',
         updatedAt: Date.now()
       });
     }
