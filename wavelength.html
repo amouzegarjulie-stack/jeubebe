@@ -354,7 +354,7 @@
 
     .score-strip {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 7px;
     }
 
@@ -1096,7 +1096,7 @@
     function renderScores(scores) {
       els.scoreStrip.innerHTML = "";
 
-      for (let i = 0; i < 5; i++) {
+ for (let i = 0; i < 6; i++) {
         const box = document.createElement("div");
         box.className = "score-box" + (scores[i] !== undefined ? " done" : "");
         box.textContent = scores[i] !== undefined ? scores[i] : i + 1;
@@ -1167,7 +1167,7 @@
       setNeedle(d.guessValue ?? 90);
 
       els.roleLabel.textContent = master ? "Maître" : "Devin";
-      els.roundLabel.textContent = "Manche " + (d.round || 1) + "/5";
+      els.roundLabel.textContent = "Manche " + (d.round || 1) + "/6";
       els.totalLabel.textContent = (d.total || 0) + " pts";
       els.leftWord.textContent = d.left || "";
       els.rightWord.textContent = d.right || "";
@@ -1303,7 +1303,7 @@
       const d = state.data;
       if (!d) return;
 
-      if ((d.round || 1) >= 5) {
+      if ((d.round || 1) >= 6) {
         await patch({ phase: "final" });
         return;
       }
