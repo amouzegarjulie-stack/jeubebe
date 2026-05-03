@@ -3,981 +3,1636 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>PANTONE</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"]
-          },
-          colors: {
-            paper: "#F7F3EA",
-            ink: "#171717",
-            soft: "#EFE8DC"
-          },
-          boxShadow: {
-            soft: "0 18px 50px rgba(23, 23, 23, 0.08)"
-          }
-        }
-      }
-    };
-  </script>
+  <title>1000 Bornes Mobile</title>
 
   <style>
     :root {
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
+      --bg: #f6f8fc;
+      --text: #121826;
+      --muted: #737b8c;
+      --card: rgba(255, 255, 255, 0.82);
+      --card-solid: #ffffff;
+      --border: rgba(15, 23, 42, 0.08);
+      --border-strong: rgba(15, 23, 42, 0.14);
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.09);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.07);
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --sky: #38bdf8;
+      --mint: #86efac;
+      --mint-soft: #dcfce7;
+      --coral: #fb7185;
+      --coral-soft: #ffe4e6;
+      --gold: #facc15;
+      --gold-soft: #fef3c7;
+      --violet: #a78bfa;
+      --violet-soft: #ede9fe;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --road: #171d29;
+      --road-light: #2b3443;
+      --radius: 24px;
+      --tap: 52px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html,
     body {
+      margin: 0;
       min-height: 100%;
-      background: #F7F3EA;
-      color: #171717;
       overscroll-behavior: none;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .app-shell {
+      font-family: Inter, ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.22), transparent 32%),
+        radial-gradient(circle at 100% 6%, rgba(250, 204, 21, 0.22), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(167, 139, 250, 0.16), transparent 32%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      color: var(--text);
       min-height: 100dvh;
-      padding-top: max(16px, var(--safe-top));
-      padding-bottom: max(16px, var(--safe-bottom));
+      overflow: hidden;
     }
 
-    .glass-card {
-      background: rgba(255, 252, 246, 0.86);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      border: 1px solid rgba(255, 255, 255, 0.82);
+    button,
+    input {
+      font: inherit;
     }
 
-    .soft-button {
-      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    button {
+      min-height: var(--tap);
+      border: 0;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      font-weight: 900;
+      padding: 0 18px;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+      transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
     }
 
-    .soft-button:active {
-      transform: scale(0.96);
+    button:active {
+      transform: scale(0.97);
     }
 
-    .fade-in {
-      animation: fadeIn 220ms ease both;
+    button.secondary {
+      background: #eef2ff;
+      color: #1e293b;
+      box-shadow: none;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+    button.ghost {
+      background: rgba(255, 255, 255, 0.7);
+      color: #1e293b;
+      border: 1px solid var(--border);
+      box-shadow: none;
     }
 
-    .color-cell {
+    button.danger {
+      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.2);
+    }
+
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    input {
+      width: 100%;
+      min-height: var(--tap);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 0 15px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    input:focus {
+      border-color: rgba(37, 99, 235, 0.35);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.09);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      height: 100dvh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       position: relative;
-      aspect-ratio: 1 / 1;
-      border-radius: 10px;
-      transform: translateZ(0) scale(1);
-      transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease, filter 150ms ease;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 4px 10px rgba(23, 23, 23, 0.04);
     }
 
-    .color-cell:active {
-      transform: scale(0.9);
+    .screen {
+      height: 100%;
+      padding: calc(16px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+      overflow-y: auto;
     }
 
-    .color-cell[disabled] {
-      cursor: default;
+    .hidden {
+      display: none !important;
     }
 
-    .color-cell.last-choice::after {
+    .glass {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      background: rgba(247, 248, 252, 0.72);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(22px);
+      z-index: 5;
+    }
+
+    .title {
+      font-size: 1.14rem;
+      font-weight: 950;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    #roomLabel {
+      display: inline-block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid var(--border);
+      color: #172033;
+      font-size: 0.8rem;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .pill.hot {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e3a8a;
+    }
+
+    .card-panel {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .landing {
+      display: grid;
+      align-content: start;
+      gap: 16px;
+      padding-top: calc(30px + env(safe-area-inset-top));
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 250px;
+      padding: 22px;
+      border-radius: 32px;
+      background:
+        radial-gradient(circle at top right, rgba(250, 204, 21, 0.28), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.28), transparent 34%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62));
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .hero-card::after {
       content: "";
       position: absolute;
-      inset: 50%;
-      width: 13px;
-      height: 13px;
-      border-radius: 999px;
-      background: #111;
-      border: 2px solid #fff;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.22);
-    }
-
-    .color-cell.target-blink {
-      z-index: 3;
-      animation: targetPulse 900ms ease-in-out infinite;
-    }
-
-    @keyframes targetPulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: inset 0 0 0 3px #30D158, 0 0 0 0 rgba(48, 209, 88, 0.42), 0 8px 18px rgba(48, 209, 88, 0.18);
-      }
-      50% {
-        transform: scale(1.12);
-        box-shadow: inset 0 0 0 3px #30D158, 0 0 0 8px rgba(48, 209, 88, 0.12), 0 14px 30px rgba(48, 209, 88, 0.3);
-      }
-    }
-
-    .score-ring {
+      left: -20px;
+      right: -20px;
+      bottom: 28px;
+      height: 72px;
       background:
-        radial-gradient(circle at center, #FFFCF6 58%, transparent 59%),
-        conic-gradient(#171717 var(--score), #E8DECF 0);
-    }
-
-    .toast-feedback {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: grid;
-      place-items: center;
-      opacity: 0;
-      transform: scale(0.82);
-    }
-
-    .toast-feedback.show {
-      animation: popFeedback 820ms cubic-bezier(.2, .8, .2, 1) both;
-    }
-
-    .toast-feedback span {
+        repeating-linear-gradient(90deg, transparent 0 22px, rgba(255, 255, 255, 0.34) 22px 34px),
+        linear-gradient(180deg, var(--road-light), var(--road));
+      transform: rotate(-4deg);
       border-radius: 999px;
-      background: rgba(23, 23, 23, 0.92);
-      padding: 22px 30px;
-      color: white;
-      font-size: 40px;
-      font-weight: 800;
-      letter-spacing: -0.07em;
-      box-shadow: 0 28px 70px rgba(23, 23, 23, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
     }
 
-    @keyframes popFeedback {
-      0% { opacity: 0; transform: scale(0.68) rotate(-4deg); }
-      18% { opacity: 1; transform: scale(1.08) rotate(2deg); }
-      34% { opacity: 1; transform: scale(1) rotate(0deg); }
-      100% { opacity: 0; transform: scale(0.96) translateY(-18px); }
+    .hero-car {
+      position: absolute;
+      right: 30px;
+      bottom: 56px;
+      z-index: 2;
+      font-size: 3.2rem;
+      filter: drop-shadow(0 14px 14px rgba(15, 23, 42, 0.28));
+      animation: heroDrive 2.4s ease-in-out infinite;
+    }
+
+    @keyframes heroDrive {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-7px) rotate(-2deg); }
+    }
+
+    .brand {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      gap: 10px;
+      max-width: 285px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(2.55rem, 13vw, 4.35rem);
+      letter-spacing: -0.09em;
+      line-height: 0.88;
+    }
+
+    .brand p {
+      margin: 0;
+      color: #535c6e;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .row > * {
+      flex: 1;
+    }
+
+    .game {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .table {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px 178px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .race-progress {
+      display: grid;
+      gap: 11px;
+      padding: 14px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.62)),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 35%);
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .race-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .race-title small {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .race-lane {
+      display: grid;
+      gap: 6px;
+    }
+
+    .race-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .road {
+      position: relative;
+      height: 42px;
+      border-radius: 999px;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.28) 18px 30px),
+        linear-gradient(180deg, var(--road-light), var(--road));
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .road::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0 18px, transparent 18px 34px);
+    }
+
+    .car {
+      position: absolute;
+      top: 50%;
+      left: var(--progress);
+      transform: translate(-50%, -50%);
+      font-size: 1.45rem;
+      filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.3));
+      transition: left 450ms cubic-bezier(.2,.9,.2,1);
+      z-index: 2;
+    }
+
+    .car.me {
+      animation: carBounce 1.2s ease-in-out infinite;
+    }
+
+    .finish-flag {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      z-index: 3;
+    }
+
+    @keyframes carBounce {
+      0%, 100% { transform: translate(-50%, -50%) rotate(-1deg); }
+      50% { transform: translate(-50%, -56%) rotate(1deg); }
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 22px;
+      padding: 12px;
+      min-height: 78px;
+      display: grid;
+      align-content: space-between;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric strong {
+      color: #111827;
+      font-size: 1.06rem;
+      letter-spacing: -0.04em;
+    }
+
+    .player-card {
+      position: relative;
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .player-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(250, 204, 21, 0.13), transparent 32%);
+      pointer-events: none;
+    }
+
+    .player-card > * {
+      position: relative;
+    }
+
+    .player-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .player-name {
+      font-size: 1.05rem;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .player-head small {
+      display: inline-block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .progress-line {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.08);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: var(--progress);
+      border-radius: inherit;
+      background: linear-gradient(90deg, #38bdf8, #2563eb);
+      transition: width 350ms ease;
+    }
+
+    .zones {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .zone {
+      min-height: 86px;
+      border-radius: 20px;
+      padding: 12px;
+      background: rgba(248, 250, 252, 0.8);
+      border: 1px dashed rgba(15, 23, 42, 0.13);
+      display: grid;
+      gap: 8px;
+    }
+
+    .zone h4 {
+      margin: 0;
+      font-size: 0.76rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .mini-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mini-card {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 0.73rem;
+      font-weight: 950;
+      color: #111827;
+      background: #eef2ff;
+      box-shadow: 0 5px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .mini-card.distance { background: var(--mint-soft); }
+    .mini-card.attack { background: var(--coral-soft); }
+    .mini-card.remedy { background: #dbeafe; }
+    .mini-card.safety { background: var(--gold-soft); }
+
+    .center-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .log {
+      max-height: 116px;
+      overflow-y: auto;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .log div + div {
+      margin-top: 6px;
+    }
+
+    .hand-drawer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+      background: rgba(248, 250, 252, 0.9);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -18px 38px rgba(15, 23, 42, 0.1);
+      transform: translateY(calc(100% - 72px));
+      transition: transform 200ms cubic-bezier(.2,.9,.2,1);
+      z-index: 10;
+    }
+
+    .hand-drawer.open {
+      transform: translateY(0);
+    }
+
+    .drawer-handle {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 52px;
+      padding-top: 8px;
+    }
+
+    .drawer-handle::before {
+      content: "";
+      position: absolute;
+      top: 7px;
+      left: 50%;
+      width: 46px;
+      height: 5px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.18);
+    }
+
+    .drawer-handle strong {
+      font-size: 0.95rem;
+      font-weight: 950;
+      letter-spacing: -0.03em;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-height: 52dvh;
+      overflow-y: auto;
+      padding-bottom: 4px;
+    }
+
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 22px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.86);
+      min-height: 132px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .game-card::after {
+      content: "";
+      position: absolute;
+      width: 96px;
+      height: 96px;
+      right: -34px;
+      top: -34px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.38);
+    }
+
+    .game-card.distance { background: linear-gradient(135deg, #ffffff, #dcfce7); }
+    .game-card.attack { background: linear-gradient(135deg, #ffffff, #ffe4e6); }
+    .game-card.remedy { background: linear-gradient(135deg, #ffffff, #dbeafe); }
+    .game-card.safety { background: linear-gradient(135deg, #ffffff, #fef3c7); }
+
+    .game-card h3,
+    .game-card p,
+    .game-card .card-actions,
+    .card-type {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-type {
+      display: inline-flex;
+      width: fit-content;
+      margin-bottom: 8px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: #334155;
+      font-size: 0.66rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .game-card h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.04em;
+    }
+
+    .game-card p {
+      margin: 6px 0 0;
+      color: #4b5563;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.28;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .card-actions button {
+      min-height: 42px;
+      padding: 0 8px;
+      font-size: 0.78rem;
+      border-radius: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 92px;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.94);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 900;
+      font-size: 0.84rem;
+      max-width: calc(100vw - 28px);
+      z-index: 99;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease, transform 150ms ease;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    .help {
+      font-size: 0.84rem;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.45;
     }
 
     @media (max-width: 380px) {
-      .color-cell {
-        border-radius: 8px;
+      .table {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .status-grid {
+        gap: 8px;
+      }
+
+      .metric {
+        padding: 10px;
+      }
+
+      .metric strong {
+        font-size: 0.98rem;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 481px) {
+      body {
+        background:
+          radial-gradient(circle at 30% 0%, rgba(56, 189, 248, 0.18), transparent 32%),
+          linear-gradient(180deg, #e5e7eb, #f8fafc);
+      }
+
+      .app {
+        border-left: 1px solid var(--border);
+        border-right: 1px solid var(--border);
       }
     }
   </style>
 </head>
-
 <body>
-  <main class="app-shell mx-auto flex w-full max-w-[430px] flex-col px-4">
-    <header class="mb-4 flex items-center justify-between">
-      <div>
-        <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-500">Jeu mobile</p>
-        <h1 class="text-4xl font-semibold tracking-[-0.06em] text-ink">PANTONE</h1>
-      </div>
-      <div id="connectionPill" class="rounded-full bg-soft px-3 py-2 text-xs font-medium text-neutral-500">Connexion...</div>
-    </header>
-
-    <section id="homeScreen" class="fade-in flex flex-1 flex-col justify-center gap-5">
-      <div class="glass-card rounded-[32px] p-6 shadow-soft">
-        <p class="mb-2 text-sm font-medium text-neutral-500">Joueur 1 donne un indice. Joueur 2 retrouve la couleur.</p>
-        <h2 class="text-3xl font-semibold leading-tight tracking-[-0.05em]">Un duel calme, précis, chromatique.</h2>
-      </div>
-
-      <button id="createRoomBtn" class="soft-button rounded-[28px] bg-ink px-6 py-5 text-base font-semibold text-white shadow-soft">
-        Créer un Salon
-      </button>
-
-      <div class="glass-card rounded-[28px] p-4 shadow-soft">
-        <label for="roomInput" class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">ID du salon</label>
-        <div class="flex gap-2">
-          <input id="roomInput" inputmode="numeric" maxlength="4" placeholder="1234" class="min-w-0 flex-1 rounded-[22px] border-0 bg-soft px-4 py-4 text-center text-xl font-semibold tracking-[0.3em] outline-none placeholder:text-neutral-300" />
-          <button id="joinRoomBtn" class="soft-button rounded-[22px] bg-white px-5 py-4 text-sm font-semibold shadow-sm">Rejoindre</button>
+  <main class="app">
+    <section id="lobbyScreen" class="screen landing">
+      <div class="hero-card">
+        <div class="brand">
+          <span class="pill hot">🏎️ Duel mobile</span>
+          <h1>1000<br>Bornes</h1>
+          <p>Crée un salon, invite un deuxième pilote, et fonce jusqu'à 1000 km.</p>
         </div>
+        <div class="hero-car">🏎️</div>
       </div>
 
-      <p id="homeMessage" class="min-h-6 text-center text-sm font-medium text-neutral-500"></p>
+      <div class="card-panel form-grid">
+        <input id="playerName" placeholder="Ton pseudo" autocomplete="nickname" />
+        <input id="roomId" placeholder="Code salon, ex: route42" autocomplete="off" />
+        <div class="row">
+          <button id="createRoomBtn">Créer</button>
+          <button id="joinRoomBtn" class="secondary">Rejoindre</button>
+        </div>
+        <button id="quickRoomBtn" class="ghost">Créer salon aléatoire</button>
+        <div id="connectionStatus" class="help"></div>
+      </div>
+
+      <div class="card-panel help">
+        Téléphone 1: crée un salon. Téléphone 2: entre exactement le même code puis rejoins la partie.
+      </div>
     </section>
 
-    <section id="gameScreen" class="hidden flex-1 flex-col gap-3">
-      <div class="glass-card rounded-[28px] p-4 shadow-soft">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Salon <span id="roomCodeLabel">----</span></p>
-            <h2 id="roleLabel" class="mt-1 text-2xl font-semibold tracking-[-0.05em]">...</h2>
-          </div>
-          <div class="text-right">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Tour</p>
-            <p id="roundLabel" class="mt-1 text-lg font-semibold">1</p>
-          </div>
+    <section id="gameScreen" class="game hidden">
+      <header class="topbar">
+        <div>
+          <div class="title">1000 Bornes</div>
+          <small id="roomLabel">Salon</small>
         </div>
+        <span id="turnPill" class="pill">Tour</span>
+      </header>
 
-        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div class="rounded-[20px] bg-soft px-2 py-3">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Essais</p>
-            <p id="attemptsLabel" class="text-lg font-semibold">0/5</p>
+      <div class="table">
+        <section id="raceProgress" class="race-progress"></section>
+
+        <section class="status-grid">
+          <div class="metric">
+            <small>Pioche</small>
+            <strong id="deckCount">0</strong>
           </div>
-          <div class="rounded-[20px] bg-soft px-2 py-3">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Score</p>
-            <p id="bestScoreLabel" class="text-lg font-semibold">0%</p>
+          <div class="metric">
+            <small>Défausse</small>
+            <strong id="discardTop">-</strong>
           </div>
-          <div class="rounded-[20px] bg-soft px-2 py-3">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">État</p>
-            <p id="stateLabel" class="text-lg font-semibold">...</p>
+          <div class="metric">
+            <small>Manche</small>
+            <strong id="roundState">...</strong>
           </div>
+        </section>
+
+        <section id="playersArea"></section>
+
+        <section class="center-actions">
+          <button id="drawBtn">Piocher</button>
+          <button id="endTurnBtn" class="secondary">Fin du tour</button>
+        </section>
+
+        <section class="center-actions">
+          <button id="newRoundBtn" class="ghost">Nouvelle manche</button>
+          <button id="leaveBtn" class="danger">Quitter</button>
+        </section>
+
+        <section class="card-panel">
+          <div class="player-head">
+            <strong>Journal</strong>
+            <span class="pill" id="scorePill">0 - 0</span>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </div>
+
+      <aside id="handDrawer" class="hand-drawer">
+        <div id="drawerHandle" class="drawer-handle">
+          <strong id="handTitle">Main</strong>
+          <span class="pill" id="handCount">0 carte</span>
         </div>
-      </div>
-
-      <div id="giverPanel" class="hidden glass-card rounded-[28px] p-4 shadow-soft">
-        <p class="mb-3 text-sm font-medium text-neutral-500">Ta couleur cible clignote sur la grille. Écris un indice pour aider le Joueur 2.</p>
-        <label for="hintInput" class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Ton indice</label>
-        <div class="flex gap-2">
-          <input id="hintInput" maxlength="64" placeholder="Ex : pêche au coucher du soleil" class="min-w-0 flex-1 rounded-[22px] border-0 bg-soft px-4 py-4 text-sm font-medium outline-none placeholder:text-neutral-400" />
-          <button id="sendHintBtn" class="soft-button rounded-[22px] bg-ink px-5 py-4 text-sm font-semibold text-white">Envoyer</button>
-        </div>
-      </div>
-
-      <div id="seekerPanel" class="hidden glass-card rounded-[28px] p-4 shadow-soft">
-        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Indice du Joueur 1</p>
-        <p id="hintLabel" class="min-h-6 text-lg font-semibold leading-snug tracking-[-0.03em] text-ink">En attente d'un indice...</p>
-      </div>
-
-      <div id="waitingPanel" class="glass-card rounded-[28px] p-4 shadow-soft">
-        <p id="waitingText" class="text-sm font-medium text-neutral-500">En attente du deuxième joueur...</p>
-      </div>
-
-      <div class="glass-card rounded-[28px] p-3 shadow-soft">
-        <div id="grid" class="grid grid-cols-10 gap-1.5"></div>
-      </div>
-
-      <div id="resultPanel" class="hidden glass-card rounded-[28px] p-4 shadow-soft">
-        <div class="flex items-center gap-4">
-          <div id="scoreRing" class="score-ring grid h-20 w-20 shrink-0 place-items-center rounded-full" style="--score: 0%;">
-            <span id="scoreLabel" class="text-lg font-semibold">0%</span>
-          </div>
-          <div>
-            <p id="resultTitle" class="text-xl font-semibold tracking-[-0.04em]">Résultat</p>
-            <p id="resultText" class="mt-1 text-sm font-medium text-neutral-500">Choisis une couleur.</p>
-          </div>
-        </div>
-      </div>
-
-      <button id="leaveRoomBtn" class="soft-button mt-auto rounded-[24px] bg-soft px-5 py-4 text-sm font-semibold text-neutral-600">
-        Quitter le salon
-      </button>
+        <div id="handCards" class="cards"></div>
+      </aside>
     </section>
+
+    <div id="toast" class="toast"></div>
   </main>
 
-  <div id="feedbackToast" class="toast-feedback"><span id="feedbackText">OUPS</span></div>
-
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getDatabase,
       ref,
-      get,
       set,
-      update,
+      get,
       onValue,
-      off,
-      onDisconnect,
-      serverTimestamp,
-      runTransaction
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+      runTransaction,
+      onDisconnect
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    /*
-      =========================================================
-      FIREBASE CONFIGURATION
-      Remplace les valeurs ci-dessous par celles de ton projet.
-
-      Firebase Console > Paramètres du projet > Tes applications > SDK Web
-
-      Active aussi :
-      1. Authentication > Sign-in method > Anonymous
-      2. Realtime Database
-      3. Des règles adaptées avant production
-      =========================================================
-    */
-const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
-
-    const MAX_ATTEMPTS = 5;
-    const WIN_SCORE = 96;
-    const NEXT_ROUND_DELAY = 2600;
-    const COLOR_COUNT = 120;
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const ui = {
-      connectionPill: document.getElementById("connectionPill"),
-      homeScreen: document.getElementById("homeScreen"),
-      gameScreen: document.getElementById("gameScreen"),
-      createRoomBtn: document.getElementById("createRoomBtn"),
-      joinRoomBtn: document.getElementById("joinRoomBtn"),
-      roomInput: document.getElementById("roomInput"),
-      homeMessage: document.getElementById("homeMessage"),
-      roomCodeLabel: document.getElementById("roomCodeLabel"),
-      roleLabel: document.getElementById("roleLabel"),
-      roundLabel: document.getElementById("roundLabel"),
-      attemptsLabel: document.getElementById("attemptsLabel"),
-      bestScoreLabel: document.getElementById("bestScoreLabel"),
-      stateLabel: document.getElementById("stateLabel"),
-      giverPanel: document.getElementById("giverPanel"),
-      seekerPanel: document.getElementById("seekerPanel"),
-      waitingPanel: document.getElementById("waitingPanel"),
-      waitingText: document.getElementById("waitingText"),
-      hintInput: document.getElementById("hintInput"),
-      sendHintBtn: document.getElementById("sendHintBtn"),
-      hintLabel: document.getElementById("hintLabel"),
-      grid: document.getElementById("grid"),
-      resultPanel: document.getElementById("resultPanel"),
-      scoreRing: document.getElementById("scoreRing"),
-      scoreLabel: document.getElementById("scoreLabel"),
-      resultTitle: document.getElementById("resultTitle"),
-      resultText: document.getElementById("resultText"),
-      leaveRoomBtn: document.getElementById("leaveRoomBtn"),
-      feedbackToast: document.getElementById("feedbackToast"),
-      feedbackText: document.getElementById("feedbackText")
+    /***************************************************************
+     * IMPORTANT
+     * Replace this object with your real Firebase web app config.
+     * Firebase Console > Project settings > Your apps > Web app.
+     * You must also enable Realtime Database.
+     ***************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
     };
 
-    let userId = getOrCreateLocalUserId();
-    let currentRoomId = null;
-    let currentRoomRef = null;
-    let currentRoomUnsubscribe = null;
-    let latestRoom = null;
-    let roundTimer = null;
-    let lastSeenAttemptId = null;
+    const firebaseReady = !firebaseConfig.apiKey.includes("PASTE_");
+    let app = null;
+    let db = null;
 
-    function getFirebaseError(error) {
-      return error?.code || error?.message || "erreur inconnue";
+    if (firebaseReady) {
+      app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
     }
 
-    function getOrCreateLocalUserId() {
-      const storageKey = "pantone_local_player_id";
-      let value = localStorage.getItem(storageKey);
+    const CARD_DEFS = {
+      d25: { id: "d25", type: "distance", value: 25, name: "25 km", text: "Avance de 25 km.", count: 10 },
+      d50: { id: "d50", type: "distance", value: 50, name: "50 km", text: "Avance de 50 km.", count: 10 },
+      d75: { id: "d75", type: "distance", value: 75, name: "75 km", text: "Avance de 75 km.", count: 10 },
+      d100: { id: "d100", type: "distance", value: 100, name: "100 km", text: "Avance de 100 km.", count: 12 },
+      d200: { id: "d200", type: "distance", value: 200, name: "200 km", text: "Avance de 200 km. Max deux par joueur.", count: 4 },
 
-      if (!value) {
-        value = `player_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-        localStorage.setItem(storageKey, value);
+      redLight: { id: "redLight", type: "attack", name: "Feu rouge", text: "Stoppe l'adversaire.", problem: "redLight", count: 5 },
+      speedLimit: { id: "speedLimit", type: "attack", name: "Limitation", text: "Limite l'adversaire à 50 km.", problem: "speedLimit", count: 4 },
+      flatTire: { id: "flatTire", type: "attack", name: "Crevaison", text: "L'adversaire doit réparer puis repartir.", problem: "flatTire", count: 3 },
+      outOfGas: { id: "outOfGas", type: "attack", name: "Panne d'essence", text: "L'adversaire doit ravitailler puis repartir.", problem: "outOfGas", count: 3 },
+      accident: { id: "accident", type: "attack", name: "Accident", text: "L'adversaire doit réparer puis repartir.", problem: "accident", count: 3 },
+
+      greenLight: { id: "greenLight", type: "remedy", name: "Feu vert", text: "Permet de repartir.", solves: "redLight", count: 14 },
+      endLimit: { id: "endLimit", type: "remedy", name: "Fin limitation", text: "Annule la limitation de vitesse.", solves: "speedLimit", count: 6 },
+      spareTire: { id: "spareTire", type: "remedy", name: "Roue de secours", text: "Répare une crevaison.", solves: "flatTire", count: 6 },
+      gas: { id: "gas", type: "remedy", name: "Essence", text: "Répare une panne d'essence.", solves: "outOfGas", count: 6 },
+      repair: { id: "repair", type: "remedy", name: "Réparations", text: "Répare un accident.", solves: "accident", count: 6 },
+
+      rightOfWay: { id: "rightOfWay", type: "safety", name: "Prioritaire", text: "Protège contre feu rouge et limitation.", protects: ["redLight", "speedLimit"], count: 1 },
+      punctureProof: { id: "punctureProof", type: "safety", name: "Increvable", text: "Protège contre crevaison.", protects: ["flatTire"], count: 1 },
+      extraTank: { id: "extraTank", type: "safety", name: "Citerne", text: "Protège contre panne d'essence.", protects: ["outOfGas"], count: 1 },
+      drivingAce: { id: "drivingAce", type: "safety", name: "As du volant", text: "Protège contre accident.", protects: ["accident"], count: 1 }
+    };
+
+    const PROBLEM_LABELS = {
+      none: "OK",
+      redLight: "Feu rouge",
+      speedLimit: "Limité",
+      flatTire: "Crevaison",
+      outOfGas: "Panne essence",
+      accident: "Accident"
+    };
+
+    const TYPE_LABELS = {
+      distance: "Borne",
+      attack: "Attaque",
+      remedy: "Parade",
+      safety: "Botte"
+    };
+
+    const SAFETY_BY_PROBLEM = Object.values(CARD_DEFS)
+      .filter(card => card.type === "safety")
+      .reduce((acc, card) => {
+        card.protects.forEach(problem => acc[problem] = card.id);
+        return acc;
+      }, {});
+
+    const $ = selector => document.querySelector(selector);
+
+    const refs = {
+      lobbyScreen: $("#lobbyScreen"),
+      gameScreen: $("#gameScreen"),
+      playerName: $("#playerName"),
+      roomId: $("#roomId"),
+      createRoomBtn: $("#createRoomBtn"),
+      joinRoomBtn: $("#joinRoomBtn"),
+      quickRoomBtn: $("#quickRoomBtn"),
+      connectionStatus: $("#connectionStatus"),
+      roomLabel: $("#roomLabel"),
+      turnPill: $("#turnPill"),
+      raceProgress: $("#raceProgress"),
+      deckCount: $("#deckCount"),
+      discardTop: $("#discardTop"),
+      roundState: $("#roundState"),
+      playersArea: $("#playersArea"),
+      drawBtn: $("#drawBtn"),
+      endTurnBtn: $("#endTurnBtn"),
+      newRoundBtn: $("#newRoundBtn"),
+      leaveBtn: $("#leaveBtn"),
+      log: $("#log"),
+      scorePill: $("#scorePill"),
+      handDrawer: $("#handDrawer"),
+      drawerHandle: $("#drawerHandle"),
+      handTitle: $("#handTitle"),
+      handCount: $("#handCount"),
+      handCards: $("#handCards"),
+      toast: $("#toast")
+    };
+
+    const savedName = localStorage.getItem("mille-bornes-player-name") || "";
+    refs.playerName.value = savedName;
+
+    let playerId = sessionStorage.getItem("mille-bornes-session-player-id");
+    if (!playerId) {
+      playerId = crypto.randomUUID();
+      sessionStorage.setItem("mille-bornes-session-player-id", playerId);
+    }
+
+    const state = {
+      roomId: "",
+      game: null,
+      unsub: null
+    };
+
+    refs.connectionStatus.textContent = firebaseReady
+      ? "Firebase configuré. Le jeu peut fonctionner entre deux téléphones."
+      : "Firebase non configuré. Remplace firebaseConfig avant de tester entre deux téléphones.";
+
+    function toast(message) {
+      refs.toast.textContent = message;
+      refs.toast.classList.add("show");
+      setTimeout(() => refs.toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function cardName(cardId) {
+      return CARD_DEFS[cardId]?.name || "-";
+    }
+
+    function requireFirebase() {
+      if (!firebaseReady || !db) {
+        throw new Error("Firebase n'est pas configuré dans le code.");
       }
-
-      return value;
     }
 
-    function showFeedback(text) {
-      ui.feedbackText.textContent = text;
-      ui.feedbackToast.classList.remove("show");
-      void ui.feedbackToast.offsetWidth;
-      ui.feedbackToast.classList.add("show");
+    function roomPath(roomId) {
+      return `rooms/${roomId}`;
     }
 
-    function setMessage(text) {
-      ui.homeMessage.textContent = text;
+    function roomRef(roomId) {
+      return ref(db, roomPath(roomId));
     }
 
-    function setLoading(button, isLoading, label) {
-      button.disabled = isLoading;
-      button.style.opacity = isLoading ? "0.55" : "1";
-      if (label) button.textContent = label;
+    function cleanRoomId(value) {
+      return value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
     }
 
-    function randomRoomId() {
-      return String(Math.floor(1000 + Math.random() * 9000));
+    function getLobbyInput() {
+      const name = refs.playerName.value.trim() || "Pilote";
+      const roomId = cleanRoomId(refs.roomId.value) || `route-${Math.floor(1000 + Math.random() * 9000)}`;
+      refs.roomId.value = roomId;
+      localStorage.setItem("mille-bornes-player-name", name);
+      return { name, roomId };
     }
 
-    function sanitizeRoomId(value) {
-      return String(value || "").replace(/\D/g, "").slice(0, 4);
-    }
-
-    function hashSeed(input) {
-      let hash = 2166136261;
-      for (let i = 0; i < input.length; i++) {
-        hash ^= input.charCodeAt(i);
-        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
       }
-      return Math.abs(hash >>> 0);
+      return copy;
     }
 
-    function seededRandom(seed) {
-      let value = seed % 2147483647;
-      if (value <= 0) value += 2147483646;
-      return function next() {
-        value = (value * 16807) % 2147483647;
-        return (value - 1) / 2147483646;
-      };
-    }
-
-    function hslToHex(h, s, l) {
-      s /= 100;
-      l /= 100;
-      const c = (1 - Math.abs(2 * l - 1)) * s;
-      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-      const m = l - c / 2;
-      let r = 0;
-      let g = 0;
-      let b = 0;
-
-      if (h < 60) [r, g, b] = [c, x, 0];
-      else if (h < 120) [r, g, b] = [x, c, 0];
-      else if (h < 180) [r, g, b] = [0, c, x];
-      else if (h < 240) [r, g, b] = [0, x, c];
-      else if (h < 300) [r, g, b] = [x, 0, c];
-      else [r, g, b] = [c, 0, x];
-
-      const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, "0");
-      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
-    }
-
-    function generatePalette(seedText) {
-      const random = seededRandom(hashSeed(seedText));
-      const baseHue = Math.floor(random() * 360);
-      const palette = [];
-      const used = new Set();
-
-      for (let i = 0; i < COLOR_COUNT; i++) {
-        const hueStep = (360 / COLOR_COUNT) * i;
-        const hueNoise = (random() - 0.5) * 16;
-        const hue = (baseHue + hueStep + hueNoise + 360) % 360;
-        const saturation = 50 + random() * 34;
-        const lightness = 36 + random() * 34;
-        let hex = hslToHex(hue, saturation, lightness);
-
-        while (used.has(hex)) {
-          hex = hslToHex((hue + random() * 12) % 360, saturation, lightness);
-        }
-
-        used.add(hex);
-        palette.push(hex);
-      }
-
-      return palette.sort(() => random() - 0.5);
-    }
-
-    function hexToRgb(hex) {
-      const clean = hex.replace("#", "");
-      return {
-        r: parseInt(clean.slice(0, 2), 16),
-        g: parseInt(clean.slice(2, 4), 16),
-        b: parseInt(clean.slice(4, 6), 16)
-      };
-    }
-
-    function rgbToLab({ r, g, b }) {
-      let rr = r / 255;
-      let gg = g / 255;
-      let bb = b / 255;
-
-      rr = rr > 0.04045 ? Math.pow((rr + 0.055) / 1.055, 2.4) : rr / 12.92;
-      gg = gg > 0.04045 ? Math.pow((gg + 0.055) / 1.055, 2.4) : gg / 12.92;
-      bb = bb > 0.04045 ? Math.pow((bb + 0.055) / 1.055, 2.4) : bb / 12.92;
-
-      let x = (rr * 0.4124 + gg * 0.3576 + bb * 0.1805) / 0.95047;
-      let y = (rr * 0.2126 + gg * 0.7152 + bb * 0.0722) / 1.00000;
-      let z = (rr * 0.0193 + gg * 0.1192 + bb * 0.9505) / 1.08883;
-
-      const pivot = value => value > 0.008856 ? Math.cbrt(value) : (7.787 * value) + 16 / 116;
-      x = pivot(x);
-      y = pivot(y);
-      z = pivot(z);
-
-      return {
-        l: (116 * y) - 16,
-        a: 500 * (x - y),
-        b: 200 * (y - z)
-      };
-    }
-
-    function colorDistanceScore(selectedHex, targetHex) {
-      const selected = rgbToLab(hexToRgb(selectedHex));
-      const target = rgbToLab(hexToRgb(targetHex));
-      const delta = Math.sqrt(
-        Math.pow(selected.l - target.l, 2) +
-        Math.pow(selected.a - target.a, 2) +
-        Math.pow(selected.b - target.b, 2)
-      );
-
-      const normalized = Math.max(0, 100 - (delta / 140) * 100);
-      return Math.round(Math.min(100, normalized));
-    }
-
-    function getPlayerRole(room) {
-      if (!room?.players || !userId) return null;
-      const entry = Object.entries(room.players).find(([, value]) => value.uid === userId);
-      return entry ? entry[0] : null;
-    }
-
-    function getCurrentGiver(room) {
-      return room?.round?.giver || "player1";
-    }
-
-    function getCurrentSeeker(room) {
-      return getCurrentGiver(room) === "player1" ? "player2" : "player1";
-    }
-
-    function isGiver(room) {
-      return getPlayerRole(room) === getCurrentGiver(room);
-    }
-
-    function isSeeker(room) {
-      return getPlayerRole(room) === getCurrentSeeker(room);
-    }
-
-    function getTargetHex(room) {
-      const targetIndex = room?.round?.targetIndex ?? 0;
-      return room?.palette?.[targetIndex] || "#FFFFFF";
-    }
-
-    function getAttempts(room) {
-      return Object.entries(room?.attempts && typeof room.attempts === "object" ? room.attempts : {})
-        .map(([id, value]) => ({ id, ...value }))
-        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    }
-
-    function getBestScore(room) {
-      return getAttempts(room).reduce((best, item) => Math.max(best, item.score || 0), 0);
-    }
-
-    function showScreen(name) {
-      const isGame = name === "game";
-      ui.homeScreen.classList.toggle("hidden", isGame);
-      ui.gameScreen.classList.toggle("hidden", !isGame);
-      ui.gameScreen.classList.toggle("flex", isGame);
-    }
-
-    async function createInitialRoom(roomId) {
-      const palette = generatePalette(roomId);
-      const random = seededRandom(hashSeed(`${roomId}:round:1`));
-      const targetIndex = Math.floor(random() * COLOR_COUNT);
-
-      await set(ref(db, `rooms/${roomId}`), {
-        id: roomId,
-        createdAt: serverTimestamp(),
-        status: "waiting",
-        palette,
-        players: {
-          player1: {
-            uid: userId,
-            joinedAt: serverTimestamp(),
-            online: true
-          }
-        },
-        round: {
-          number: 1,
-          giver: "player1",
-          targetIndex,
-          status: "playing",
-          startedAt: serverTimestamp()
-        },
-        hint: "",
-        attempts: false
+    function buildDeck() {
+      const deck = [];
+      Object.values(CARD_DEFS).forEach(card => {
+        for (let i = 0; i < card.count; i++) deck.push(card.id);
       });
+      return shuffle(deck);
+    }
+
+    function makePlayer(name, id) {
+      return {
+        id,
+        name,
+        online: true,
+        hand: [],
+        distance: 0,
+        speedLimit: false,
+        problem: "redLight",
+        safeties: [],
+        distanceCards: [],
+        score: 0,
+        wins: 0,
+        losses: 0,
+        drewThisTurn: false
+      };
+    }
+
+    function createInitialGame(name) {
+      const deck = buildDeck();
+      const p1 = makePlayer(name, playerId);
+      p1.hand = deck.splice(0, 6);
+
+      return {
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        status: "waiting",
+        hostId: playerId,
+        players: { [playerId]: p1 },
+        playerOrder: [playerId],
+        turnPlayerId: playerId,
+        deck,
+        discard: [],
+        log: [`${name} a créé le salon.`],
+        winnerId: null,
+        round: 1
+      };
     }
 
     async function createRoom() {
-      userId = userId || getOrCreateLocalUserId();
+      const { name, roomId } = getLobbyInput();
+      requireFirebase();
 
-      setLoading(ui.createRoomBtn, true, "Création...");
-      setMessage("");
+      const result = await runTransaction(roomRef(roomId), current => {
+        if (current) return;
+        return createInitialGame(name);
+      });
 
-      try {
-        let createdRoomId = null;
-
-        for (let tries = 0; tries < 20; tries++) {
-          const roomId = randomRoomId();
-          const roomRef = ref(db, `rooms/${roomId}`);
-          const palette = generatePalette(roomId);
-          const random = seededRandom(hashSeed(`${roomId}:round:1:${Date.now()}`));
-          const targetIndex = Math.floor(random() * COLOR_COUNT);
-
-          const result = await runTransaction(roomRef, currentRoom => {
-            if (currentRoom !== null) return;
-
-            return {
-              id: roomId,
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-              status: "waiting",
-              palette,
-              players: {
-                player1: {
-                  uid: userId,
-                  joinedAt: Date.now(),
-                  online: true
-                }
-              },
-              round: {
-                number: 1,
-                giver: "player1",
-                targetIndex,
-                status: "playing",
-                startedAt: Date.now()
-              },
-              hint: "",
-              attempts: false
-            };
-          });
-
-          if (result.committed) {
-            createdRoomId = roomId;
-            break;
-          }
-        }
-
-        if (!createdRoomId) {
-          throw new Error("Impossible de générer un salon libre. Réessaie.");
-        }
-
-        await enterRoom(createdRoomId);
-      } catch (error) {
-        console.error("Erreur création salon", error);
-        setMessage(`Création impossible : ${getFirebaseError(error)}`);
-      } finally {
-        setLoading(ui.createRoomBtn, false, "Créer un Salon");
-      }
-    }
-
-    async function joinRoom() {
-      userId = userId || getOrCreateLocalUserId();
-
-      const roomId = sanitizeRoomId(ui.roomInput.value);
-      setMessage("");
-
-      if (roomId.length !== 4) {
-        setMessage("Entre un ID de salon à 4 chiffres.");
+      if (!result.committed) {
+        toast("Ce salon existe déjà.");
         return;
       }
 
-      setLoading(ui.joinRoomBtn, true, "...");
+      enterRoom(roomId);
+    }
 
+    async function joinRoom() {
+      const { name, roomId } = getLobbyInput();
+      requireFirebase();
+
+      const result = await runTransaction(roomRef(roomId), current => {
+        if (!current) return current;
+
+        current.players = current.players || {};
+        current.playerOrder = current.playerOrder || [];
+        current.deck = current.deck || [];
+        current.log = current.log || [];
+
+        if (!current.players[playerId]) {
+          if (current.playerOrder.length >= 2) return current;
+
+          const player = makePlayer(name, playerId);
+          player.hand = current.deck.splice(0, 6);
+          current.players[playerId] = player;
+          current.playerOrder.push(playerId);
+          current.status = "playing";
+          current.log.unshift(`${name} rejoint la partie.`);
+        } else {
+          current.players[playerId].online = true;
+          current.players[playerId].name = name;
+        }
+
+        current.updatedAt = Date.now();
+        return current;
+      });
+
+      const game = result.snapshot.val();
+      if (!game) {
+        toast("Salon introuvable.");
+        return;
+      }
+      if (!game.players || !game.players[playerId]) {
+        toast("Salon complet.");
+        return;
+      }
+
+      enterRoom(roomId);
+    }
+
+    function enterRoom(roomId) {
+      state.roomId = roomId;
+      refs.lobbyScreen.classList.add("hidden");
+      refs.gameScreen.classList.remove("hidden");
+      refs.roomLabel.textContent = `Salon ${roomId}`;
+      subscribeRoom(roomId);
+      setupPresence(roomId).catch(console.error);
+    }
+
+    function subscribeRoom(roomId) {
+      if (state.unsub) state.unsub();
+      state.unsub = onValue(roomRef(roomId), snapshot => {
+        state.game = snapshot.val() ? normalizeGame(snapshot.val()) : null;
+        render();
+      });
+    }
+
+    async function setupPresence(roomId) {
+      if (!firebaseReady) return;
+      const onlineRef = ref(db, `${roomPath(roomId)}/players/${playerId}/online`);
+      await set(onlineRef, true);
+      onDisconnect(onlineRef).set(false);
+    }
+
+    function asArray(value) {
+      if (Array.isArray(value)) return value;
+      if (!value) return [];
+      return Object.values(value);
+    }
+
+    function normalizeGame(game) {
+      if (!game) return game;
+
+      game.deck = asArray(game.deck);
+      game.discard = asArray(game.discard);
+      game.log = asArray(game.log);
+      game.playerOrder = asArray(game.playerOrder);
+
+      Object.values(game.players || {}).forEach(player => {
+        player.hand = asArray(player.hand);
+        player.safeties = asArray(player.safeties);
+        player.distanceCards = asArray(player.distanceCards);
+      });
+
+      return game;
+    }
+
+    async function mutateGame(mutator) {
+      requireFirebase();
+      await runTransaction(roomRef(state.roomId), current => {
+        if (!current) return current;
+        current = normalizeGame(current);
+        const next = mutator(current);
+        next.updatedAt = Date.now();
+        return next;
+      });
+    }
+
+    function opponentOf(game, id) {
+      const otherId = (game.playerOrder || []).find(pid => pid !== id);
+      return otherId ? game.players[otherId] : null;
+    }
+
+    function hasSafety(player, problem) {
+      const safetyId = SAFETY_BY_PROBLEM[problem];
+      return safetyId && player.safeties.includes(safetyId);
+    }
+
+    function canMove(player) {
+      return player.problem === "none" || player.safeties.includes("rightOfWay");
+    }
+
+    function canPlayDistance(player, card) {
+      if (!canMove(player)) return false;
+      if (player.speedLimit && card.value > 50 && !player.safeties.includes("rightOfWay")) return false;
+      if (card.value === 200 && player.distanceCards.filter(id => id === "d200").length >= 2) return false;
+      if (player.distance + card.value > 1000) return false;
+      return true;
+    }
+
+    function canPlayRemedy(player, card) {
+      if (card.solves === "speedLimit") return player.speedLimit;
+      return player.problem === card.solves;
+    }
+
+    function canAttack(opponent, card) {
+      if (!opponent) return false;
+      if (hasSafety(opponent, card.problem)) return false;
+      if (card.problem === "speedLimit") return !opponent.speedLimit;
+      return opponent.problem === "none" || opponent.safeties.includes("rightOfWay");
+    }
+
+    function canPlaySafety(player, card) {
+      return !player.safeties.includes(card.id);
+    }
+
+    function validatePlay(game, id, cardId, target) {
+      if (game.status !== "playing") return "La manche n'est pas active.";
+      if (game.turnPlayerId !== id) return "Ce n'est pas ton tour.";
+      const player = game.players[id];
+      if (!player) return "Joueur introuvable.";
+      if (!player.hand.includes(cardId)) return "Cette carte n'est pas dans ta main.";
+      const card = CARD_DEFS[cardId];
+      const opponent = opponentOf(game, id);
+
+      if (target === "discard") return null;
+      if (card.type === "distance") return canPlayDistance(player, card) ? null : "Tu ne peux pas poser cette borne.";
+      if (card.type === "remedy") return canPlayRemedy(player, card) ? null : "Cette parade ne correspond pas à ton état.";
+      if (card.type === "attack") return canAttack(opponent, card) ? null : "Cette attaque n'est pas possible.";
+      if (card.type === "safety") return canPlaySafety(player, card) ? null : "Cette botte est déjà posée.";
+      return "Action invalide.";
+    }
+
+    function removeCardFromHand(player, cardId) {
+      const index = player.hand.indexOf(cardId);
+      if (index >= 0) player.hand.splice(index, 1);
+    }
+
+    function nextTurn(game) {
+      const order = game.playerOrder || [];
+      const index = order.indexOf(game.turnPlayerId);
+      const nextIndex = (index + 1) % order.length;
+      game.turnPlayerId = order[nextIndex];
+      if (game.players[game.turnPlayerId]) {
+        game.players[game.turnPlayerId].drewThisTurn = false;
+      }
+    }
+
+    function drawFor(game, id) {
+      const player = game.players[id];
+      if (game.status !== "playing") throw new Error("La manche n'est pas active.");
+      if (game.turnPlayerId !== id) throw new Error("Ce n'est pas ton tour.");
+      if (player.drewThisTurn) throw new Error("Tu as déjà pioché ce tour-ci.");
+      if (!game.deck.length) throw new Error("La pioche est vide.");
+      player.hand.push(game.deck.shift());
+      player.drewThisTurn = true;
+      game.log.unshift(`${player.name} pioche.`);
+      return game;
+    }
+
+    function calculateScore(player, won) {
+      let score = player.distance;
+      score += player.safeties.length * 100;
+      if (won) score += 400;
+      if (player.distance === 1000) score += 300;
+      return score;
+    }
+
+    function finishRound(game, winnerId) {
+      const winner = game.players[winnerId];
+      const loser = opponentOf(game, winnerId);
+      winner.wins = (winner.wins || 0) + 1;
+      winner.score += calculateScore(winner, true);
+      if (loser) {
+        loser.losses = (loser.losses || 0) + 1;
+        loser.score += calculateScore(loser, false);
+      }
+      game.status = "finished";
+      game.winnerId = winnerId;
+      game.log.unshift(`${winner.name} gagne la manche !`);
+    }
+
+    function tryCoupFourre(game, attackedPlayerId, attackCardId) {
+      const attacked = game.players[attackedPlayerId];
+      const attack = CARD_DEFS[attackCardId];
+      const safetyId = SAFETY_BY_PROBLEM[attack.problem];
+      if (!safetyId || !attacked.hand.includes(safetyId)) return false;
+
+      removeCardFromHand(attacked, safetyId);
+      attacked.safeties.push(safetyId);
+      attacked.problem = "none";
+      if (attack.problem === "speedLimit") attacked.speedLimit = false;
+      attacked.score += 300;
+      game.turnPlayerId = attackedPlayerId;
+      game.log.unshift(`Coup-fourré ! ${attacked.name} pose ${CARD_DEFS[safetyId].name}.`);
+      return true;
+    }
+
+    function playCardInGame(game, id, cardId, target) {
+      const error = validatePlay(game, id, cardId, target);
+      if (error) throw new Error(error);
+
+      const player = game.players[id];
+      const opponent = opponentOf(game, id);
+      const card = CARD_DEFS[cardId];
+      removeCardFromHand(player, cardId);
+
+      if (target === "discard") {
+        game.discard.push(cardId);
+        game.log.unshift(`${player.name} défausse ${card.name}.`);
+        return game;
+      }
+
+      if (card.type === "distance") {
+        player.distance += card.value;
+        player.distanceCards.push(cardId);
+        game.log.unshift(`${player.name} pose ${card.name}.`);
+      }
+
+      if (card.type === "remedy") {
+        if (card.solves === "speedLimit") player.speedLimit = false;
+        else player.problem = "none";
+        game.discard.push(cardId);
+        game.log.unshift(`${player.name} joue ${card.name}.`);
+      }
+
+      if (card.type === "attack") {
+        if (card.problem === "speedLimit") opponent.speedLimit = true;
+        else opponent.problem = card.problem;
+        game.discard.push(cardId);
+        game.log.unshift(`${player.name} attaque avec ${card.name}.`);
+      }
+
+      if (card.type === "safety") {
+        player.safeties.push(cardId);
+        card.protects.forEach(problem => {
+          if (problem === "speedLimit") player.speedLimit = false;
+          if (player.problem === problem) player.problem = "none";
+        });
+        game.log.unshift(`${player.name} pose la botte ${card.name}.`);
+      }
+
+      if (player.distance === 1000) finishRound(game, id);
+      return game;
+    }
+
+    function startNewRound(game) {
+      if (game.status !== "finished") throw new Error("La manche n'est pas finie.");
+      const order = game.playerOrder || [];
+      if (order.length < 2) throw new Error("Il faut deux joueurs.");
+
+      const oldPlayers = game.players;
+      const deck = buildDeck();
+      const players = {};
+
+      order.forEach(id => {
+        const old = oldPlayers[id];
+        const p = makePlayer(old.name, id);
+        p.score = old.score || 0;
+        p.wins = old.wins || 0;
+        p.losses = old.losses || 0;
+        p.online = old.online !== false;
+        p.hand = deck.splice(0, 6);
+        players[id] = p;
+      });
+
+      game.players = players;
+      game.deck = deck;
+      game.discard = [];
+      game.status = "playing";
+      game.winnerId = null;
+      game.round = (game.round || 1) + 1;
+      game.turnPlayerId = order[(game.round + 1) % 2];
+      game.log.unshift(`Nouvelle manche ${game.round}.`);
+      return game;
+    }
+
+    refs.createRoomBtn.addEventListener("click", async () => {
       try {
-        const roomRef = ref(db, `rooms/${roomId}`);
-        const existingSnapshot = await get(roomRef);
-        if (!existingSnapshot.exists()) throw new Error("Salon introuvable.");
+        await createRoom();
+      } catch (error) {
+        console.error(error);
+        toast(error.message || "Erreur création salon.");
+      }
+    });
 
-        const result = await runTransaction(roomRef, room => {
-          if (!room) return room;
+    refs.joinRoomBtn.addEventListener("click", async () => {
+      try {
+        await joinRoom();
+      } catch (error) {
+        console.error(error);
+        toast(error.message || "Erreur rejoindre salon.");
+      }
+    });
 
-          room.players = room.players || {};
+    refs.quickRoomBtn.addEventListener("click", () => {
+      refs.roomId.value = `route-${Math.floor(1000 + Math.random() * 9000)}`;
+      refs.createRoomBtn.click();
+    });
 
-          const alreadyInRoom = Object.values(room.players).some(player => player.uid === userId);
-          if (alreadyInRoom) return room;
+    refs.drawBtn.addEventListener("click", async () => {
+      try {
+        await mutateGame(game => drawFor(game, playerId));
+      } catch (error) {
+        toast(error.message);
+      }
+    });
 
-          if (!room.players.player1) {
-            room.players.player1 = { uid: userId, joinedAt: Date.now(), online: true };
-          } else if (!room.players.player2) {
-            room.players.player2 = { uid: userId, joinedAt: Date.now(), online: true };
-            room.status = "playing";
-          } else {
-            room.joinError = "full";
+    refs.endTurnBtn.addEventListener("click", async () => {
+      try {
+        await mutateGame(game => {
+          if (game.turnPlayerId !== playerId) throw new Error("Ce n'est pas ton tour.");
+          if (game.status !== "playing") throw new Error("La manche n'est pas active.");
+          nextTurn(game);
+          return game;
+        });
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+
+    refs.newRoundBtn.addEventListener("click", async () => {
+      try {
+        await mutateGame(game => startNewRound(game));
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+
+    refs.leaveBtn.addEventListener("click", async () => {
+      try {
+        if (state.roomId && firebaseReady) {
+          await set(ref(db, `${roomPath(state.roomId)}/players/${playerId}/online`), false);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      location.reload();
+    });
+
+    refs.drawerHandle.addEventListener("click", () => {
+      refs.handDrawer.classList.toggle("open");
+    });
+
+    async function playCard(cardId, target) {
+      try {
+        await mutateGame(game => {
+          const opponent = opponentOf(game, playerId);
+          const card = CARD_DEFS[cardId];
+
+          playCardInGame(game, playerId, cardId, target);
+
+          if (target !== "discard" && card.type === "attack" && opponent) {
+            tryCoupFourre(game, opponent.id, cardId);
           }
 
-          return room;
+          if (game.status === "playing" && game.turnPlayerId === playerId) {
+            nextTurn(game);
+          }
+
+          return game;
         });
-
-        const value = result.snapshot.val();
-        if (!value) throw new Error("Salon introuvable.");
-        if (value.joinError === "full") {
-          await update(roomRef, { joinError: null });
-          throw new Error("Ce salon est déjà complet.");
-        }
-
-        await enterRoom(roomId);
       } catch (error) {
-        console.error("Erreur rejoindre salon", error);
-        setMessage(`Impossible de rejoindre : ${getFirebaseError(error)}`);
-      } finally {
-        setLoading(ui.joinRoomBtn, false, "Rejoindre");
+        toast(error.message);
       }
     }
 
-    async function enterRoom(roomId) {
-      currentRoomId = roomId;
-      currentRoomRef = ref(db, `rooms/${roomId}`);
-      lastSeenAttemptId = null;
-      showScreen("game");
-      ui.roomCodeLabel.textContent = roomId;
+    window.playCardFromUI = (cardId, action) => {
+      playCard(cardId, action === "discard" ? "discard" : "play");
+    };
 
-      if (currentRoomUnsubscribe) currentRoomUnsubscribe();
+    function render() {
+      const game = state.game;
+      if (!game) return;
 
-      onValue(currentRoomRef, snapshot => {
-        latestRoom = snapshot.val();
-        if (!latestRoom) {
-          leaveRoom(false);
-          return;
-        }
-        renderGame(latestRoom);
-      });
+      const me = game.players?.[playerId];
+      const isMyTurn = game.turnPlayerId === playerId;
+      const players = (game.playerOrder || []).map(id => game.players[id]).filter(Boolean);
+      const p1 = players[0];
+      const p2 = players[1];
 
-      currentRoomUnsubscribe = () => off(currentRoomRef);
+      refs.turnPill.textContent = game.status === "waiting" ? "⏳ En attente" : isMyTurn ? "🔥 À toi" : "👀 Adversaire";
+      refs.turnPill.classList.toggle("hot", isMyTurn && game.status === "playing");
+      refs.raceProgress.innerHTML = renderRaceProgress(players);
+      refs.deckCount.textContent = game.deck?.length || 0;
+      refs.discardTop.textContent = cardName(game.discard?.at(-1));
+      refs.roundState.textContent = game.status === "finished" ? "Finie" : game.status === "waiting" ? "Attente" : "Active";
+      refs.scorePill.textContent = p1 && p2 ? `${p1.score || 0} - ${p2.score || 0}` : "0 - 0";
+      refs.drawBtn.disabled = !me || !isMyTurn || game.status !== "playing" || me.drewThisTurn;
+      refs.endTurnBtn.disabled = !me || !isMyTurn || game.status !== "playing";
+      refs.newRoundBtn.disabled = game.status !== "finished";
 
-      const rolePath = await findRolePath(roomId);
-      if (rolePath) {
-        const onlineRef = ref(db, `rooms/${roomId}/players/${rolePath}/online`);
-        await update(ref(db, `rooms/${roomId}/players/${rolePath}`), { online: true });
-        onDisconnect(onlineRef).set(false);
-      }
+      refs.playersArea.innerHTML = players.map(player => renderPlayer(player, player.id === playerId)).join("");
+      refs.log.innerHTML = (game.log || []).slice(0, 12).map(item => `<div>${escapeHtml(item)}</div>`).join("");
+
+      renderHand(me, isMyTurn, game.status === "playing");
     }
 
-    async function findRolePath(roomId) {
-      const snapshot = await get(ref(db, `rooms/${roomId}/players`));
-      const players = snapshot.val() || {};
-      const entry = Object.entries(players).find(([, value]) => value.uid === userId);
-      return entry ? entry[0] : null;
-    }
-
-    function renderGame(room) {
-      const attempts = getAttempts(room);
-      const bestScore = getBestScore(room);
-      const hasTwoPlayers = Boolean(room.players?.player1 && room.players?.player2);
-      const playerIsGiver = isGiver(room);
-      const playerIsSeeker = isSeeker(room);
-      const roundStatus = room.round?.status || "playing";
-      const latestAttempt = attempts.at(-1);
-
-      ui.roundLabel.textContent = room.round?.number || 1;
-      ui.attemptsLabel.textContent = `${attempts.length}/${MAX_ATTEMPTS}`;
-      ui.bestScoreLabel.textContent = `${bestScore}%`;
-
-      if (!hasTwoPlayers) {
-        ui.roleLabel.textContent = "Joueur 1";
-        ui.stateLabel.textContent = "Attente";
-      } else if (playerIsGiver) {
-        ui.roleLabel.textContent = "Joueur 1 · Donneur";
-        ui.stateLabel.textContent = "Indice";
-      } else if (playerIsSeeker) {
-        ui.roleLabel.textContent = "Joueur 2 · Chercheur";
-        ui.stateLabel.textContent = roundStatus === "playing" ? "Devine" : "Fin";
-      } else {
-        ui.roleLabel.textContent = "Spectateur";
-        ui.stateLabel.textContent = "Vue";
+    function renderRaceProgress(players) {
+      if (!players.length) {
+        return `
+          <div class="race-title">
+            <span>🏁 Course vers 1000 km</span>
+            <small>En attente</small>
+          </div>
+        `;
       }
 
-      ui.giverPanel.classList.toggle("hidden", !hasTwoPlayers || !playerIsGiver || roundStatus !== "playing");
-      ui.seekerPanel.classList.toggle("hidden", !hasTwoPlayers || !playerIsSeeker);
-      ui.waitingPanel.classList.toggle("hidden", hasTwoPlayers);
-      ui.hintLabel.textContent = room.hint || "En attente d'un indice...";
-      ui.waitingText.textContent = "En attente du deuxième joueur. Partage le code du salon.";
+      return `
+        <div class="race-title">
+          <span>🏁 Course vers 1000 km</span>
+          <small>${players.length}/2 pilotes</small>
+        </div>
 
-      renderGrid(room);
-      renderResult(room, attempts, bestScore);
-      handleAttemptFeedback(latestAttempt, roundStatus);
-      maybeScheduleNextRound(room);
+        ${players.map((player, index) => {
+          const progress = Math.max(0, Math.min(100, (player.distance || 0) / 1000 * 100));
+          const isMe = player.id === playerId;
+          const car = index === 0 ? "🏎️" : "🚙";
+
+          return `
+            <div class="race-lane">
+              <div class="race-meta">
+                <span>${escapeHtml(player.name)}${isMe ? " · toi" : ""}</span>
+                <span>${player.distance || 0}/1000 km</span>
+              </div>
+              <div class="road">
+                <span class="car ${isMe ? "me" : ""}" style="--progress: ${progress}%">${car}</span>
+                <span class="finish-flag">🏁</span>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      `;
     }
 
-    function renderGrid(room) {
-      const palette = room.palette || [];
-      const attempts = getAttempts(room);
-      const lastAttempt = attempts.at(-1);
-      const targetIndex = room.round?.targetIndex ?? -1;
-      const hasTwoPlayers = Boolean(room.players?.player1 && room.players?.player2);
-      const playerIsGiver = isGiver(room);
-      const playerIsSeeker = isSeeker(room);
-      const canPick = hasTwoPlayers && playerIsSeeker && room.status === "playing" && room.round?.status === "playing" && Boolean(room.hint);
+    function renderPlayer(player, isMe) {
+      const progress = Math.max(0, Math.min(100, (player.distance || 0) / 1000 * 100));
+      const statusIcon = player.online === false ? "⚪" : "🟢";
+      const problem = PROBLEM_LABELS[player.problem] || player.problem;
 
-      ui.grid.innerHTML = "";
+      return `
+        <section class="card-panel player-card">
+          <div class="player-head">
+            <div>
+              <div class="player-name">${statusIcon} ${escapeHtml(player.name)} ${isMe ? "· toi" : ""}</div>
+              <small>${player.distance}/1000 km · ${problem} · ${player.online === false ? "hors ligne" : "en ligne"}</small>
+            </div>
+            <span class="pill">${player.hand?.length || 0} cartes</span>
+          </div>
 
-      palette.forEach((hex, index) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "color-cell";
-        button.style.background = hex;
-        button.setAttribute("aria-label", `Couleur ${index + 1}`);
+          <div class="progress-line">
+            <div class="progress-fill" style="--progress: ${progress}%"></div>
+          </div>
 
-        if (playerIsGiver && index === targetIndex && room.round?.status === "playing") {
-          button.classList.add("target-blink");
-        }
+          <div class="status-grid">
+            <div class="metric"><small>Distance</small><strong>${player.distance}</strong></div>
+            <div class="metric"><small>Vitesse</small><strong>${player.speedLimit ? "≤ 50" : "Libre"}</strong></div>
+            <div class="metric"><small>État</small><strong>${problem}</strong></div>
+          </div>
 
-        if (lastAttempt?.index === index) {
-          button.classList.add("last-choice");
-        }
-
-        if (!canPick) {
-          button.disabled = true;
-        }
-
-        button.addEventListener("click", () => submitAttempt(index, hex));
-        ui.grid.appendChild(button);
-      });
+          <div class="zones">
+            <div class="zone">
+              <h4>Bottes</h4>
+              <div class="mini-cards">${(player.safeties || []).map(id => `<span class="mini-card safety">${cardName(id)}</span>`).join("") || "<small>Aucune</small>"}</div>
+            </div>
+            <div class="zone">
+              <h4>Bornes posées</h4>
+              <div class="mini-cards">${(player.distanceCards || []).slice(-10).map(id => `<span class="mini-card distance">${cardName(id)}</span>`).join("") || "<small>Aucune</small>"}</div>
+            </div>
+          </div>
+        </section>
+      `;
     }
 
-    function renderResult(room, attempts, bestScore) {
-      const lastAttempt = attempts.at(-1);
-      const status = room.round?.status || "playing";
-      const showResult = Boolean(lastAttempt) || status !== "playing";
-
-      ui.resultPanel.classList.toggle("hidden", !showResult);
-
-      const score = lastAttempt?.score || bestScore || 0;
-      ui.scoreRing.style.setProperty("--score", `${score}%`);
-      ui.scoreLabel.textContent = `${score}%`;
-
-      if (status === "won") {
-        ui.resultTitle.textContent = "BRAVO";
-        ui.resultText.textContent = "La bonne couleur a été trouvée. Les rôles s'inversent.";
-      } else if (status === "lost") {
-        ui.resultTitle.textContent = "Perdu";
-        ui.resultText.textContent = "Les 5 essais sont utilisés. Les rôles s'inversent.";
-      } else if (lastAttempt) {
-        ui.resultTitle.textContent = "OUPS";
-        ui.resultText.textContent = `Ce n'est pas la bonne couleur. Score de proximité : ${score}%.`;
-      }
-    }
-
-    function handleAttemptFeedback(latestAttempt, roundStatus) {
-      if (!latestAttempt?.id) return;
-      if (latestAttempt.id === lastSeenAttemptId) return;
-
-      lastSeenAttemptId = latestAttempt.id;
-
-      if (roundStatus === "won") {
-        showFeedback("BRAVO");
-      } else {
-        showFeedback("OUPS");
-      }
-    }
-
-    async function sendHint() {
-      if (!currentRoomId || !latestRoom || !isGiver(latestRoom)) return;
-      const text = ui.hintInput.value.trim().slice(0, 64);
-      if (!text) return;
-
-      ui.hintInput.value = "";
-      await update(ref(db, `rooms/${currentRoomId}`), {
-        hint: text,
-        updatedAt: serverTimestamp()
-      });
-    }
-
-    async function submitAttempt(index, hex) {
-      if (!currentRoomId || !latestRoom || !isSeeker(latestRoom)) return;
-      if (latestRoom.round?.status !== "playing") return;
-      if (!latestRoom.hint) return;
-
-      const attempts = getAttempts(latestRoom);
-      if (attempts.length >= MAX_ATTEMPTS) return;
-
-      const targetIndex = latestRoom.round?.targetIndex;
-      const targetHex = getTargetHex(latestRoom);
-      const score = colorDistanceScore(hex, targetHex);
-      const nextCount = attempts.length + 1;
-      const won = index === targetIndex || score >= WIN_SCORE;
-      const lost = !won && nextCount >= MAX_ATTEMPTS;
-
-      const attemptId = `${Date.now()}_${userId.slice(0, 6)}`;
-      const updates = {
-        [`attempts/${attemptId}`]: {
-          uid: userId,
-          index,
-          hex,
-          score,
-          exact: index === targetIndex,
-          createdAt: Date.now()
-        },
-        updatedAt: serverTimestamp()
-      };
-
-      if (won || lost) {
-        updates["round/status"] = won ? "won" : "lost";
-        updates["round/endedAt"] = serverTimestamp();
+    function renderHand(player, isMyTurn, isPlaying) {
+      if (!player) {
+        refs.handTitle.textContent = "Main";
+        refs.handCount.textContent = "0 carte";
+        refs.handCards.innerHTML = "";
+        return;
       }
 
-      await update(ref(db, `rooms/${currentRoomId}`), updates);
+      refs.handTitle.textContent = isMyTurn ? "Ta main · choisis une carte" : "Ta main";
+      refs.handCount.textContent = `${player.hand.length} carte${player.hand.length > 1 ? "s" : ""}`;
+
+      refs.handCards.innerHTML = player.hand.map(cardId => {
+        const card = CARD_DEFS[cardId];
+        if (!card) return "";
+        const disabled = !isMyTurn || !isPlaying;
+        return `
+          <article class="game-card ${card.type}">
+            <div>
+              <span class="card-type">${TYPE_LABELS[card.type] || card.type}</span>
+              <h3>${escapeHtml(card.name)}</h3>
+              <p>${escapeHtml(card.text)}</p>
+            </div>
+            <div class="card-actions">
+              <button ${disabled ? "disabled" : ""} onclick="window.playCardFromUI('${cardId}', 'play')">Jouer</button>
+              <button ${disabled ? "disabled" : ""} class="secondary" onclick="window.playCardFromUI('${cardId}', 'discard')">Jeter</button>
+            </div>
+          </article>
+        `;
+      }).join("");
     }
-
-    function maybeScheduleNextRound(room) {
-      const status = room.round?.status;
-      if (status !== "won" && status !== "lost") return;
-      if (roundTimer) return;
-      if (!isGiver(room)) return;
-
-      roundTimer = window.setTimeout(async () => {
-        roundTimer = null;
-        await startNextRound(room);
-      }, NEXT_ROUND_DELAY);
-    }
-
-    async function startNextRound(room) {
-      if (!currentRoomId || !room?.round) return;
-
-      const nextNumber = (room.round.number || 1) + 1;
-      const nextGiver = getCurrentGiver(room) === "player1" ? "player2" : "player1";
-      const random = seededRandom(hashSeed(`${currentRoomId}:round:${nextNumber}:${Date.now()}`));
-      const nextTargetIndex = Math.floor(random() * COLOR_COUNT);
-
-      lastSeenAttemptId = null;
-
-      await update(ref(db, `rooms/${currentRoomId}`), {
-        attempts: false,
-        hint: "",
-        round: {
-          number: nextNumber,
-          giver: nextGiver,
-          targetIndex: nextTargetIndex,
-          status: "playing",
-          startedAt: serverTimestamp()
-        },
-        updatedAt: serverTimestamp()
-      });
-    }
-
-    async function leaveRoom(goHome = true) {
-      if (roundTimer) {
-        window.clearTimeout(roundTimer);
-        roundTimer = null;
-      }
-
-      if (currentRoomUnsubscribe) {
-        currentRoomUnsubscribe();
-        currentRoomUnsubscribe = null;
-      }
-
-      if (currentRoomId) {
-        const rolePath = await findRolePath(currentRoomId).catch(() => null);
-        if (rolePath) {
-          await update(ref(db, `rooms/${currentRoomId}/players/${rolePath}`), { online: false }).catch(() => {});
-        }
-      }
-
-      currentRoomId = null;
-      currentRoomRef = null;
-      latestRoom = null;
-      lastSeenAttemptId = null;
-
-      if (goHome) {
-        ui.roomInput.value = "";
-        showScreen("home");
-        setMessage("");
-      }
-    }
-
-    ui.createRoomBtn.addEventListener("click", createRoom);
-    ui.joinRoomBtn.addEventListener("click", joinRoom);
-    ui.sendHintBtn.addEventListener("click", sendHint);
-    ui.leaveRoomBtn.addEventListener("click", () => leaveRoom(true));
-
-    ui.roomInput.addEventListener("input", event => {
-      event.target.value = sanitizeRoomId(event.target.value);
-    });
-
-    ui.roomInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") joinRoom();
-    });
-
-    ui.hintInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") sendHint();
-    });
-
-    ui.connectionPill.textContent = "Prêt";
-    ui.connectionPill.className = "rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-700 shadow-sm";
   </script>
 </body>
 </html>
