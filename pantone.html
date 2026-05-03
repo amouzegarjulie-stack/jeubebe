@@ -309,7 +309,6 @@ const firebaseConfig = {
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
-
     const MAX_ATTEMPTS = 5;
     const WIN_SCORE = 96;
     const NEXT_ROUND_DELAY = 2600;
@@ -523,7 +522,7 @@ const firebaseConfig = {
     }
 
     function getAttempts(room) {
-      return Object.entries(room?.attempts || {})
+      return Object.entries(room?.attempts && typeof room.attempts === "object" ? room.attempts : {})
         .map(([id, value]) => ({ id, ...value }))
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
@@ -564,13 +563,13 @@ const firebaseConfig = {
           startedAt: serverTimestamp()
         },
         hint: "",
-        attempts: {}
+        attempts: false
       });
     }
 
     async function createRoom() {
       if (!userId) {
-        setMessage("Connexion Firebase en cours. Réessaie dans un instant.");
+        setMessage("Connexion Firebase non prête. Vérifie que l'authentification anonyme est activée.");
         return;
       }
 
@@ -578,22 +577,57 @@ const firebaseConfig = {
       setMessage("");
 
       try {
-        let roomId = randomRoomId();
-        let roomSnapshot = await get(ref(db, `rooms/${roomId}`));
-        let tries = 0;
+        let createdRoomId = null;
 
-        while (roomSnapshot.exists() && tries < 12) {
-          roomId = randomRoomId();
-          roomSnapshot = await get(ref(db, `rooms/${roomId}`));
-          tries++;
+        for (let tries = 0; tries < 20; tries++) {
+          const roomId = randomRoomId();
+          const roomRef = ref(db, `rooms/${roomId}`);
+          const palette = generatePalette(roomId);
+          const random = seededRandom(hashSeed(`${roomId}:round:1:${Date.now()}`));
+          const targetIndex = Math.floor(random() * COLOR_COUNT);
+
+          const result = await runTransaction(roomRef, currentRoom => {
+            if (currentRoom !== null) return;
+
+            return {
+              id: roomId,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              status: "waiting",
+              palette,
+              players: {
+                player1: {
+                  uid: userId,
+                  joinedAt: Date.now(),
+                  online: true
+                }
+              },
+              round: {
+                number: 1,
+                giver: "player1",
+                targetIndex,
+                status: "playing",
+                startedAt: Date.now()
+              },
+              hint: "",
+              attempts: false
+            };
+          });
+
+          if (result.committed) {
+            createdRoomId = roomId;
+            break;
+          }
         }
 
-        if (roomSnapshot.exists()) throw new Error("Impossible de générer un salon libre.");
+        if (!createdRoomId) {
+          throw new Error("Impossible de générer un salon libre. Réessaie.");
+        }
 
-        await createInitialRoom(roomId);
-        await enterRoom(roomId);
+        await enterRoom(createdRoomId);
       } catch (error) {
-        setMessage(error.message || "Erreur lors de la création du salon.");
+        console.error("Erreur création salon", error);
+        setMessage(`Création impossible : ${error.code || error.message || "erreur inconnue"}`);
       } finally {
         setLoading(ui.createRoomBtn, false, "Créer un Salon");
       }
@@ -649,7 +683,8 @@ const firebaseConfig = {
 
         await enterRoom(roomId);
       } catch (error) {
-        setMessage(error.message || "Impossible de rejoindre ce salon.");
+        console.error("Erreur rejoindre salon", error);
+        setMessage(`Impossible de rejoindre : ${error.code || error.message || "erreur inconnue"}`);
       } finally {
         setLoading(ui.joinRoomBtn, false, "Rejoindre");
       }
@@ -872,7 +907,7 @@ const firebaseConfig = {
       lastSeenAttemptId = null;
 
       await update(ref(db, `rooms/${currentRoomId}`), {
-        attempts: {},
+        attempts: false,
         hint: "",
         round: {
           number: nextNumber,
@@ -942,8 +977,8 @@ const firebaseConfig = {
 
     signInAnonymously(auth).catch(error => {
       ui.connectionPill.textContent = "Hors ligne";
-      setMessage("Vérifie ta configuration Firebase et l'authentification anonyme.");
-      console.error(error);
+      setMessage(`Auth Firebase impossible : ${error.code || error.message}. Active Authentication > Anonymous.`);
+      console.error("Erreur auth Firebase", error);
     });
   </script>
 </body>
