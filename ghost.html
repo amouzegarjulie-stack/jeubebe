@@ -155,17 +155,16 @@
   <script>
     /************************************************************
      * 1. CONFIGURATION FIREBASE
-     * Remplace ces placeholders par ta configuration Firebase.
      ************************************************************/
-   const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
     let db = null;
     let firebaseReady = false;
@@ -180,10 +179,6 @@
 
     /************************************************************
      * 2. DICTIONNAIRE EXTERNE EN LIGNE
-     * Ici on utilise l'API publique MediaWiki du Wiktionnaire FR.
-     * Avantage : pas de liste locale limitée.
-     * Limite : cela vérifie l'existence d'une page Wiktionnaire, pas un dictionnaire arbitral officiel.
-     * Tu peux remplacer cette fonction par ta propre API plus tard.
      ************************************************************/
     const wordValidityCache = new Map();
 
@@ -379,6 +374,7 @@
         roomId,
         currentWord: '',
         turn: localPlayerId,
+        lastLetterBy: null,
         round: 1,
         totalRounds: TOTAL_ROUNDS,
         starterSlot: 'p1',
@@ -565,13 +561,17 @@
       const matchWinner = room.matchWinner;
       const roundResult = room.roundResult;
       const displayWord = word ? word.toUpperCase() : '· · ·';
+      const canValidateWord = room.lastLetterBy === localPlayerId && Boolean(word) && !roundResult && !matchWinner;
+
       const statusText = matchWinner
         ? matchWinner.reason
         : roundResult
           ? roundResult.reason
-          : isMyTurn
-            ? 'Ajoute une seule lettre, ou valide le mot si tu penses qu’il existe.'
-            : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}.`;
+          : canValidateWord
+            ? 'Tu peux valider le mot que tu viens de compléter, ou attendre que l’autre joueur ajoute une lettre.'
+            : isMyTurn
+              ? 'Ajoute une seule lettre.'
+              : `Tour de ${escapeHtml(activePlayer?.name || 'l’autre joueur')}.`;
 
       return `
         <div class="mt-8 grid gap-5 lg:grid-cols-5">
@@ -581,8 +581,8 @@
                 <p class="text-sm font-black uppercase tracking-[0.22em] text-gray-400">Mot proposé</p>
                 <p class="mt-2 text-base font-extrabold text-gray-600">${escapeHtml(statusText)}</p>
               </div>
-              <div class="rounded-full ${isMyTurn ? 'bg-violet/10 text-violet' : 'bg-coral/10 text-coral'} px-4 py-2 text-sm font-black">
-                ${matchWinner ? 'Final' : roundResult ? 'Point attribué' : isMyTurn ? 'Ton tour' : 'Attente'}
+              <div class="rounded-full ${canValidateWord ? 'bg-coral/10 text-coral' : isMyTurn ? 'bg-violet/10 text-violet' : 'bg-gray-100 text-gray-500'} px-4 py-2 text-sm font-black">
+                ${matchWinner ? 'Final' : roundResult ? 'Point attribué' : canValidateWord ? 'Validation possible' : isMyTurn ? 'Ton tour' : 'Attente'}
               </div>
             </div>
 
@@ -590,7 +590,7 @@
               <div class="letter-space break-all text-center text-4xl font-black uppercase tracking-[0.12em] text-ink sm:text-6xl lg:text-7xl">${escapeHtml(displayWord)}</div>
             </div>
 
-            ${matchWinner ? matchWinnerContent(room) : roundResult ? roundResultContent(room) : turnControls(isMyTurn, word)}
+            ${matchWinner ? matchWinnerContent(room) : roundResult ? roundResultContent(room) : turnControls(isMyTurn, word, canValidateWord)}
           </section>
 
           <aside class="flex flex-col gap-5 lg:col-span-2">
@@ -601,7 +601,7 @@
                 ${scoreRow(room, 'p2')}
               </div>
               <div class="mt-5 rounded-[24px] bg-white/55 p-4 text-sm font-semibold leading-6 text-gray-600">
-                Chaque joueur ajoute une seule lettre. Le joueur qui valide un mot existant gagne 1 point. Si le mot n'existe pas, l'autre joueur gagne 1 point.
+                Le joueur qui valide un mot existant gagne 1 point. Si le mot n'existe pas ou s'il est bloqué par une règle, l'autre joueur gagne 1 point.
               </div>
             </div>
 
@@ -640,12 +640,12 @@
       `;
     }
 
-    function turnControls(isMyTurn, word) {
+    function turnControls(isMyTurn, word, canValidateWord) {
       return `
         <div>
           <div class="mb-4 flex items-center justify-between gap-3">
             <p class="text-sm font-black uppercase tracking-[0.22em] text-gray-400">Clavier</p>
-            <p class="text-sm font-extrabold ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Ajoute une seule lettre' : 'Verrouillé'}</p>
+            <p class="text-sm font-extrabold ${isMyTurn ? 'text-violet' : 'text-gray-400'}">${isMyTurn ? 'Ajoute une seule lettre' : 'Clavier verrouillé'}</p>
           </div>
           <div class="keyboard-grid">
             ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => `
@@ -654,10 +654,16 @@
           </div>
 
           <div class="mt-5">
-            <button id="validateBtn" ${isMyTurn && word ? '' : 'disabled'} class="pressable w-full rounded-[24px] bg-coral px-5 py-4 text-base font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
+            <button id="validateBtn" ${canValidateWord ? '' : 'disabled'} class="pressable w-full rounded-[24px] bg-coral px-5 py-4 text-base font-black text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none">
               Valider le mot
             </button>
           </div>
+
+          ${word && !canValidateWord ? `
+            <p class="mt-3 text-center text-sm font-bold text-gray-500">
+              Seul le joueur qui vient de poser la dernière lettre peut valider le mot.
+            </p>
+          ` : ''}
         </div>
       `;
     }
@@ -720,16 +726,17 @@
       await roomRef.update({
         currentWord: nextWord,
         turn: opponentId,
+        lastLetterBy: localPlayerId,
         lastAction: `${getPlayerById(currentRoom, localPlayerId)?.name || 'Un joueur'} a ajouté la lettre ${letter}.`,
         updatedAt: Date.now()
       });
     }
 
-
     async function validateWord() {
       if (!currentRoom || currentRoom.roundResult || currentRoom.matchWinner || isCheckingWord) return;
-      if (currentRoom.turn !== localPlayerId) {
-        showToast("Ce n'est pas ton tour.", 'error');
+
+      if (currentRoom.lastLetterBy !== localPlayerId) {
+        showToast('Seul le joueur qui vient de poser la dernière lettre peut valider le mot.', 'error');
         return;
       }
 
@@ -798,20 +805,20 @@
       const normalized = normalizeWord(word);
 
       const blockedEndings = [
-        { suffix: 's', label: 'pluriel en S' },
-        { suffix: 'x', label: 'pluriel en X' },
-        { suffix: 'es', label: 'pluriel ou féminin en ES' },
-        { suffix: 'e', label: 'féminin simple en E' },
-        { suffix: 'ent', label: 'conjugaison en ENT' },
-        { suffix: 'ons', label: 'conjugaison en ONS' },
-        { suffix: 'ez', label: 'conjugaison en EZ' },
-        { suffix: 'ais', label: 'conjugaison en AIS' },
-        { suffix: 'ait', label: 'conjugaison en AIT' },
         { suffix: 'aient', label: 'conjugaison en AIENT' },
+        { suffix: 'eront', label: 'conjugaison future en ERONT' },
         { suffix: 'erai', label: 'conjugaison future en ERAI' },
         { suffix: 'eras', label: 'conjugaison future en ERAS' },
+        { suffix: 'ent', label: 'conjugaison en ENT' },
+        { suffix: 'ons', label: 'conjugaison en ONS' },
+        { suffix: 'ais', label: 'conjugaison en AIS' },
+        { suffix: 'ait', label: 'conjugaison en AIT' },
         { suffix: 'era', label: 'conjugaison future en ERA' },
-        { suffix: 'eront', label: 'conjugaison future en ERONT' }
+        { suffix: 'ez', label: 'conjugaison en EZ' },
+        { suffix: 'es', label: 'pluriel ou féminin en ES' },
+        { suffix: 's', label: 'pluriel en S' },
+        { suffix: 'x', label: 'pluriel en X' },
+        { suffix: 'e', label: 'féminin simple en E' }
       ];
 
       for (const rule of blockedEndings) {
@@ -857,6 +864,7 @@
         round: nextRoundNumber,
         starterSlot: nextStarterSlot,
         currentWord: '',
+        lastLetterBy: null,
         roundResult: null,
         turn: nextStarterId,
         lastAction: `Manche ${nextRoundNumber} lancée. ${getPlayerLabel(currentRoom, nextStarterSlot)} commence.`,
@@ -868,6 +876,7 @@
       if (!currentRoom) return;
       await roomRef.update({
         currentWord: '',
+        lastLetterBy: null,
         turn: currentRoom.players?.p1?.id,
         round: 1,
         totalRounds: TOTAL_ROUNDS,
