@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>PANTONE</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"]
+          },
+          colors: {
+            paper: "#F7F3EA",
+            ink: "#171717",
+            soft: "#EFE8DC"
+          },
+          boxShadow: {
+            soft: "0 18px 50px rgba(23, 23, 23, 0.08)"
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: #F7F3EA;
+      color: #171717;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app-shell {
+      min-height: 100dvh;
+      padding-top: max(16px, var(--safe-top));
+      padding-bottom: max(16px, var(--safe-bottom));
+    }
+
+    .glass-card {
+      background: rgba(255, 252, 246, 0.82);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(255, 255, 255, 0.78);
+    }
+
+    .color-cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      transform: translateZ(0) scale(1);
+      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 4px 10px rgba(23, 23, 23, 0.04);
+    }
+
+    .color-cell:active {
+      transform: scale(0.9);
+    }
+
+    .color-cell.selected::after {
+      content: "";
+      position: absolute;
+      inset: 50%;
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      background: #111;
+      border: 2px solid #fff;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-cell.target {
+      box-shadow: inset 0 0 0 3px #30D158, 0 0 0 2px rgba(48, 209, 88, 0.22), 0 10px 22px rgba(48, 209, 88, 0.24);
+      transform: scale(1.03);
+      z-index: 2;
+    }
+
+    .soft-button {
+      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    }
+
+    .soft-button:active {
+      transform: scale(0.97);
+    }
+
+    .fade-in {
+      animation: fadeIn 220ms ease both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .score-ring {
+      background:
+        radial-gradient(circle at center, #FFFCF6 58%, transparent 59%),
+        conic-gradient(#171717 var(--score), #E8DECF 0);
+    }
+
+    @media (max-width: 380px) {
+      .color-cell {
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-shell mx-auto flex w-full max-w-[430px] flex-col px-4">
+    <header class="mb-4 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-500">Jeu mobile</p>
+        <h1 class="text-4xl font-semibold tracking-[-0.06em] text-ink">PANTONE</h1>
+      </div>
+      <div id="connectionPill" class="rounded-full bg-soft px-3 py-2 text-xs font-medium text-neutral-500">Connexion...</div>
+    </header>
+
+    <section id="homeScreen" class="fade-in flex flex-1 flex-col justify-center gap-5">
+      <div class="glass-card rounded-[32px] p-6 shadow-soft">
+        <p class="mb-2 text-sm font-medium text-neutral-500">Trouve la couleur cible avec seulement quelques indices.</p>
+        <h2 class="text-3xl font-semibold leading-tight tracking-[-0.05em]">Un duel calme, précis, chromatique.</h2>
+      </div>
+
+      <button id="createRoomBtn" class="soft-button rounded-[28px] bg-ink px-6 py-5 text-base font-semibold text-white shadow-soft">
+        Créer un Salon
+      </button>
+
+      <div class="glass-card rounded-[28px] p-4 shadow-soft">
+        <label for="roomInput" class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">ID du salon</label>
+        <div class="flex gap-2">
+          <input id="roomInput" inputmode="numeric" maxlength="4" placeholder="1234" class="min-w-0 flex-1 rounded-[22px] border-0 bg-soft px-4 py-4 text-center text-xl font-semibold tracking-[0.3em] outline-none placeholder:text-neutral-300" />
+          <button id="joinRoomBtn" class="soft-button rounded-[22px] bg-white px-5 py-4 text-sm font-semibold shadow-sm">Rejoindre</button>
+        </div>
+      </div>
+
+      <p id="homeMessage" class="min-h-6 text-center text-sm font-medium text-neutral-500"></p>
+    </section>
+
+    <section id="gameScreen" class="hidden flex-1 flex-col gap-3">
+      <div class="glass-card rounded-[28px] p-4 shadow-soft">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Salon <span id="roomCodeLabel">----</span></p>
+            <h2 id="roleLabel" class="mt-1 text-2xl font-semibold tracking-[-0.05em]">...</h2>
+          </div>
+          <div class="text-right">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Tour</p>
+            <p id="roundLabel" class="mt-1 text-lg font-semibold">1</p>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-[20px] bg-soft px-2 py-3">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Essais</p>
+            <p id="attemptsLabel" class="text-lg font-semibold">0/5</p>
+          </div>
+          <div class="rounded-[20px] bg-soft px-2 py-3">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Meilleur</p>
+            <p id="bestScoreLabel" class="text-lg font-semibold">0%</p>
+          </div>
+          <div class="rounded-[20px] bg-soft px-2 py-3">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">État</p>
+            <p id="stateLabel" class="text-lg font-semibold">...</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="giverPanel" class="hidden glass-card rounded-[28px] p-4 shadow-soft">
+        <label for="hintInput" class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Indice</label>
+        <div class="flex gap-2">
+          <input id="hintInput" maxlength="64" placeholder="Ex : coucher de soleil pâle" class="min-w-0 flex-1 rounded-[22px] border-0 bg-soft px-4 py-4 text-sm font-medium outline-none placeholder:text-neutral-400" />
+          <button id="sendHintBtn" class="soft-button rounded-[22px] bg-ink px-5 py-4 text-sm font-semibold text-white">Envoyer</button>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-[28px] p-4 shadow-soft">
+        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Indice reçu</p>
+        <p id="hintLabel" class="min-h-6 text-lg font-medium leading-snug tracking-[-0.03em] text-ink">Aucun indice pour le moment.</p>
+      </div>
+
+      <div class="glass-card rounded-[28px] p-3 shadow-soft">
+        <div id="grid" class="grid grid-cols-10 gap-1.5"></div>
+      </div>
+
+      <div id="resultPanel" class="hidden glass-card rounded-[28px] p-4 shadow-soft">
+        <div class="flex items-center gap-4">
+          <div id="scoreRing" class="score-ring grid h-20 w-20 shrink-0 place-items-center rounded-full" style="--score: 0%;">
+            <span id="scoreLabel" class="text-lg font-semibold">0%</span>
+          </div>
+          <div>
+            <p id="resultTitle" class="text-xl font-semibold tracking-[-0.04em]">Résultat</p>
+            <p id="resultText" class="mt-1 text-sm font-medium text-neutral-500">Le prochain tour démarre automatiquement.</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="leaveRoomBtn" class="soft-button mt-auto rounded-[24px] bg-soft px-5 py-4 text-sm font-semibold text-neutral-600">
+        Quitter le salon
+      </button>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      set,
+      update,
+      onValue,
+      off,
+      onDisconnect,
+      serverTimestamp,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+    /*
+      =========================================================
+      FIREBASE CONFIGURATION
+      Remplace les valeurs ci-dessous par celles de ton projet.
+      Firebase Console > Paramètres du projet > Tes applications > SDK Web
+
+      Important : active aussi dans Firebase :
+      1. Authentication > Sign-in method > Anonymous
+      2. Realtime Database > Créer une base
+      3. Règles de test pour commencer, puis sécuriser avant production
+      =========================================================
+    */
+const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+
+    const MAX_ATTEMPTS = 5;
+    const WIN_THRESHOLD = 92;
+    const NEXT_ROUND_DELAY = 2600;
+    const COLOR_COUNT = 120;
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const ui = {
+      connectionPill: document.getElementById("connectionPill"),
+      homeScreen: document.getElementById("homeScreen"),
+      gameScreen: document.getElementById("gameScreen"),
+      createRoomBtn: document.getElementById("createRoomBtn"),
+      joinRoomBtn: document.getElementById("joinRoomBtn"),
+      roomInput: document.getElementById("roomInput"),
+      homeMessage: document.getElementById("homeMessage"),
+      roomCodeLabel: document.getElementById("roomCodeLabel"),
+      roleLabel: document.getElementById("roleLabel"),
+      roundLabel: document.getElementById("roundLabel"),
+      attemptsLabel: document.getElementById("attemptsLabel"),
+      bestScoreLabel: document.getElementById("bestScoreLabel"),
+      stateLabel: document.getElementById("stateLabel"),
+      giverPanel: document.getElementById("giverPanel"),
+      hintInput: document.getElementById("hintInput"),
+      sendHintBtn: document.getElementById("sendHintBtn"),
+      hintLabel: document.getElementById("hintLabel"),
+      grid: document.getElementById("grid"),
+      resultPanel: document.getElementById("resultPanel"),
+      scoreRing: document.getElementById("scoreRing"),
+      scoreLabel: document.getElementById("scoreLabel"),
+      resultTitle: document.getElementById("resultTitle"),
+      resultText: document.getElementById("resultText"),
+      leaveRoomBtn: document.getElementById("leaveRoomBtn")
+    };
+
+    let userId = null;
+    let currentRoomId = null;
+    let currentRoomRef = null;
+    let currentRoomUnsubscribe = null;
+    let latestRoom = null;
+    let roundTimer = null;
+
+    function setMessage(text) {
+      ui.homeMessage.textContent = text;
+    }
+
+    function setLoading(button, isLoading, label) {
+      button.disabled = isLoading;
+      button.style.opacity = isLoading ? "0.55" : "1";
+      if (label) button.textContent = label;
+    }
+
+    function randomRoomId() {
+      return String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    function sanitizeRoomId(value) {
+      return String(value || "").replace(/\D/g, "").slice(0, 4);
+    }
+
+    function hashSeed(input) {
+      let hash = 2166136261;
+      for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+      }
+      return Math.abs(hash >>> 0);
+    }
+
+    function seededRandom(seed) {
+      let value = seed % 2147483647;
+      if (value <= 0) value += 2147483646;
+      return function next() {
+        value = (value * 16807) % 2147483647;
+        return (value - 1) / 2147483646;
+      };
+    }
+
+    function hslToHex(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0;
+      let g = 0;
+      let b = 0;
+
+      if (h < 60) [r, g, b] = [c, x, 0];
+      else if (h < 120) [r, g, b] = [x, c, 0];
+      else if (h < 180) [r, g, b] = [0, c, x];
+      else if (h < 240) [r, g, b] = [0, x, c];
+      else if (h < 300) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+
+      const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    }
+
+    function generatePalette(seedText) {
+      const random = seededRandom(hashSeed(seedText));
+      const baseHue = Math.floor(random() * 360);
+      const palette = [];
+      const used = new Set();
+
+      for (let i = 0; i < COLOR_COUNT; i++) {
+        const hueStep = (360 / COLOR_COUNT) * i;
+        const hueNoise = (random() - 0.5) * 16;
+        const hue = (baseHue + hueStep + hueNoise + 360) % 360;
+        const saturation = 48 + random() * 36;
+        const lightness = 38 + random() * 32;
+        let hex = hslToHex(hue, saturation, lightness);
+
+        while (used.has(hex)) {
+          hex = hslToHex((hue + random() * 10) % 360, saturation, lightness);
+        }
+
+        used.add(hex);
+        palette.push(hex);
+      }
+
+      return palette.sort(() => random() - 0.5);
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function rgbToLab({ r, g, b }) {
+      let rr = r / 255;
+      let gg = g / 255;
+      let bb = b / 255;
+
+      rr = rr > 0.04045 ? Math.pow((rr + 0.055) / 1.055, 2.4) : rr / 12.92;
+      gg = gg > 0.04045 ? Math.pow((gg + 0.055) / 1.055, 2.4) : gg / 12.92;
+      bb = bb > 0.04045 ? Math.pow((bb + 0.055) / 1.055, 2.4) : bb / 12.92;
+
+      let x = (rr * 0.4124 + gg * 0.3576 + bb * 0.1805) / 0.95047;
+      let y = (rr * 0.2126 + gg * 0.7152 + bb * 0.0722) / 1.00000;
+      let z = (rr * 0.0193 + gg * 0.1192 + bb * 0.9505) / 1.08883;
+
+      const pivot = value => value > 0.008856 ? Math.cbrt(value) : (7.787 * value) + 16 / 116;
+      x = pivot(x);
+      y = pivot(y);
+      z = pivot(z);
+
+      return {
+        l: (116 * y) - 16,
+        a: 500 * (x - y),
+        b: 200 * (y - z)
+      };
+    }
+
+    function colorDistanceScore(selectedHex, targetHex) {
+      const selected = rgbToLab(hexToRgb(selectedHex));
+      const target = rgbToLab(hexToRgb(targetHex));
+      const delta = Math.sqrt(
+        Math.pow(selected.l - target.l, 2) +
+        Math.pow(selected.a - target.a, 2) +
+        Math.pow(selected.b - target.b, 2)
+      );
+
+      const normalized = Math.max(0, 100 - (delta / 140) * 100);
+      return Math.round(Math.min(100, normalized));
+    }
+
+    function getPlayerRole(room) {
+      if (!room?.players || !userId) return null;
+      const entry = Object.entries(room.players).find(([, value]) => value.uid === userId);
+      return entry ? entry[0] : null;
+    }
+
+    function getCurrentGiver(room) {
+      return room?.round?.giver || "player1";
+    }
+
+    function getCurrentSeeker(room) {
+      return getCurrentGiver(room) === "player1" ? "player2" : "player1";
+    }
+
+    function isGiver(room) {
+      return getPlayerRole(room) === getCurrentGiver(room);
+    }
+
+    function isSeeker(room) {
+      return getPlayerRole(room) === getCurrentSeeker(room);
+    }
+
+    function getTargetHex(room) {
+      const targetIndex = room?.round?.targetIndex ?? 0;
+      return room?.palette?.[targetIndex] || "#FFFFFF";
+    }
+
+    function getAttempts(room) {
+      return Object.values(room?.attempts || {}).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    }
+
+    function getBestScore(room) {
+      return getAttempts(room).reduce((best, item) => Math.max(best, item.score || 0), 0);
+    }
+
+    function showScreen(name) {
+      const isGame = name === "game";
+      ui.homeScreen.classList.toggle("hidden", isGame);
+      ui.gameScreen.classList.toggle("hidden", !isGame);
+      ui.gameScreen.classList.toggle("flex", isGame);
+    }
+
+    async function createInitialRoom(roomId) {
+      const palette = generatePalette(roomId);
+      const random = seededRandom(hashSeed(`${roomId}:round:1`));
+      const targetIndex = Math.floor(random() * COLOR_COUNT);
+
+      await set(ref(db, `rooms/${roomId}`), {
+        id: roomId,
+        createdAt: serverTimestamp(),
+        status: "waiting",
+        palette,
+        players: {
+          player1: {
+            uid: userId,
+            joinedAt: serverTimestamp(),
+            online: true
+          }
+        },
+        round: {
+          number: 1,
+          giver: "player1",
+          targetIndex,
+          status: "playing",
+          startedAt: serverTimestamp()
+        },
+        hint: "",
+        attempts: {}
+      });
+    }
+
+    async function createRoom() {
+      setLoading(ui.createRoomBtn, true, "Création...");
+      setMessage("");
+
+      try {
+        let roomId = randomRoomId();
+        let roomSnapshot = await get(ref(db, `rooms/${roomId}`));
+        let tries = 0;
+
+        while (roomSnapshot.exists() && tries < 12) {
+          roomId = randomRoomId();
+          roomSnapshot = await get(ref(db, `rooms/${roomId}`));
+          tries++;
+        }
+
+        if (roomSnapshot.exists()) throw new Error("Impossible de générer un salon libre.");
+
+        await createInitialRoom(roomId);
+        await enterRoom(roomId);
+      } catch (error) {
+        setMessage(error.message || "Erreur lors de la création du salon.");
+      } finally {
+        setLoading(ui.createRoomBtn, false, "Créer un Salon");
+      }
+    }
+
+    async function joinRoom() {
+      const roomId = sanitizeRoomId(ui.roomInput.value);
+      setMessage("");
+
+      if (roomId.length !== 4) {
+        setMessage("Entre un ID de salon à 4 chiffres.");
+        return;
+      }
+
+      setLoading(ui.joinRoomBtn, true, "...");
+
+      try {
+        const roomRef = ref(db, `rooms/${roomId}`);
+        const result = await runTransaction(roomRef, room => {
+          if (!room) return room;
+
+          room.players = room.players || {};
+
+          const alreadyInRoom = Object.values(room.players).some(player => player.uid === userId);
+          if (alreadyInRoom) return room;
+
+          if (!room.players.player1) {
+            room.players.player1 = { uid: userId, joinedAt: Date.now(), online: true };
+          } else if (!room.players.player2) {
+            room.players.player2 = { uid: userId, joinedAt: Date.now(), online: true };
+            room.status = "playing";
+          } else {
+            room.joinError = "full";
+          }
+
+          return room;
+        });
+
+        const value = result.snapshot.val();
+        if (!value) throw new Error("Salon introuvable.");
+        if (value.joinError === "full") {
+          await update(roomRef, { joinError: null });
+          throw new Error("Ce salon est déjà complet.");
+        }
+
+        await enterRoom(roomId);
+      } catch (error) {
+        setMessage(error.message || "Impossible de rejoindre ce salon.");
+      } finally {
+        setLoading(ui.joinRoomBtn, false, "Rejoindre");
+      }
+    }
+
+    async function enterRoom(roomId) {
+      currentRoomId = roomId;
+      currentRoomRef = ref(db, `rooms/${roomId}`);
+      showScreen("game");
+      ui.roomCodeLabel.textContent = roomId;
+
+      if (currentRoomUnsubscribe) currentRoomUnsubscribe();
+      onValue(currentRoomRef, snapshot => {
+        latestRoom = snapshot.val();
+        if (!latestRoom) {
+          leaveRoom(false);
+          return;
+        }
+        renderGame(latestRoom);
+      });
+      currentRoomUnsubscribe = () => off(currentRoomRef);
+
+      const rolePath = await findRolePath(roomId);
+      if (rolePath) {
+        const onlineRef = ref(db, `rooms/${roomId}/players/${rolePath}/online`);
+        await update(ref(db, `rooms/${roomId}/players/${rolePath}`), { online: true });
+        onDisconnect(onlineRef).set(false);
+      }
+    }
+
+    async function findRolePath(roomId) {
+      const snapshot = await get(ref(db, `rooms/${roomId}/players`));
+      const players = snapshot.val() || {};
+      const entry = Object.entries(players).find(([, value]) => value.uid === userId);
+      return entry ? entry[0] : null;
+    }
+
+    function renderGame(room) {
+      const role = getPlayerRole(room);
+      const playerIsGiver = isGiver(room);
+      const playerIsSeeker = isSeeker(room);
+      const attempts = getAttempts(room);
+      const bestScore = getBestScore(room);
+      const hasTwoPlayers = Boolean(room.players?.player1 && room.players?.player2);
+      const roundStatus = room.round?.status || "playing";
+
+      ui.roundLabel.textContent = room.round?.number || 1;
+      ui.attemptsLabel.textContent = `${attempts.length}/${MAX_ATTEMPTS}`;
+      ui.bestScoreLabel.textContent = `${bestScore}%`;
+      ui.hintLabel.textContent = room.hint || "Aucun indice pour le moment.";
+      ui.giverPanel.classList.toggle("hidden", !playerIsGiver || roundStatus !== "playing");
+
+      if (!hasTwoPlayers) {
+        ui.roleLabel.textContent = "En attente du Joueur 2";
+        ui.stateLabel.textContent = "Pause";
+      } else if (playerIsGiver) {
+        ui.roleLabel.textContent = "Donneur";
+        ui.stateLabel.textContent = "Guide";
+      } else if (playerIsSeeker) {
+        ui.roleLabel.textContent = "Chercheur";
+        ui.stateLabel.textContent = roundStatus === "playing" ? "Trouve" : "Fin";
+      } else {
+        ui.roleLabel.textContent = role ? "Spectateur" : "Salon complet";
+        ui.stateLabel.textContent = "Vue";
+      }
+
+      renderGrid(room);
+      renderResult(room, attempts, bestScore);
+      maybeScheduleNextRound(room, bestScore, attempts.length);
+    }
+
+    function renderGrid(room) {
+      const palette = room.palette || [];
+      const attempts = getAttempts(room);
+      const lastAttempt = attempts.at(-1);
+      const targetIndex = room.round?.targetIndex ?? -1;
+      const playerIsGiver = isGiver(room);
+      const playerIsSeeker = isSeeker(room);
+      const canPick = playerIsSeeker && room.status === "playing" && room.round?.status === "playing" && Boolean(room.players?.player1 && room.players?.player2);
+
+      ui.grid.innerHTML = "";
+
+      palette.forEach((hex, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "color-cell";
+        button.style.background = hex;
+        button.setAttribute("aria-label", `Couleur ${index + 1}`);
+
+        if (playerIsGiver && index === targetIndex) button.classList.add("target");
+        if (lastAttempt?.index === index) button.classList.add("selected");
+        if (!canPick) button.disabled = true;
+
+        button.addEventListener("click", () => submitAttempt(index, hex));
+        ui.grid.appendChild(button);
+      });
+    }
+
+    function renderResult(room, attempts, bestScore) {
+      const lastAttempt = attempts.at(-1);
+      const status = room.round?.status || "playing";
+      const showResult = Boolean(lastAttempt) || status !== "playing";
+
+      ui.resultPanel.classList.toggle("hidden", !showResult);
+
+      const score = lastAttempt?.score || bestScore || 0;
+      ui.scoreRing.style.setProperty("--score", `${score}%`);
+      ui.scoreLabel.textContent = `${score}%`;
+
+      if (status === "won") {
+        ui.resultTitle.textContent = "Couleur trouvée";
+        ui.resultText.textContent = "Bravo. Les rôles vont s'inverser.";
+      } else if (status === "lost") {
+        ui.resultTitle.textContent = "Cible manquée";
+        ui.resultText.textContent = "Les 5 essais sont utilisés. Inversion des rôles.";
+      } else if (lastAttempt) {
+        ui.resultTitle.textContent = score >= 75 ? "Très proche" : score >= 45 ? "Bonne piste" : "Encore loin";
+        ui.resultText.textContent = "Utilise l'indice et affine ton choix.";
+      }
+    }
+
+    async function sendHint() {
+      if (!currentRoomId || !latestRoom || !isGiver(latestRoom)) return;
+      const text = ui.hintInput.value.trim().slice(0, 64);
+      if (!text) return;
+
+      ui.hintInput.value = "";
+      await update(ref(db, `rooms/${currentRoomId}`), {
+        hint: text,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function submitAttempt(index, hex) {
+      if (!currentRoomId || !latestRoom || !isSeeker(latestRoom)) return;
+      if (latestRoom.round?.status !== "playing") return;
+
+      const attempts = getAttempts(latestRoom);
+      if (attempts.length >= MAX_ATTEMPTS) return;
+
+      const targetHex = getTargetHex(latestRoom);
+      const score = colorDistanceScore(hex, targetHex);
+      const nextCount = attempts.length + 1;
+      const won = score >= WIN_THRESHOLD;
+      const lost = !won && nextCount >= MAX_ATTEMPTS;
+
+      const attemptId = `${Date.now()}_${userId.slice(0, 6)}`;
+      const updates = {
+        [`attempts/${attemptId}`]: {
+          uid: userId,
+          index,
+          hex,
+          score,
+          createdAt: Date.now()
+        },
+        updatedAt: serverTimestamp()
+      };
+
+      if (won || lost) {
+        updates["round/status"] = won ? "won" : "lost";
+        updates["round/endedAt"] = serverTimestamp();
+      }
+
+      await update(ref(db, `rooms/${currentRoomId}`), updates);
+    }
+
+    function maybeScheduleNextRound(room, bestScore, attemptCount) {
+      const status = room.round?.status;
+      if (status !== "won" && status !== "lost") return;
+      if (roundTimer) return;
+      if (!isGiver(room)) return;
+
+      roundTimer = window.setTimeout(async () => {
+        roundTimer = null;
+        await startNextRound(room);
+      }, NEXT_ROUND_DELAY);
+    }
+
+    async function startNextRound(room) {
+      if (!currentRoomId || !room?.round) return;
+
+      const nextNumber = (room.round.number || 1) + 1;
+      const nextGiver = getCurrentGiver(room) === "player1" ? "player2" : "player1";
+      const random = seededRandom(hashSeed(`${currentRoomId}:round:${nextNumber}:${Date.now()}`));
+      const nextTargetIndex = Math.floor(random() * COLOR_COUNT);
+
+      await update(ref(db, `rooms/${currentRoomId}`), {
+        attempts: {},
+        hint: "",
+        round: {
+          number: nextNumber,
+          giver: nextGiver,
+          targetIndex: nextTargetIndex,
+          status: "playing",
+          startedAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function leaveRoom(goHome = true) {
+      if (roundTimer) {
+        window.clearTimeout(roundTimer);
+        roundTimer = null;
+      }
+
+      if (currentRoomUnsubscribe) {
+        currentRoomUnsubscribe();
+        currentRoomUnsubscribe = null;
+      }
+
+      if (currentRoomId) {
+        const rolePath = await findRolePath(currentRoomId).catch(() => null);
+        if (rolePath) {
+          await update(ref(db, `rooms/${currentRoomId}/players/${rolePath}`), { online: false }).catch(() => {});
+        }
+      }
+
+      currentRoomId = null;
+      currentRoomRef = null;
+      latestRoom = null;
+
+      if (goHome) {
+        ui.roomInput.value = "";
+        showScreen("home");
+        setMessage("");
+      }
+    }
+
+    ui.createRoomBtn.addEventListener("click", createRoom);
+    ui.joinRoomBtn.addEventListener("click", joinRoom);
+    ui.sendHintBtn.addEventListener("click", sendHint);
+    ui.leaveRoomBtn.addEventListener("click", () => leaveRoom(true));
+
+    ui.roomInput.addEventListener("input", event => {
+      event.target.value = sanitizeRoomId(event.target.value);
+    });
+
+    ui.roomInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") joinRoom();
+    });
+
+    ui.hintInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") sendHint();
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        userId = user.uid;
+        ui.connectionPill.textContent = "En ligne";
+        ui.connectionPill.className = "rounded-full bg-white px-3 py-2 text-xs font-semibold text-neutral-700 shadow-sm";
+      }
+    });
+
+    signInAnonymously(auth).catch(error => {
+      ui.connectionPill.textContent = "Hors ligne";
+      setMessage("Vérifie ta configuration Firebase et l'authentification anonyme.");
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
