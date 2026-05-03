@@ -132,7 +132,7 @@
       </div>
 
       <div class="rounded-[2rem] bg-pink-100 p-4 text-sm font-bold leading-relaxed neo-soft">
-        Le joueur 1 crée la room et reçoit une personnalité secrète. Le joueur 2 rejoint, pose ses questions à l'oral, puis tape ses propositions.
+        Le joueur 1 crée la room. Le maître du jeu alterne à chaque manche : joueur 1, puis joueur 2, et ainsi de suite pendant 6 manches.
       </div>
     </section>
 
@@ -153,13 +153,13 @@
 
         <div class="mb-3 flex items-center justify-between rounded-2xl bg-neutral-50 px-3 py-2 text-xs font-black neo-soft">
           <span>Manche</span>
-          <span id="roundInfo">1 / 5</span>
+          <span id="roundInfo">1 / 6</span>
         </div>
 
         <div class="grid grid-cols-6 gap-1.5" id="attemptDots"></div>
       </div>
 
-      <!-- Score global sur 5 manches -->
+      <!-- Score global sur 6 manches -->
       <div class="grid grid-cols-2 gap-3 fade-up">
         <div class="rounded-[1.5rem] bg-yellow-100 p-3 text-center neo-soft">
           <p class="text-xs font-black uppercase tracking-[.18em] text-neutral-500">Joueur 1</p>
@@ -283,17 +283,20 @@ const firebaseConfig = {
        Tu peux remplacer ou compléter cette liste facilement.
        ========================================================= */
     const CELEBRITIES = [
-      "Une Wokiste", "Squeezie", "Ma maman", "Ma soeur", "Louis-San",
-      "Bertrand", "Lititia", "Cedric", "Simao", "Tudy",
-      "Leslie", "Macron", "Timmy", "HugoDécrypte", "Le Rire Jaune", "Un complotiste","Une Karen",
-      "Un beauf",
-      "Un Parisien", "Un stagiaire perdu",
-      "Un client impatient", "Christophe",
-      "Un voisin bruyant","Un moniteur d’auto-école","Ton père","Michael","Julie",
+      "Taylor Swift", "Beyoncé", "Cristiano Ronaldo", "Lionel Messi", "Rihanna",
+      "Elon Musk", "Barack Obama", "Oprah Winfrey", "Ariana Grande", "Kylian Mbappé",
+      "Lady Gaga", "Tom Cruise", "Zendaya", "Dwayne Johnson", "Shakira",
+      "Billie Eilish", "Drake", "Ed Sheeran", "Kim Kardashian", "Brad Pitt",
+      "Angelina Jolie", "Leonardo DiCaprio", "Greta Thunberg", "Neymar", "Emma Watson",
+      "Will Smith", "Snoop Dogg", "Meryl Streep", "Keanu Reeves", "Serena Williams",
+      "Roger Federer", "Lewis Hamilton", "Madonna", "Justin Bieber", "Dua Lipa",
+      "Adele", "Selena Gomez", "Harry Styles", "Jennifer Lopez", "Eminem",
+      "Céline Dion", "Omar Sy", "Marion Cotillard", "Stromae", "David Guetta",
+      "Zinedine Zidane", "Albert Einstein", "Marilyn Monroe", "Steve Jobs", "Walt Disney"
     ];
 
     const MAX_ATTEMPTS = 6;
-    const MAX_ROUNDS = 5;
+    const MAX_ROUNDS = 6;
 
     /* =========================================================
        3. État local
@@ -400,6 +403,23 @@ const firebaseConfig = {
       return guessHistory(room).filter(g => !g.exact).length;
     }
 
+    function isOddRound(room) {
+      return ((room?.round || 1) % 2) === 1;
+    }
+
+    function roundHostId(room) {
+      return isOddRound(room) ? room?.hostId : room?.guesserId;
+    }
+
+    function roundGuesserId(room) {
+      return isOddRound(room) ? room?.guesserId : room?.hostId;
+    }
+
+    function playerLabel(room, id) {
+      if (!room || !id) return "Joueur";
+      return id === room.hostId ? "Joueur 1" : id === room.guesserId ? "Joueur 2" : "Spectateur";
+    }
+
     /* =========================================================
        5. Initialisation Firebase
        ========================================================= */
@@ -437,6 +457,7 @@ const firebaseConfig = {
         hostScore: 0,
         guesserScore: 0,
         winner: null,
+        winnerId: null,
         matchWinner: null,
         pendingGuessId: null,
         lastFeedback: null,
@@ -513,12 +534,13 @@ const firebaseConfig = {
       const id = crypto.randomUUID();
       const attemptsAfterSubmit = nonExactAttempts(currentRoom) + (exact ? 0 : 1);
       const winner = exact ? "guesser" : attemptsAfterSubmit >= MAX_ATTEMPTS ? "host" : null;
+      const winnerId = winner === "guesser" ? roundGuesserId(currentRoom) : winner === "host" ? roundHostId(currentRoom) : null;
       const status = winner ? "ended" : "playing";
-      const nextHostScore = (currentRoom.hostScore || 0) + (winner === "host" ? 1 : 0);
-      const nextGuesserScore = (currentRoom.guesserScore || 0) + (winner === "guesser" ? 1 : 0);
+      const nextHostScore = (currentRoom.hostScore || 0) + (winnerId === currentRoom.hostId ? 1 : 0);
+      const nextGuesserScore = (currentRoom.guesserScore || 0) + (winnerId === currentRoom.guesserId ? 1 : 0);
       const isMatchFinished = Boolean(winner) && (currentRoom.round || 1) >= MAX_ROUNDS;
       const matchWinner = isMatchFinished
-        ? nextGuesserScore > nextHostScore ? "guesser" : nextHostScore > nextGuesserScore ? "host" : "draw"
+        ? nextGuesserScore > nextHostScore ? "player2" : nextHostScore > nextGuesserScore ? "player1" : "draw"
         : null;
 
       const guess = {
@@ -534,6 +556,7 @@ const firebaseConfig = {
         [`guesses/${id}`]: guess,
         pendingGuessId: exact || winner ? null : id,
         winner,
+        winnerId,
         status,
         hostScore: nextHostScore,
         guesserScore: nextGuesserScore,
@@ -579,6 +602,7 @@ const firebaseConfig = {
         secretName: pickCelebrity(currentRoom.secretName),
         status: currentRoom.guesserId ? "playing" : "waiting",
         winner: null,
+        winnerId: null,
         matchWinner: null,
         pendingGuessId: null,
         lastFeedback: null,
@@ -598,6 +622,7 @@ const firebaseConfig = {
         secretName: pickCelebrity(currentRoom.secretName),
         status: currentRoom.guesserId ? "playing" : "waiting",
         winner: null,
+        winnerId: null,
         matchWinner: null,
         hostScore: 0,
         guesserScore: 0,
@@ -630,10 +655,13 @@ const firebaseConfig = {
     function renderGame() {
       if (!currentRoom) return;
 
-      currentRole = currentRoom.hostId === playerId ? "host" : currentRoom.guesserId === playerId ? "guesser" : "spectator";
+      const currentRoundHostId = roundHostId(currentRoom);
+      const currentRoundGuesserId = roundGuesserId(currentRoom);
+      currentRole = currentRoundHostId === playerId ? "host" : currentRoundGuesserId === playerId ? "guesser" : "spectator";
+      const currentPlayerName = playerLabel(currentRoom, playerId);
 
       els.roomCode.textContent = currentRoom.id;
-      els.roleBadge.textContent = currentRole === "host" ? "Joueur 1\nMaître" : currentRole === "guesser" ? "Joueur 2\nDevine" : "Spectateur";
+      els.roleBadge.textContent = currentRole === "host" ? `${currentPlayerName}\nMaître` : currentRole === "guesser" ? `${currentPlayerName}\nDevine` : "Spectateur";
       els.roleBadge.className = `rounded-2xl px-3 py-2 text-right text-xs font-black whitespace-pre-line neo-soft ${currentRole === "host" ? "bg-yellow-200" : "bg-emerald-200"}`;
 
       const attempts = nonExactAttempts(currentRoom);
@@ -724,19 +752,20 @@ const firebaseConfig = {
 
     function renderEndModal() {
       const guesserWon = currentRoom.winner === "guesser";
+      const winnerName = playerLabel(currentRoom, currentRoom.winnerId);
       const round = currentRoom.round || 1;
       const matchFinished = round >= MAX_ROUNDS;
       const scoreText = `Score : Joueur 1 ${currentRoom.hostScore || 0} - ${currentRoom.guesserScore || 0} Joueur 2`;
 
       if (matchFinished) {
         const matchWinner = currentRoom.matchWinner;
-        els.endEmoji.textContent = matchWinner === "draw" ? "🤝" : matchWinner === "guesser" ? "🎉" : "👑";
-        els.endTitle.textContent = matchWinner === "draw" ? "Égalité finale !" : matchWinner === "guesser" ? "Joueur 2 remporte la partie !" : "Joueur 1 remporte la partie !";
+        els.endEmoji.textContent = matchWinner === "draw" ? "🤝" : matchWinner === "player2" ? "🎉" : "👑";
+        els.endTitle.textContent = matchWinner === "draw" ? "Égalité finale !" : matchWinner === "player2" ? "Joueur 2 remporte la partie !" : "Joueur 1 remporte la partie !";
         els.endMessage.textContent = `Fin des ${MAX_ROUNDS} manches. La dernière personnalité était ${currentRoom.secretName}. ${scoreText}`;
         els.newRoundBtn.textContent = "Recommencer";
       } else {
         els.endEmoji.textContent = guesserWon ? "🎉" : "👑";
-        els.endTitle.textContent = guesserWon ? "Manche pour Joueur 2 !" : "Manche pour Joueur 1 !";
+        els.endTitle.textContent = `Manche pour ${winnerName} !`;
         els.endMessage.textContent = guesserWon
           ? `La réponse était bien ${currentRoom.secretName}. ${scoreText}`
           : `La personnalité était ${currentRoom.secretName}. Les 6 tentatives sont écoulées. ${scoreText}`;
