@@ -5,33 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cache-Cache Mondial</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQJdJbVdcP7whXT9RPS7ccROpSDVJE0=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Firebase Compat, plus robuste dans un fichier HTML simple -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
   <style>
-    :root {
-      --blue: #2563ff;
-      --pink: #ff2bd6;
-      --yellow: #ffd60a;
-      --ink: #0b1020;
-    }
-
     html, body {
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #070a18;
+      background: #0b1020;
       color: white;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -39,54 +28,39 @@
     #map {
       position: fixed;
       inset: 0;
+      width: 100vw;
+      height: 100dvh;
       z-index: 0;
-      background: #dbeafe;
+      background: #cfe8ff;
     }
 
-    /* Laisse Leaflet recevoir les gestes tactiles correctement */
-    .leaflet-container {
-      touch-action: pan-x pan-y pinch-zoom;
-      font: inherit;
-      background: #dbeafe;
+    .maplibregl-ctrl-bottom-left,
+    .maplibregl-ctrl-bottom-right {
+      display: none;
     }
 
-    /* Correctif Tailwind + Leaflet : ne jamais forcer la taille des tuiles, seulement empêcher Tailwind de les contraindre. */
-    .leaflet-container img,
-    .leaflet-container .leaflet-tile,
-    .leaflet-tile-container img {
-      max-width: none !important;
-      max-height: none !important;
+    .maplibregl-ctrl-top-right {
+      top: 76px;
+      right: 10px;
     }
 
-    .leaflet-control-zoom {
-      border: 0 !important;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, .25) !important;
+    .maplibregl-ctrl-group {
+      border-radius: 18px !important;
+      overflow: hidden;
+      box-shadow: 0 14px 30px rgba(0,0,0,.28) !important;
     }
 
-    .leaflet-control-zoom a {
+    .maplibregl-ctrl button {
       width: 42px !important;
       height: 42px !important;
-      line-height: 42px !important;
-      font-size: 24px !important;
-      color: #0f172a !important;
-      background: rgba(255, 255, 255, .92) !important;
-    }
-
-    .leaflet-control-attribution {
-      font-size: 10px;
-      border-radius: 14px 0 0 0;
     }
 
     .glass {
-      background: rgba(7, 10, 24, .64);
-      border: 1px solid rgba(255, 255, 255, .22);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .24);
+      background: rgba(10, 14, 32, .68);
+      border: 1px solid rgba(255, 255, 255, .20);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .24);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-    }
-
-    .soft {
-      box-shadow: 8px 8px 20px rgba(0, 0, 0, .20), -8px -8px 20px rgba(255, 255, 255, .06);
     }
 
     .btn {
@@ -100,95 +74,50 @@
       filter: brightness(1.08);
     }
 
-    .marker-pin {
-      width: 34px;
-      height: 34px;
+    .safe-top { padding-top: max(8px, env(safe-area-inset-top)); }
+    .safe-bottom { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+
+    .pin {
+      width: 36px;
+      height: 36px;
       display: grid;
       place-items: center;
       border-radius: 999px;
       color: white;
-      border: 2px solid rgba(255, 255, 255, .85);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+      border: 2px solid rgba(255, 255, 255, .9);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, .38);
     }
 
-    .secret-pin { background: linear-gradient(135deg, #ff2bd6, #8b5cf6); }
-    .guess-pin { background: linear-gradient(135deg, #2563ff, #00d4ff); }
-    .preview-pin { background: linear-gradient(135deg, #ffd60a, #ff7a00); color: #1b1400; }
+    .pin-secret { background: linear-gradient(135deg, #ff2bd6, #8b5cf6); }
+    .pin-guess { background: linear-gradient(135deg, #2563ff, #00d4ff); }
+    .pin-preview { background: linear-gradient(135deg, #ffd60a, #ff7a00); color: #1b1400; }
 
-    @keyframes popIn {
-      0% { transform: translate(-50%, -20px) scale(.9); opacity: 0; }
-      18% { transform: translate(-50%, 0) scale(1.04); opacity: 1; }
-      100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 10, 0); }
-      50% { box-shadow: 0 0 32px rgba(255, 214, 10, .85); }
-    }
-
-    .toast-show {
-      animation: popIn .42s cubic-bezier(.2, 1.3, .25, 1) both;
-    }
-
-    .bingo-glow {
-      animation: pulseGlow 1s ease-in-out infinite;
-    }
-
-    .safe-bottom {
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
-    }
-
-    .safe-top {
-      padding-top: max(8px, env(safe-area-inset-top));
-    }
-
-    .search-results {
-      max-height: 210px;
-      overflow: auto;
-    }
-
-    #topPanel, #searchPanel, #hintPanel, #bottomPanel, #toast, #miniMapControls {
+    #topPanel, #bottomPanel, #searchPanel, #hintPanel, #miniControls, #placementHud, #toast {
       pointer-events: none;
     }
 
-    #topPanel > *, #searchPanel > *, #hintPanel > *, #bottomPanel > *, #toast > *, #miniMapControls > * {
+    #topPanel > *, #bottomPanel > *, #searchPanel > *, #hintPanel > *, #miniControls > *, #placementHud > *, #toast > * {
       pointer-events: auto;
     }
 
-    .compact-panel {
-      max-height: 34dvh;
-      overflow: auto;
-    }
-
-    body.placing #topPanel,
-    body.placing #bottomPanel,
-    body.placing #searchPanel,
-    body.placing #hintPanel,
     body.map-only #topPanel,
     body.map-only #bottomPanel,
     body.map-only #searchPanel,
-    body.map-only #hintPanel {
+    body.map-only #hintPanel,
+    body.placing #topPanel,
+    body.placing #bottomPanel,
+    body.placing #searchPanel,
+    body.placing #hintPanel {
       display: none !important;
     }
 
-    body:not(.map-only) #showUiBtn {
-      display: none !important;
-    }
+    body:not(.map-only) #showUiBtn { display: none !important; }
+    body.map-only #hideUiBtn { display: none !important; }
 
-    body.map-only #hideUiBtn {
-      display: none !important;
-    }
+    #placementHud { display: none; }
+    body.placing #placementHud { display: block; }
 
-    #placementHud {
-      display: none;
-      pointer-events: none;
-    }
-
-    body.placing #placementHud {
-      display: block;
-    }
-
-    .crosshair-pin {
+    .center-pin {
       position: fixed;
       left: 50%;
       top: 50%;
@@ -198,15 +127,23 @@
       filter: drop-shadow(0 14px 18px rgba(0,0,0,.36));
     }
 
-    
+    @keyframes popIn {
+      0% { transform: translate(-50%, -18px) scale(.92); opacity: 0; }
+      18% { transform: translate(-50%, 0) scale(1.04); opacity: 1; }
+      100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    }
 
-    @media (max-height: 720px) {
-      #brandIcon { width: 40px; height: 40px; border-radius: 18px; }
-      #topCard { padding: 10px; border-radius: 22px; }
-      #actionPanel { border-radius: 24px; padding: 10px; }
-      .mobile-tight { padding-top: 10px !important; padding-bottom: 10px !important; }
-      #searchPanel { top: 136px !important; }
-      #hintPanel { top: 136px !important; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 10, 0); }
+      50% { box-shadow: 0 0 32px rgba(255, 214, 10, .85); }
+    }
+
+    .toast-show { animation: popIn .42s cubic-bezier(.2, 1.3, .25, 1) both; }
+    .bingo-glow { animation: pulseGlow 1s ease-in-out infinite; }
+
+    .search-results {
+      max-height: 230px;
+      overflow: auto;
     }
   </style>
 </head>
@@ -214,18 +151,19 @@
   <div id="map"></div>
 
   <main class="relative z-10 h-dvh pointer-events-none">
-    <div id="miniMapControls" class="fixed left-3 top-3 z-[8500] safe-top">
-      <button id="hideUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm shadow-lg">Carte</button>
-      <button id="showUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm shadow-lg">Actions</button>
+    <div id="miniControls" class="fixed left-3 top-3 z-[8500] safe-top">
+      <button id="hideUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm">Carte</button>
+      <button id="showUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm">Actions</button>
     </div>
+
     <section id="topPanel" class="absolute top-0 left-0 right-0 safe-top px-3">
-      <div id="topCard" class="glass rounded-[22px] p-2 soft max-w-[calc(100vw-24px)] mx-auto">
-        <div class="flex items-center gap-3">
-          <div id="brandIcon" class="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
-            <i data-lucide="globe-2" class="w-7 h-7"></i>
+      <div class="glass rounded-[22px] p-2 ml-14">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
+            <i data-lucide="globe-2" class="w-6 h-6"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h1 class="text-base font-black tracking-tight leading-tight">Cache-Cache</h1>
+            <h1 class="text-base font-black leading-tight">Cache-Cache</h1>
             <p id="subtitle" class="text-xs text-white/75 truncate">Crée ou rejoins un salon mondial</p>
           </div>
           <button id="shareBtn" class="btn hidden rounded-2xl px-3 py-2 bg-white/15 border border-white/20 text-sm font-bold">
@@ -233,12 +171,10 @@
           </button>
         </div>
 
-        <div id="lobby" class="mt-3 grid grid-cols-2 gap-2">
+        <div id="lobby" class="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
           <button id="createRoomBtn" class="btn rounded-2xl px-4 py-3 bg-blue-500 font-black shadow-lg shadow-blue-950/30">Créer</button>
-          <div class="flex gap-2">
-            <input id="joinCodeInput" class="w-full rounded-2xl px-3 py-3 bg-white/15 border border-white/20 outline-none placeholder:text-white/50 font-bold uppercase" placeholder="CODE" maxlength="6" />
-            <button id="joinRoomBtn" class="btn rounded-2xl px-4 py-3 bg-pink-500 font-black shadow-lg shadow-pink-950/30">OK</button>
-          </div>
+          <input id="joinCodeInput" class="rounded-2xl px-3 py-3 bg-white/15 border border-white/20 outline-none placeholder:text-white/50 font-bold uppercase" placeholder="CODE" maxlength="6" />
+          <button id="joinRoomBtn" class="btn rounded-2xl px-4 py-3 bg-pink-500 font-black shadow-lg shadow-pink-950/30">OK</button>
         </div>
 
         <div id="gameInfo" class="hidden mt-2 grid grid-cols-3 gap-1 text-center">
@@ -258,7 +194,7 @@
       </div>
     </section>
 
-    <section id="searchPanel" class="hidden absolute top-[154px] left-3 right-3">
+    <section id="searchPanel" class="hidden absolute top-[132px] left-3 right-3">
       <div class="glass rounded-[24px] p-3">
         <div class="flex gap-2">
           <input id="searchInput" class="flex-1 rounded-2xl px-4 py-3 bg-white text-slate-950 outline-none placeholder:text-slate-400 font-semibold" placeholder="Chercher une ville, un monument..." />
@@ -270,18 +206,18 @@
       </div>
     </section>
 
-    <section id="hintPanel" class="hidden absolute right-3 top-[154px] w-[72px]">
-      <div class="glass rounded-[28px] p-2 grid gap-2">
-        <button data-hint="⬆️ Nord" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬆️</button>
-        <button data-hint="⬇️ Sud" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬇️</button>
-        <button data-hint="⬅️ Ouest" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬅️</button>
-        <button data-hint="➡️ Est" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">➡️</button>
-        <button data-hint="🌍 Autre pays ou continent" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">🌍</button>
+    <section id="hintPanel" class="hidden absolute right-3 top-[132px] w-[64px]">
+      <div class="glass rounded-[24px] p-2 grid gap-2">
+        <button data-hint="⬆️ Nord" class="hintBtn btn rounded-2xl h-11 bg-white/15 text-xl">⬆️</button>
+        <button data-hint="⬇️ Sud" class="hintBtn btn rounded-2xl h-11 bg-white/15 text-xl">⬇️</button>
+        <button data-hint="⬅️ Ouest" class="hintBtn btn rounded-2xl h-11 bg-white/15 text-xl">⬅️</button>
+        <button data-hint="➡️ Est" class="hintBtn btn rounded-2xl h-11 bg-white/15 text-xl">➡️</button>
+        <button data-hint="🌍 Autre pays ou continent" class="hintBtn btn rounded-2xl h-11 bg-white/15 text-xl">🌍</button>
       </div>
     </section>
 
     <section id="bottomPanel" class="absolute left-0 right-0 bottom-0 safe-bottom px-3">
-      <div id="actionPanel" class="glass rounded-[24px] p-2 soft compact-panel">
+      <div id="actionPanel" class="glass rounded-[24px] p-2 mb-1">
         <div class="flex items-center gap-2 mb-2">
           <div class="flex-1 min-w-0">
             <p id="statusTitle" class="font-black text-base leading-tight">Bienvenue</p>
@@ -291,32 +227,32 @@
         </div>
 
         <div id="hiderActions" class="hidden grid grid-cols-4 gap-2">
-          <button id="diceBtn" class="btn mobile-tight rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-1 text-sm">
+          <button id="diceBtn" class="btn rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-1 text-sm">
             <i data-lucide="dice-5" class="w-5 h-5"></i> Dé
           </button>
-          <button id="mapPickBtn" class="btn mobile-tight rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-1 text-sm">
+          <button id="mapPickBtn" class="btn rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-1 text-sm">
             <i data-lucide="crosshair" class="w-5 h-5"></i> Placer
           </button>
-          <button id="toggleSearchBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-1 text-sm">
+          <button id="toggleSearchBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-1 text-sm">
             <i data-lucide="search" class="w-5 h-5"></i> Ville
           </button>
-          <button id="lockSpotBtn" class="btn mobile-tight rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-1 text-sm disabled:opacity-40" disabled>
-            <i data-lucide="lock" class="w-5 h-5"></i> Valider
+          <button id="lockSpotBtn" class="btn rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-1 text-sm disabled:opacity-40" disabled>
+            <i data-lucide="lock" class="w-5 h-5"></i> OK
           </button>
         </div>
 
         <div id="seekerActions" class="hidden grid grid-cols-2 gap-2">
-          <button id="guessBtn" class="btn mobile-tight rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+          <button id="guessBtn" class="btn rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
             <i data-lucide="flag" class="w-5 h-5"></i> Tenter
           </button>
-          <button id="centerBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
-            <i data-lucide="crosshair" class="w-5 h-5"></i> Explorer
+          <button id="centerBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+            <i data-lucide="crosshair" class="w-5 h-5"></i> Monde
           </button>
         </div>
 
         <div id="betweenActions" class="hidden grid grid-cols-2 gap-2">
           <button id="nextRoundBtn" class="btn rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
-            <i data-lucide="rotate-cw" class="w-5 h-5"></i> Manche suivante
+            <i data-lucide="rotate-cw" class="w-5 h-5"></i> Suite
           </button>
           <button id="resetBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
             <i data-lucide="trash-2" class="w-5 h-5"></i> Reset
@@ -327,16 +263,16 @@
   </main>
 
   <div id="placementHud" class="fixed inset-0 z-[9000]">
-    <div class="crosshair-pin">
-      <div class="marker-pin preview-pin"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+    <div class="center-pin">
+      <div class="pin pin-preview"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
     </div>
-    <div class="fixed left-3 right-3 top-3 safe-top pointer-events-auto">
+    <div class="fixed left-3 right-3 top-3 safe-top">
       <div class="glass rounded-[26px] p-3 text-center">
         <p class="font-black text-lg">Place ta cachette</p>
-        <p class="text-sm text-white/75">Déplace la carte sous la pin jaune, puis valide.</p>
+        <p class="text-sm text-white/75">Déplace et zoome la carte sous la pin jaune.</p>
       </div>
     </div>
-    <div class="fixed left-3 right-3 bottom-3 safe-bottom pointer-events-auto grid grid-cols-2 gap-2">
+    <div class="fixed left-3 right-3 bottom-3 safe-bottom grid grid-cols-2 gap-2">
       <button id="cancelPlaceBtn" class="btn rounded-2xl py-4 bg-white/20 border border-white/25 font-black">Annuler</button>
       <button id="confirmCenterBtn" class="btn rounded-2xl py-4 bg-yellow-300 text-slate-950 font-black">Valider ici</button>
     </div>
@@ -348,7 +284,7 @@
   </div>
 
   <script>
-const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -357,7 +293,6 @@ const firebaseConfig = {
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
-
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let db = null;
 
@@ -379,7 +314,9 @@ const firebaseConfig = {
       playerIndex: null,
       room: null,
       previewSpot: null,
-      localGuess: null
+      localGuess: null,
+      markers: {},
+      lineSourceReady: false
     };
     localStorage.setItem("cachecache_player_id", state.playerId);
 
@@ -394,51 +331,56 @@ const firebaseConfig = {
       { name: "Japon", minLat: 31, maxLat: 45, minLng: 129, maxLng: 146 }
     ];
 
-    const map = L.map("map", {
-      zoomControl: false,
-      worldCopyJump: true,
-      minZoom: 2,
-      maxZoom: 19,
-      zoomSnap: 0.25,
-      zoomDelta: 0.75,
-      tap: true,
-      dragging: true,
-      touchZoom: true,
-      doubleClickZoom: true,
-      scrollWheelZoom: true
-    }).setView([20, 0], 2.25);
-
-    L.control.zoom({ position: "topright" }).addTo(map);
-
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
-      subdomains: "abcd",
-      maxZoom: 19
-    }).addTo(map);
-
-    let secretMarker = null;
-    let guessMarker = null;
-    let previewMarker = null;
-    let lineLayer = null;
-
-    const iconHtml = (kind, iconName) => L.divIcon({
-      className: "",
-      html: `<div class="marker-pin ${kind}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17]
+    const map = new maplibregl.Map({
+      container: "map",
+      style: "https://tiles.openfreemap.org/styles/liberty",
+      center: [0, 20],
+      zoom: 1.75,
+      minZoom: 1.4,
+      maxZoom: 18,
+      attributionControl: false
     });
 
-    const secretIcon = () => iconHtml("secret-pin", "lock-keyhole");
-    const guessIcon = () => iconHtml("guess-pin", "flag");
-    const previewIcon = () => iconHtml("preview-pin", "sparkles");
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
+    map.dragRotate.disable();
+    map.touchZoomRotate.disableRotation();
+
+    map.on("load", () => {
+      map.resize();
+      map.addSource("guess-line", {
+        type: "geojson",
+        data: emptyLine()
+      });
+      map.addLayer({
+        id: "guess-line-layer",
+        type: "line",
+        source: "guess-line",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#ff2bd6", "line-width": 4, "line-dasharray": [2, 2], "line-opacity": 0.9 }
+      });
+      state.lineSourceReady = true;
+      setTimeout(() => map.resize(), 250);
+    });
+
+    window.addEventListener("resize", () => map.resize());
+
+    function emptyLine() {
+      return { type: "FeatureCollection", features: [] };
+    }
+
+    function lineGeojson(a, b) {
+      return {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: [[a.lng, a.lat], [b.lng, b.lat]] },
+          properties: {}
+        }]
+      };
+    }
 
     function refreshIcons() {
       if (window.lucide) window.lucide.createIcons();
-    }
-
-    function ensureMapUsable() {
-      setTimeout(() => map.invalidateSize(true), 60);
-      setTimeout(() => map.invalidateSize(true), 300);
     }
 
     function roomRef(path = "") {
@@ -512,83 +454,76 @@ const firebaseConfig = {
       return { title: "Pas mal", text: `Distance : ${formatDistance(distance)}.`, score: 20, bingo: false };
     }
 
-    function setMarker(kind, point) {
-      const latlng = [point.lat, point.lng];
-      if (kind === "secret") {
-        if (!secretMarker) secretMarker = L.marker(latlng, { icon: secretIcon() }).addTo(map);
-        secretMarker.setLatLng(latlng).setIcon(secretIcon());
-      }
-      if (kind === "guess") {
-        if (!guessMarker) guessMarker = L.marker(latlng, { icon: guessIcon() }).addTo(map);
-        guessMarker.setLatLng(latlng).setIcon(guessIcon());
-      }
-      if (kind === "preview") {
-        if (!previewMarker) previewMarker = L.marker(latlng, { icon: previewIcon() }).addTo(map);
-        previewMarker.setLatLng(latlng).setIcon(previewIcon());
+    function createMarkerElement(kind, iconName) {
+      const el = document.createElement("div");
+      el.className = `pin ${kind}`;
+      el.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
+      return el;
+    }
+
+    function setMarker(name, point, kind, iconName) {
+      const lngLat = [point.lng, point.lat];
+      if (!state.markers[name]) {
+        state.markers[name] = new maplibregl.Marker({ element: createMarkerElement(kind, iconName), anchor: "center" })
+          .setLngLat(lngLat)
+          .addTo(map);
+      } else {
+        state.markers[name].setLngLat(lngLat);
       }
       refreshIcons();
     }
 
+    function removeMarker(name) {
+      if (state.markers[name]) {
+        state.markers[name].remove();
+        delete state.markers[name];
+      }
+    }
+
     function clearMarkers(keepSecret = false) {
-      if (!keepSecret && secretMarker) {
-        map.removeLayer(secretMarker);
-        secretMarker = null;
-      }
-      if (guessMarker) {
-        map.removeLayer(guessMarker);
-        guessMarker = null;
-      }
-      if (previewMarker) {
-        map.removeLayer(previewMarker);
-        previewMarker = null;
-      }
-      if (lineLayer) {
-        map.removeLayer(lineLayer);
-        lineLayer = null;
+      if (!keepSecret) removeMarker("secret");
+      removeMarker("preview");
+      removeMarker("guess");
+      clearLine();
+    }
+
+    function clearLine() {
+      if (state.lineSourceReady && map.getSource("guess-line")) {
+        map.getSource("guess-line").setData(emptyLine());
       }
     }
 
     function drawLine(secret, guess) {
-      if (lineLayer) map.removeLayer(lineLayer);
-      lineLayer = L.polyline([[secret.lat, secret.lng], [guess.lat, guess.lng]], {
-        color: "#ff2bd6",
-        weight: 4,
-        opacity: 0.85,
-        dashArray: "8, 12"
-      }).addTo(map);
+      if (state.lineSourceReady && map.getSource("guess-line")) {
+        map.getSource("guess-line").setData(lineGeojson(secret, guess));
+      }
     }
 
     function setPreview(point, fly = true) {
       stopPlacementMode();
       state.previewSpot = point;
-      setMarker("preview", point);
+      setMarker("preview", point, "pin-preview", "sparkles");
       $("#lockSpotBtn").disabled = false;
-      if (fly) map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 7), { duration: 1.1 });
-      ensureMapUsable();
+      if (fly) map.flyTo({ center: [point.lng, point.lat], zoom: Math.max(map.getZoom(), 7), duration: 900 });
     }
 
     function startPlacementMode() {
       document.body.classList.add("placing");
-      if (previewMarker) {
-        map.removeLayer(previewMarker);
-        previewMarker = null;
-      }
-      ensureMapUsable();
+      removeMarker("preview");
+      setTimeout(() => map.resize(), 60);
       refreshIcons();
     }
 
     function stopPlacementMode() {
       document.body.classList.remove("placing");
-      ensureMapUsable();
+      setTimeout(() => map.resize(), 60);
     }
 
     function setPreviewFromMapCenter() {
       const center = map.getCenter();
       const point = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
       stopPlacementMode();
-      state.previewSpot = point;
-      setMarker("preview", point);
-      $("#lockSpotBtn").disabled = false;
+      setPreview(point, false);
       showToast("Pin placée", "Tu peux maintenant valider ta cachette.");
     }
 
@@ -691,21 +626,20 @@ const firebaseConfig = {
       $("#distanceBadge").classList.add("hidden");
 
       clearMarkers(role === "cacheur" && !!room.secret);
-      if (role === "cacheur" && room.secret) setMarker("secret", room.secret);
-      if (role === "chercheur" && room.status === "result" && room.secret) setMarker("secret", room.secret);
-      if (room.guess) setMarker("guess", room.guess);
+      if (role === "cacheur" && room.secret) setMarker("secret", room.secret, "pin-secret", "lock-keyhole");
+      if (role === "chercheur" && room.status === "result" && room.secret) setMarker("secret", room.secret, "pin-secret", "lock-keyhole");
+      if (room.guess) setMarker("guess", room.guess, "pin-guess", "flag");
       if (room.status === "result" && room.secret && room.guess) drawLine(room.secret, room.guess);
 
       if (!ready) {
         $("#statusTitle").textContent = "En attente";
         $("#statusText").textContent = "Partage le code du salon avec l'autre joueur.";
-        ensureMapUsable();
         return;
       }
 
       if (room.status === "hiding") {
         $("#statusTitle").textContent = role === "cacheur" ? "Choisis ta cachette" : "Le cacheur choisit";
-        $("#statusText").textContent = role === "cacheur" ? "Dé, Placer ou Ville, puis Valider." : "Prépare-toi à explorer le monde.";
+        $("#statusText").textContent = role === "cacheur" ? "Dé, Placer ou Ville, puis OK." : "Prépare-toi à explorer le monde.";
         if (role === "cacheur") $("#hiderActions").classList.remove("hidden");
       }
 
@@ -727,13 +661,13 @@ const firebaseConfig = {
       }
 
       refreshIcons();
-      ensureMapUsable();
+      setTimeout(() => map.resize(), 80);
     }
 
     map.on("click", async event => {
       const room = state.room;
       if (!room) return;
-      const point = { lat: +event.latlng.lat.toFixed(6), lng: +event.latlng.lng.toFixed(6) };
+      const point = { lat: +event.lngLat.lat.toFixed(6), lng: +event.lngLat.lng.toFixed(6) };
       const role = myRole(room);
 
       if (room.status === "hiding" && role === "cacheur") {
@@ -743,7 +677,7 @@ const firebaseConfig = {
 
       if (room.status === "seeking" && role === "chercheur") {
         state.localGuess = point;
-        setMarker("guess", point);
+        setMarker("guess", point, "pin-guess", "flag");
         $("#guessBtn").disabled = false;
         await writePatch({ guess: point });
       }
@@ -765,8 +699,8 @@ const firebaseConfig = {
     $("#toggleSearchBtn").addEventListener("click", () => {
       stopPlacementMode();
       $("#searchPanel").classList.toggle("hidden");
-      ensureMapUsable();
       $("#searchInput").focus();
+      setTimeout(() => map.resize(), 80);
     });
 
     $("#searchBtn").addEventListener("click", searchAddress);
@@ -824,12 +758,9 @@ const firebaseConfig = {
       });
       if (!ok) return;
       state.previewSpot = null;
-      if (previewMarker) {
-        map.removeLayer(previewMarker);
-        previewMarker = null;
-      }
-      setMarker("secret", lockedSpot);
-      map.flyTo([lockedSpot.lat, lockedSpot.lng], Math.max(map.getZoom(), 8), { duration: 1 });
+      removeMarker("preview");
+      setMarker("secret", lockedSpot, "pin-secret", "lock-keyhole");
+      map.flyTo({ center: [lockedSpot.lng, lockedSpot.lat], zoom: Math.max(map.getZoom(), 8), duration: 900 });
       showToast("Caché !", "Ta pin secrète reste visible pour toi.");
     });
 
@@ -851,8 +782,8 @@ const firebaseConfig = {
     });
 
     $("#centerBtn").addEventListener("click", () => {
-      map.flyTo([20, 0], 2.25, { duration: 1.2 });
-      showToast("Exploration", "Zoom fluide activé.");
+      map.flyTo({ center: [0, 20], zoom: 1.75, duration: 900 });
+      showToast("Exploration", "Retour au monde.");
     });
 
     $$(".hintBtn").forEach(btn => btn.addEventListener("click", async () => {
@@ -903,19 +834,19 @@ const firebaseConfig = {
 
     $("#hideUiBtn").addEventListener("click", () => {
       document.body.classList.add("map-only");
-      ensureMapUsable();
+      setTimeout(() => map.resize(), 80);
     });
 
     $("#showUiBtn").addEventListener("click", () => {
       document.body.classList.remove("map-only");
-      ensureMapUsable();
+      setTimeout(() => map.resize(), 80);
     });
 
     window.addEventListener("load", () => {
       stopPlacementMode();
       document.body.classList.remove("map-only");
       refreshIcons();
-      ensureMapUsable();
+      setTimeout(() => map.resize(), 250);
       if (!hasFirebaseConfig) {
         showToast("Mode démo", "Ajoute ta config Firebase pour créer ou rejoindre un salon.");
       }
