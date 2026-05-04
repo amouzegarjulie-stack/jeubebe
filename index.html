@@ -5,23 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Jeubebe</title>
 
-  <!-- ICONE iPHONE INLINE -->
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%237c3aed'/><stop offset='50%25' stop-color='%23ec4899'/><stop offset='100%25' stop-color='%2306b6d4'/></linearGradient></defs><rect width='180' height='180' rx='42' fill='url(%23g)'/><text x='50%25' y='56%25' font-size='72' text-anchor='middle'>🎮</text></svg>">
 
-  <!-- MODE APP -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Jeubebe">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <style>
     :root {
-      --bg: #0b0f1a;
-      --card: rgba(255, 255, 255, 0.08);
-      --card-border: rgba(255, 255, 255, 0.12);
-      --text: #ffffff;
-      --muted: rgba(255, 255, 255, 0.62);
-      --soft: rgba(255, 255, 255, 0.10);
-      --shadow: rgba(0, 0, 0, 0.38);
+      --bg: #f7f7fb;
+      --text: #111827;
+      --muted: #6b7280;
+      --card: rgba(255, 255, 255, 0.82);
+      --border: rgba(17, 24, 39, 0.08);
+      --shadow: 0 18px 45px rgba(17, 24, 39, 0.10);
     }
 
     * {
@@ -40,114 +37,77 @@
       min-height: 100svh;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
       color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
-      overflow-x: hidden;
       background:
-        radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.42), transparent 28%),
-        radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.28), transparent 26%),
-        radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.24), transparent 32%),
-        linear-gradient(180deg, #111827 0%, #080b12 100%);
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 34px 34px;
-      mask-image: linear-gradient(to bottom, black, transparent 75%);
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.20), transparent 34%),
+        radial-gradient(circle at top right, rgba(236, 72, 153, 0.18), transparent 30%),
+        radial-gradient(circle at bottom, rgba(6, 182, 212, 0.16), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #f4f5fb 100%);
+      padding: max(18px, env(safe-area-inset-top)) 14px max(22px, env(safe-area-inset-bottom));
     }
 
     .app {
-      position: relative;
       width: 100%;
-      max-width: 460px;
-      min-height: min(840px, calc(100svh - 36px));
-      padding: 20px;
-      border-radius: 34px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.045));
-      border: 1px solid var(--card-border);
-      box-shadow: 0 28px 80px var(--shadow);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      overflow: hidden;
+      max-width: 520px;
+      margin: 0 auto;
     }
 
-    .app::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      border-radius: inherit;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+    .hero {
+      padding: 12px 4px 22px;
     }
 
-    .header {
-      position: relative;
-      z-index: 1;
-      padding: 10px 4px 22px;
-    }
-
-    .pill {
-      width: fit-content;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.10);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .title-row {
+    .topbar {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      gap: 14px;
-      margin-top: 24px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 25px rgba(17, 24, 39, 0.06);
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      background: linear-gradient(135deg, #7c3aed, #ec4899, #06b6d4);
+      box-shadow: 0 14px 28px rgba(124, 58, 237, 0.22);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(40px, 12vw, 58px);
-      line-height: 0.95;
-      letter-spacing: -2.4px;
+      font-size: clamp(46px, 15vw, 72px);
+      line-height: 0.88;
+      letter-spacing: -3px;
+      color: #111827;
     }
 
     .subtitle {
-      margin: 12px 0 0;
-      max-width: 270px;
+      margin: 14px 0 0;
+      max-width: 330px;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.45;
-    }
-
-    .logo {
-      flex: 0 0 auto;
-      width: 62px;
-      height: 62px;
-      border-radius: 22px;
-      display: grid;
-      place-items: center;
-      font-size: 30px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)),
-        linear-gradient(135deg, #7c3aed, #ec4899, #06b6d4);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+      font-weight: 500;
     }
 
     .grid {
-      position: relative;
-      z-index: 1;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
@@ -155,138 +115,133 @@
 
     .game {
       position: relative;
-      min-height: 118px;
-      padding: 15px;
-      border-radius: 24px;
-      color: white;
+      min-height: 116px;
+      padding: 14px;
+      border-radius: 28px;
       text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      color: white;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
-      transition:
-        transform 0.16s ease,
-        border-color 0.16s ease,
-        background 0.16s ease,
-        filter 0.16s ease;
+      background: var(--gradient);
+      box-shadow: 0 14px 32px rgba(17, 24, 39, 0.13);
+      transform: translateZ(0);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
     }
 
     .game::before {
       content: "";
       position: absolute;
       inset: 0;
-      opacity: 0.95;
-      background: var(--gradient);
-      transition: opacity 0.16s ease;
+      background:
+        radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.38), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.04));
+      pointer-events: none;
     }
 
     .game::after {
       content: "";
       position: absolute;
-      width: 90px;
-      height: 90px;
-      right: -34px;
-      top: -34px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.18);
-      filter: blur(2px);
+      inset: 1px;
+      border-radius: 27px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      pointer-events: none;
     }
 
     .game:active {
-      transform: scale(0.965);
-      filter: brightness(1.08);
+      transform: scale(0.97);
+      filter: saturate(1.12) brightness(1.04);
+      box-shadow: 0 9px 22px rgba(17, 24, 39, 0.12);
     }
 
     .game-content {
       position: relative;
       z-index: 1;
+      min-height: 88px;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      justify-content: space-between;
       gap: 18px;
     }
 
     .topline {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 10px;
     }
 
     .icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 16px;
+      width: 43px;
+      height: 43px;
+      border-radius: 17px;
       display: grid;
       place-items: center;
       font-size: 25px;
-      background: rgba(255, 255, 255, 0.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
     }
 
     .arrow {
-      width: 30px;
-      height: 30px;
+      width: 29px;
+      height: 29px;
       border-radius: 999px;
       display: grid;
       place-items: center;
-      font-size: 24px;
+      font-size: 23px;
       line-height: 1;
-      background: rgba(255, 255, 255, 0.16);
-      color: rgba(255, 255, 255, 0.84);
+      color: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.18);
     }
 
     .name {
       font-size: 16px;
-      line-height: 1.12;
-      font-weight: 800;
-      letter-spacing: -0.2px;
+      line-height: 1.1;
+      font-weight: 850;
+      letter-spacing: -0.25px;
     }
 
     .hint {
       margin-top: 5px;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.68);
-      font-weight: 600;
+      color: rgba(255, 255, 255, 0.74);
+      font-weight: 700;
     }
 
     .footer {
-      position: relative;
-      z-index: 1;
-      margin-top: 22px;
-      padding: 14px 4px 4px;
+      margin: 22px 0 4px;
       text-align: center;
-      color: rgba(255, 255, 255, 0.48);
+      color: #9ca3af;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
     }
 
-    .green { --gradient: linear-gradient(135deg, #16a34a, #22c55e); }
-    .orange { --gradient: linear-gradient(135deg, #f97316, #ef4444); }
-    .blue { --gradient: linear-gradient(135deg, #2563eb, #06b6d4); }
-    .purple { --gradient: linear-gradient(135deg, #7c3aed, #a855f7); }
-    .gold { --gradient: linear-gradient(135deg, #f59e0b, #f97316); }
-    .gray { --gradient: linear-gradient(135deg, #475569, #1e293b); }
-    .red { --gradient: linear-gradient(135deg, #dc2626, #991b1b); }
-    .pink { --gradient: linear-gradient(135deg, #ec4899, #be185d); }
-    .ghost { --gradient: linear-gradient(135deg, #94a3b8, #475569); }
+    .green { --gradient: linear-gradient(135deg, #16a34a, #4ade80); }
+    .orange { --gradient: linear-gradient(135deg, #f97316, #fb7185); }
+    .blue { --gradient: linear-gradient(135deg, #2563eb, #22d3ee); }
+    .purple { --gradient: linear-gradient(135deg, #7c3aed, #c084fc); }
+    .gold { --gradient: linear-gradient(135deg, #f59e0b, #fb923c); }
+    .gray { --gradient: linear-gradient(135deg, #475569, #111827); }
+    .red { --gradient: linear-gradient(135deg, #dc2626, #f43f5e); }
+    .pink { --gradient: linear-gradient(135deg, #ec4899, #8b5cf6); }
+    .ghost { --gradient: linear-gradient(135deg, #64748b, #94a3b8); }
     .pantone { --gradient: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4); }
-    .wasabi { --gradient: linear-gradient(135deg, #84cc16, #22c55e); }
+    .wasabi { --gradient: linear-gradient(135deg, #65a30d, #22c55e); }
     .escalando { --gradient: linear-gradient(135deg, #3b82f6, #4338ca); }
     .who { --gradient: linear-gradient(135deg, #14b8a6, #6366f1); }
+    .map { --gradient: linear-gradient(135deg, #06b6d4, #22c55e, #f59e0b); }
 
-    @media (max-width: 380px) {
+    @media (max-width: 390px) {
       body {
         padding-left: 12px;
         padding-right: 12px;
       }
 
-      .app {
-        padding: 16px;
-        border-radius: 28px;
+      .hero {
+        padding-top: 8px;
+        padding-bottom: 18px;
+      }
+
+      .topbar {
+        margin-bottom: 22px;
       }
 
       .grid {
@@ -294,16 +249,29 @@
       }
 
       .game {
-        min-height: 108px;
-        padding: 13px;
-        border-radius: 21px;
+        min-height: 104px;
+        padding: 12px;
+        border-radius: 24px;
+      }
+
+      .game::after {
+        border-radius: 23px;
+      }
+
+      .game-content {
+        min-height: 80px;
       }
 
       .icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 14px;
+        width: 39px;
+        height: 39px;
+        border-radius: 15px;
         font-size: 23px;
+      }
+
+      .arrow {
+        width: 27px;
+        height: 27px;
       }
 
       .name {
@@ -315,13 +283,17 @@
       }
     }
 
-    @media (min-width: 700px) {
-      .app {
-        max-width: 520px;
+    @media (min-width: 720px) {
+      body {
+        padding-top: 34px;
       }
 
       .grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .game {
+        min-height: 126px;
       }
     }
   </style>
@@ -329,17 +301,14 @@
 
 <body>
   <main class="app">
-    <header class="header">
-      <div class="pill">🎮 Menu des jeux</div>
-
-      <div class="title-row">
-        <div>
-          <h1>Jeubebe</h1>
-          <p class="subtitle">Choisis un jeu et lance la partie en un toucher.</p>
-        </div>
-
+    <header class="hero">
+      <div class="topbar">
+        <div class="badge">🎮 Menu des jeux</div>
         <div class="logo">🎲</div>
       </div>
+
+      <h1>Jeubebe</h1>
+      <p class="subtitle">Choisis un jeu et lance la partie en un toucher.</p>
     </header>
 
     <section class="grid" aria-label="Liste des jeux">
@@ -508,6 +477,19 @@
           <div>
             <div class="name">Qui suis-je ?</div>
             <div class="hint">Devine</div>
+          </div>
+        </div>
+      </a>
+
+      <a class="game map" href="cachecache.html">
+        <div class="game-content">
+          <div class="topline">
+            <div class="icon">🗺️</div>
+            <div class="arrow">›</div>
+          </div>
+          <div>
+            <div class="name">Cache-cache</div>
+            <div class="hint">Carte</div>
           </div>
         </div>
       </a>
