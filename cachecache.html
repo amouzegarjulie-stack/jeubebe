@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cache-Cache Mondial</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQJdJbVdcP7whXT9RPS7ccROpSDVJE0=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --blue: #2563ff;
+      --pink: #ff2bd6;
+      --yellow: #ffd60a;
+      --ink: #0b1020;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at top left, rgba(37, 99, 255, .35), transparent 32%),
+                  radial-gradient(circle at bottom right, rgba(255, 43, 214, .28), transparent 34%),
+                  #070a18;
+      color: white;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #map {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: #0b1020;
+    }
+
+    .leaflet-control-attribution {
+      font-size: 10px;
+      border-radius: 14px 0 0 0;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, .16);
+      border: 1px solid rgba(255, 255, 255, .24);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .26);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .soft {
+      box-shadow: 8px 8px 20px rgba(0, 0, 0, .22), -8px -8px 20px rgba(255, 255, 255, .08);
+    }
+
+    .btn {
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+      transform: scale(.96);
+      filter: brightness(1.08);
+    }
+
+    .marker-pin {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: white;
+      border: 2px solid rgba(255, 255, 255, .85);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+    }
+
+    .secret-pin { background: linear-gradient(135deg, #ff2bd6, #8b5cf6); }
+    .guess-pin { background: linear-gradient(135deg, #2563ff, #00d4ff); }
+    .preview-pin { background: linear-gradient(135deg, #ffd60a, #ff7a00); color: #1b1400; }
+
+    @keyframes popIn {
+      0% { transform: translate(-50%, -20px) scale(.9); opacity: 0; }
+      18% { transform: translate(-50%, 0) scale(1.04); opacity: 1; }
+      100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 10, 0); }
+      50% { box-shadow: 0 0 32px rgba(255, 214, 10, .85); }
+    }
+
+    .toast-show {
+      animation: popIn .42s cubic-bezier(.2, 1.3, .25, 1) both;
+    }
+
+    .bingo-glow {
+      animation: pulseGlow 1s ease-in-out infinite;
+    }
+
+    .safe-bottom {
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .safe-top {
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+
+    .search-results {
+      max-height: 230px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <main class="relative z-10 h-dvh pointer-events-none">
+    <section id="topPanel" class="pointer-events-auto absolute top-0 left-0 right-0 safe-top px-3">
+      <div class="glass rounded-[28px] p-3 soft">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
+            <i data-lucide="globe-2" class="w-7 h-7"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h1 class="text-xl font-black tracking-tight leading-tight">Cache-Cache</h1>
+            <p id="subtitle" class="text-xs text-white/75 truncate">Crée ou rejoins un salon mondial</p>
+          </div>
+          <button id="shareBtn" class="btn hidden rounded-2xl px-3 py-2 bg-white/15 border border-white/20 text-sm font-bold">
+            <i data-lucide="share-2" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div id="lobby" class="mt-3 grid grid-cols-2 gap-2">
+          <button id="createRoomBtn" class="btn rounded-2xl px-4 py-3 bg-blue-500 font-black shadow-lg shadow-blue-950/30">Créer</button>
+          <div class="flex gap-2">
+            <input id="joinCodeInput" class="w-full rounded-2xl px-3 py-3 bg-white/15 border border-white/20 outline-none placeholder:text-white/50 font-bold uppercase" placeholder="CODE" maxlength="6" />
+            <button id="joinRoomBtn" class="btn rounded-2xl px-4 py-3 bg-pink-500 font-black shadow-lg shadow-pink-950/30">OK</button>
+          </div>
+        </div>
+
+        <div id="gameInfo" class="hidden mt-3 grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-2xl bg-white/12 p-2 border border-white/15">
+            <p class="text-[10px] uppercase text-white/60 font-black">Salon</p>
+            <p id="roomCodeText" class="font-black tracking-widest">------</p>
+          </div>
+          <div class="rounded-2xl bg-white/12 p-2 border border-white/15">
+            <p class="text-[10px] uppercase text-white/60 font-black">Manche</p>
+            <p id="roundText" class="font-black">1/6</p>
+          </div>
+          <div class="rounded-2xl bg-white/12 p-2 border border-white/15">
+            <p class="text-[10px] uppercase text-white/60 font-black">Rôle</p>
+            <p id="roleText" class="font-black">...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="searchPanel" class="pointer-events-auto hidden absolute top-[176px] left-3 right-3">
+      <div class="glass rounded-[24px] p-3">
+        <div class="flex gap-2">
+          <input id="searchInput" class="flex-1 rounded-2xl px-4 py-3 bg-white text-slate-950 outline-none placeholder:text-slate-400 font-semibold" placeholder="Chercher une ville, un monument..." />
+          <button id="searchBtn" class="btn rounded-2xl px-4 bg-yellow-300 text-slate-950 font-black">
+            <i data-lucide="search" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div id="searchResults" class="search-results mt-2 grid gap-2"></div>
+      </div>
+    </section>
+
+    <section id="hintPanel" class="pointer-events-auto hidden absolute right-3 top-[176px] w-[72px]">
+      <div class="glass rounded-[28px] p-2 grid gap-2">
+        <button data-hint="⬆️ Nord" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬆️</button>
+        <button data-hint="⬇️ Sud" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬇️</button>
+        <button data-hint="⬅️ Ouest" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬅️</button>
+        <button data-hint="➡️ Est" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">➡️</button>
+        <button data-hint="🌍 Autre pays ou continent" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">🌍</button>
+      </div>
+    </section>
+
+    <section class="pointer-events-auto absolute left-0 right-0 bottom-0 safe-bottom px-3">
+      <div id="actionPanel" class="glass rounded-t-[32px] rounded-b-[24px] p-3 soft">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="flex-1 min-w-0">
+            <p id="statusTitle" class="font-black text-lg leading-tight">Bienvenue</p>
+            <p id="statusText" class="text-sm text-white/75 leading-snug">Le cacheur choisit un lieu secret. Le chercheur pose son drapeau.</p>
+          </div>
+          <div id="distanceBadge" class="hidden shrink-0 rounded-2xl bg-white text-slate-950 px-3 py-2 font-black text-sm">0 km</div>
+        </div>
+
+        <div id="hiderActions" class="hidden grid grid-cols-3 gap-2">
+          <button id="diceBtn" class="btn rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
+            <i data-lucide="dice-5" class="w-5 h-5"></i> Dé
+          </button>
+          <button id="toggleSearchBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5"></i> Lieu
+          </button>
+          <button id="lockSpotBtn" class="btn rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+            <i data-lucide="lock" class="w-5 h-5"></i> Valider
+          </button>
+        </div>
+
+        <div id="seekerActions" class="hidden grid grid-cols-2 gap-2">
+          <button id="guessBtn" class="btn rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+            <i data-lucide="flag" class="w-5 h-5"></i> Tenter
+          </button>
+          <button id="centerBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+            <i data-lucide="crosshair" class="w-5 h-5"></i> Explorer
+          </button>
+        </div>
+
+        <div id="betweenActions" class="hidden grid grid-cols-2 gap-2">
+          <button id="nextRoundBtn" class="btn rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
+            <i data-lucide="rotate-cw" class="w-5 h-5"></i> Manche suivante
+          </button>
+          <button id="resetBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+            <i data-lucide="trash-2" class="w-5 h-5"></i> Reset
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="hidden fixed left-1/2 top-24 z-[9999] -translate-x-1/2 glass rounded-[24px] px-5 py-4 text-center min-w-[260px] max-w-[90vw]">
+    <p id="toastTitle" class="text-2xl font-black">BINGO !</p>
+    <p id="toastText" class="text-sm text-white/80 mt-1">Tu as trouvé la cachette.</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, set, update, onValue, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+    /*
+      1) Crée un projet Firebase gratuit.
+      2) Active Realtime Database en mode test pour tes essais.
+      3) Remplace ces valeurs par ta config.
+      4) Pour une vraie publication, ajoute des règles Firebase plus strictes.
+    */
+ const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+
+    const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
+    let app = null;
+    let db = null;
+
+    if (hasFirebaseConfig) {
+      app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+    }
+
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => [...document.querySelectorAll(selector)];
+
+    const state = {
+      roomCode: null,
+      playerId: localStorage.getItem("cachecache_player_id") || crypto.randomUUID(),
+      playerIndex: null,
+      room: null,
+      previewSpot: null,
+      localGuess: null,
+      unsubscribeRoom: null
+    };
+    localStorage.setItem("cachecache_player_id", state.playerId);
+
+    const landBoxes = [
+      { name: "Europe", minLat: 36, maxLat: 61, minLng: -10, maxLng: 35 },
+      { name: "Afrique", minLat: -34, maxLat: 30, minLng: -17, maxLng: 45 },
+      { name: "Asie", minLat: 7, maxLat: 55, minLng: 45, maxLng: 142 },
+      { name: "Amérique du Nord", minLat: 25, maxLat: 62, minLng: -125, maxLng: -65 },
+      { name: "Amérique du Sud", minLat: -52, maxLat: 12, minLng: -78, maxLng: -35 },
+      { name: "Océanie", minLat: -44, maxLat: -10, minLng: 112, maxLng: 154 },
+      { name: "Inde", minLat: 8, maxLat: 31, minLng: 68, maxLng: 89 },
+      { name: "Japon", minLat: 31, maxLat: 45, minLng: 129, maxLng: 146 }
+    ];
+
+    const map = L.map("map", {
+      zoomControl: false,
+      worldCopyJump: true,
+      minZoom: 2,
+      maxZoom: 18
+    }).setView([20, 0], 2);
+
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap &copy; CARTO",
+      subdomains: "abcd",
+      maxZoom: 20
+    }).addTo(map);
+
+    let secretMarker = null;
+    let guessMarker = null;
+    let previewMarker = null;
+    let lineLayer = null;
+
+    const iconHtml = (kind, iconName) => L.divIcon({
+      className: "",
+      html: `<div class="marker-pin ${kind}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+
+    const secretIcon = () => iconHtml("secret-pin", "lock-keyhole");
+    const guessIcon = () => iconHtml("guess-pin", "flag");
+    const previewIcon = () => iconHtml("preview-pin", "sparkles");
+
+    function refreshIcons() {
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function roomRef(path = "") {
+      return ref(db, `cachecache_rooms/${state.roomCode}${path ? "/" + path : ""}`);
+    }
+
+    function randomCode() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    }
+
+    function randomLandPoint() {
+      const box = landBoxes[Math.floor(Math.random() * landBoxes.length)];
+      return {
+        lat: +(box.minLat + Math.random() * (box.maxLat - box.minLat)).toFixed(6),
+        lng: +(box.minLng + Math.random() * (box.maxLng - box.minLng)).toFixed(6),
+        label: box.name
+      };
+    }
+
+    function currentHiderIndex(room = state.room) {
+      return room?.round % 2 === 1 ? 1 : 2;
+    }
+
+    function myRole(room = state.room) {
+      if (!room || !state.playerIndex) return "spectateur";
+      return currentHiderIndex(room) === state.playerIndex ? "cacheur" : "chercheur";
+    }
+
+    function hiderName(room = state.room) {
+      return currentHiderIndex(room) === 1 ? "Joueur 1" : "Joueur 2";
+    }
+
+    function seekerName(room = state.room) {
+      return currentHiderIndex(room) === 1 ? "Joueur 2" : "Joueur 1";
+    }
+
+    function showToast(title, text, isBingo = false) {
+      const toast = $("#toast");
+      $("#toastTitle").textContent = title;
+      $("#toastText").textContent = text;
+      toast.classList.remove("hidden", "toast-show", "bingo-glow");
+      void toast.offsetWidth;
+      toast.classList.add("toast-show");
+      if (isBingo) toast.classList.add("bingo-glow");
+      setTimeout(() => toast.classList.add("hidden"), isBingo ? 3600 : 2500);
+    }
+
+    function formatDistance(meters) {
+      if (meters < 1000) return `${Math.round(meters)} m`;
+      if (meters < 100000) return `${(meters / 1000).toFixed(1)} km`;
+      return `${Math.round(meters / 1000)} km`;
+    }
+
+    function haversineMeters(a, b) {
+      const R = 6371000;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const x = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    }
+
+    function verdict(distance) {
+      if (distance < 100) return { title: "BINGO !", text: `Trouvé à ${formatDistance(distance)}.`, score: 100, bingo: true };
+      if (distance < 15000) return { title: "Très fort !", text: `Tu es à ${formatDistance(distance)}.`, score: 70, bingo: false };
+      if (distance < 50000) return { title: "Presque !", text: `Encore ${formatDistance(distance)}.`, score: 40, bingo: false };
+      if (distance > 100000) return { title: "Perdu", text: `Tu es à ${formatDistance(distance)}.`, score: 0, bingo: false };
+      return { title: "Pas mal", text: `Distance : ${formatDistance(distance)}.`, score: 20, bingo: false };
+    }
+
+    function setMarker(kind, point) {
+      const latlng = [point.lat, point.lng];
+      if (kind === "secret") {
+        if (!secretMarker) secretMarker = L.marker(latlng, { icon: secretIcon() }).addTo(map);
+        secretMarker.setLatLng(latlng).setIcon(secretIcon());
+      }
+      if (kind === "guess") {
+        if (!guessMarker) guessMarker = L.marker(latlng, { icon: guessIcon() }).addTo(map);
+        guessMarker.setLatLng(latlng).setIcon(guessIcon());
+      }
+      if (kind === "preview") {
+        if (!previewMarker) previewMarker = L.marker(latlng, { icon: previewIcon() }).addTo(map);
+        previewMarker.setLatLng(latlng).setIcon(previewIcon());
+      }
+      refreshIcons();
+    }
+
+    function clearMarkers(keepSecret = false) {
+      if (!keepSecret && secretMarker) {
+        map.removeLayer(secretMarker);
+        secretMarker = null;
+      }
+      if (guessMarker) {
+        map.removeLayer(guessMarker);
+        guessMarker = null;
+      }
+      if (previewMarker) {
+        map.removeLayer(previewMarker);
+        previewMarker = null;
+      }
+      if (lineLayer) {
+        map.removeLayer(lineLayer);
+        lineLayer = null;
+      }
+    }
+
+    function drawLine(secret, guess) {
+      if (lineLayer) map.removeLayer(lineLayer);
+      lineLayer = L.polyline([[secret.lat, secret.lng], [guess.lat, guess.lng]], {
+        color: "#ff2bd6",
+        weight: 4,
+        opacity: .85,
+        dashArray: "8, 12"
+      }).addTo(map);
+    }
+
+    function setPreview(point, fly = true) {
+      state.previewSpot = point;
+      setMarker("preview", point);
+      $("#lockSpotBtn").disabled = false;
+      if (fly) map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 6), { duration: 1.1 });
+    }
+
+    async function writePatch(patch) {
+      if (!db) return showToast("Firebase manquant", "Remplace les placeholders de configuration.");
+      await update(roomRef(), patch);
+    }
+
+    async function createRoom() {
+      if (!db) return showToast("Config Firebase", "Remplace firebaseConfig pour activer le multijoueur.");
+      const code = randomCode();
+      state.roomCode = code;
+      state.playerIndex = 1;
+      await set(roomRef(), {
+        code,
+        createdAt: serverTimestamp(),
+        round: 1,
+        maxRounds: 6,
+        status: "hiding",
+        players: {
+          [state.playerId]: { index: 1, name: "Joueur 1", joinedAt: serverTimestamp() }
+        },
+        secret: null,
+        guess: null,
+        hint: null,
+        result: null,
+        scores: { p1: 0, p2: 0 }
+      });
+      subscribeRoom();
+      showToast("Salon créé", `Code : ${code}`);
+    }
+
+    async function joinRoom() {
+      if (!db) return showToast("Config Firebase", "Remplace firebaseConfig pour activer le multijoueur.");
+      const code = $("#joinCodeInput").value.trim().toUpperCase();
+      if (code.length !== 6) return showToast("Code invalide", "Entre le code à 6 caractères.");
+      state.roomCode = code;
+      const snap = await get(roomRef());
+      if (!snap.exists()) return showToast("Introuvable", "Ce salon n'existe pas.");
+      const room = snap.val();
+      const players = room.players || {};
+      const existing = players[state.playerId];
+      if (existing) {
+        state.playerIndex = existing.index;
+      } else {
+        const used = Object.values(players).map(p => p.index);
+        if (used.length >= 2) return showToast("Complet", "Ce salon a déjà deux joueurs.");
+        state.playerIndex = used.includes(1) ? 2 : 1;
+        await update(roomRef(`players/${state.playerId}`), {
+          index: state.playerIndex,
+          name: `Joueur ${state.playerIndex}`,
+          joinedAt: serverTimestamp()
+        });
+      }
+      subscribeRoom();
+      showToast("Connecté", `Tu es Joueur ${state.playerIndex}.`);
+    }
+
+    function subscribeRoom() {
+      onValue(roomRef(), snapshot => {
+        if (!snapshot.exists()) {
+          state.room = null;
+          showToast("Salon fermé", "La partie a été réinitialisée.");
+          return;
+        }
+        state.room = snapshot.val();
+        if (!state.playerIndex) {
+          const mine = state.room.players?.[state.playerId];
+          if (mine) state.playerIndex = mine.index;
+        }
+        render();
+      });
+    }
+
+    function render() {
+      const room = state.room;
+      if (!room) return;
+      const role = myRole(room);
+      const playersCount = Object.keys(room.players || {}).length;
+      const ready = playersCount === 2;
+
+      $("#lobby").classList.add("hidden");
+      $("#gameInfo").classList.remove("hidden");
+      $("#shareBtn").classList.remove("hidden");
+      $("#roomCodeText").textContent = room.code;
+      $("#roundText").textContent = `${room.round}/${room.maxRounds || 6}`;
+      $("#roleText").textContent = role === "cacheur" ? "Cacheur" : "Chercheur";
+      $("#subtitle").textContent = ready ? `${hiderName(room)} cache, ${seekerName(room)} cherche` : "En attente du deuxième joueur";
+
+      $("#hiderActions").classList.add("hidden");
+      $("#seekerActions").classList.add("hidden");
+      $("#betweenActions").classList.add("hidden");
+      $("#hintPanel").classList.add("hidden");
+      $("#distanceBadge").classList.add("hidden");
+
+      clearMarkers(true);
+      if (role === "cacheur" && room.secret) setMarker("secret", room.secret);
+      if (role === "chercheur" && room.status === "result" && room.secret) setMarker("secret", room.secret);
+      if (room.guess) setMarker("guess", room.guess);
+      if (room.status === "result" && room.secret && room.guess) drawLine(room.secret, room.guess);
+
+      if (!ready) {
+        $("#statusTitle").textContent = "En attente";
+        $("#statusText").textContent = "Partage le code du salon avec l'autre joueur.";
+        return;
+      }
+
+      if (room.status === "hiding") {
+        $("#statusTitle").textContent = role === "cacheur" ? "Choisis ta cachette" : "Le cacheur choisit";
+        $("#statusText").textContent = role === "cacheur" ? "Dé, recherche ou tap sur la carte, puis valide." : "Prépare-toi à explorer le monde.";
+        if (role === "cacheur") $("#hiderActions").classList.remove("hidden");
+      }
+
+      if (room.status === "seeking") {
+        $("#statusTitle").textContent = role === "chercheur" ? "Pose ton drapeau" : "Regarde le chercheur";
+        $("#statusText").textContent = role === "chercheur" ? "Tap sur la carte pour placer ton drapeau, puis tente." : "Tu vois le drapeau adverse bouger en direct.";
+        if (role === "chercheur") $("#seekerActions").classList.remove("hidden");
+        if (role === "cacheur") $("#hintPanel").classList.remove("hidden");
+        if (room.hint) $("#statusText").textContent += ` Indice : ${room.hint}`;
+      }
+
+      if (room.status === "result") {
+        const d = room.result?.distance || 0;
+        $("#statusTitle").textContent = room.result?.title || "Résultat";
+        $("#statusText").textContent = `${room.result?.text || "Manche terminée."} Score : J1 ${room.scores?.p1 || 0} | J2 ${room.scores?.p2 || 0}`;
+        $("#distanceBadge").textContent = formatDistance(d);
+        $("#distanceBadge").classList.remove("hidden");
+        $("#betweenActions").classList.remove("hidden");
+      }
+
+      refreshIcons();
+    }
+
+    map.on("click", async event => {
+      const room = state.room;
+      if (!room) return;
+      const point = { lat: +event.latlng.lat.toFixed(6), lng: +event.latlng.lng.toFixed(6) };
+      const role = myRole(room);
+
+      if (room.status === "hiding" && role === "cacheur") {
+        setPreview(point, false);
+        showToast("Spot prêt", "Valide pour lancer la recherche.");
+      }
+
+      if (room.status === "seeking" && role === "chercheur") {
+        state.localGuess = point;
+        setMarker("guess", point);
+        $("#guessBtn").disabled = false;
+        await writePatch({ guess: point });
+      }
+    });
+
+    $("#createRoomBtn").addEventListener("click", createRoom);
+    $("#joinRoomBtn").addEventListener("click", joinRoom);
+
+    $("#diceBtn").addEventListener("click", () => {
+      const point = randomLandPoint();
+      setPreview(point);
+      showToast("Destination secrète", point.label);
+    });
+
+    $("#toggleSearchBtn").addEventListener("click", () => {
+      $("#searchPanel").classList.toggle("hidden");
+      $("#searchInput").focus();
+    });
+
+    $("#searchBtn").addEventListener("click", searchAddress);
+    $("#searchInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") searchAddress();
+    });
+
+    async function searchAddress() {
+      const query = $("#searchInput").value.trim();
+      if (query.length < 3) return showToast("Recherche", "Tape au moins 3 caractères.");
+      $("#searchResults").innerHTML = `<div class="rounded-2xl bg-white/15 p-3 text-sm">Recherche...</div>`;
+      try {
+        const url = new URL("https://nominatim.openstreetmap.org/search");
+        url.searchParams.set("q", query);
+        url.searchParams.set("format", "jsonv2");
+        url.searchParams.set("addressdetails", "1");
+        url.searchParams.set("limit", "5");
+        url.searchParams.set("accept-language", "fr");
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.length) {
+          $("#searchResults").innerHTML = `<div class="rounded-2xl bg-white/15 p-3 text-sm">Aucun résultat.</div>`;
+          return;
+        }
+        $("#searchResults").innerHTML = data.map((item, index) => `
+          <button data-index="${index}" class="resultBtn btn text-left rounded-2xl bg-white/90 text-slate-950 p-3">
+            <p class="font-black line-clamp-1">${escapeHtml(item.name || item.display_name.split(",")[0])}</p>
+            <p class="text-xs text-slate-600 line-clamp-2">${escapeHtml(item.display_name)}</p>
+          </button>
+        `).join("");
+        $$(".resultBtn").forEach(btn => btn.addEventListener("click", () => {
+          const item = data[Number(btn.dataset.index)];
+          const point = { lat: +Number(item.lat).toFixed(6), lng: +Number(item.lon).toFixed(6) };
+          setPreview(point);
+          $("#searchPanel").classList.add("hidden");
+        }));
+      } catch (error) {
+        $("#searchResults").innerHTML = `<div class="rounded-2xl bg-red-500/80 p-3 text-sm">Erreur Nominatim. Réessaie.</div>`;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char]));
+    }
+
+    $("#lockSpotBtn").addEventListener("click", async () => {
+      if (!state.previewSpot) return;
+      await writePatch({
+        secret: state.previewSpot,
+        guess: null,
+        hint: null,
+        result: null,
+        status: "seeking"
+      });
+      state.previewSpot = null;
+      clearMarkers(true);
+      showToast("Caché !", "Le chercheur peut commencer.");
+    });
+
+    $("#guessBtn").addEventListener("click", async () => {
+      const room = state.room;
+      const guess = state.localGuess || room.guess;
+      if (!room?.secret || !guess) return;
+      const distance = haversineMeters(room.secret, guess);
+      const v = verdict(distance);
+      const seekerIndex = currentHiderIndex(room) === 1 ? 2 : 1;
+      const scoreKey = seekerIndex === 1 ? "p1" : "p2";
+      const nextScore = (room.scores?.[scoreKey] || 0) + v.score;
+      await writePatch({
+        status: "result",
+        result: { ...v, distance, at: Date.now() },
+        [`scores/${scoreKey}`]: nextScore
+      });
+      showToast(v.title, v.text, v.bingo);
+    });
+
+    $("#centerBtn").addEventListener("click", () => {
+      map.flyTo([20, 0], 2, { duration: 1.2 });
+      showToast("Exploration", "Zoom fluide activé.");
+    });
+
+    $$(".hintBtn").forEach(btn => btn.addEventListener("click", async () => {
+      const hint = btn.dataset.hint;
+      await writePatch({ hint });
+      showToast("Indice envoyé", hint);
+    }));
+
+    $("#nextRoundBtn").addEventListener("click", async () => {
+      const room = state.room;
+      if (!room) return;
+      if (room.round >= (room.maxRounds || 6)) {
+        const p1 = room.scores?.p1 || 0;
+        const p2 = room.scores?.p2 || 0;
+        const title = p1 === p2 ? "Égalité finale" : p1 > p2 ? "Joueur 1 gagne" : "Joueur 2 gagne";
+        showToast(title, `Score final : J1 ${p1} | J2 ${p2}`, true);
+        return;
+      }
+      state.previewSpot = null;
+      state.localGuess = null;
+      await writePatch({
+        round: room.round + 1,
+        status: "hiding",
+        secret: null,
+        guess: null,
+        hint: null,
+        result: null
+      });
+      clearMarkers(false);
+      showToast("Nouvelle manche", "Les rôles s'inversent.");
+    });
+
+    $("#resetBtn").addEventListener("click", async () => {
+      if (!state.roomCode || !db) return;
+      await remove(roomRef());
+      location.reload();
+    });
+
+    $("#shareBtn").addEventListener("click", async () => {
+      const text = `Rejoins mon Cache-Cache mondial avec le code ${state.roomCode}`;
+      if (navigator.share) {
+        await navigator.share({ title: "Cache-Cache", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        showToast("Copié", text);
+      }
+    });
+
+    window.addEventListener("load", () => {
+      refreshIcons();
+      setTimeout(() => map.invalidateSize(), 250);
+      if (!hasFirebaseConfig) {
+        showToast("Mode démo", "Ajoute ta config Firebase pour jouer en ligne.");
+      }
+    });
+  </script>
+</body>
+</html>
