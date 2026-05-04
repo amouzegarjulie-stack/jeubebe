@@ -281,7 +281,7 @@
       3) Remplace ces valeurs par ta config.
       4) Pour une vraie publication, ajoute des règles Firebase plus strictes.
     */
-const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -290,6 +290,7 @@ const firebaseConfig = {
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
+
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let app = null;
     let db = null;
