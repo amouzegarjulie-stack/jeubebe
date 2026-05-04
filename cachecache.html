@@ -333,13 +333,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getDatabase, ref, set, update, onValue, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-    /*
-      1) Crée un projet Firebase gratuit.
-      2) Active Realtime Database en mode test pour tes essais.
-      3) Remplace ces valeurs par ta config.
-      4) Pour une vraie publication, ajoute des règles Firebase plus strictes.
-    */
-const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -350,11 +344,10 @@ const firebaseConfig = {
 };
 
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
-    let app = null;
     let db = null;
 
     if (hasFirebaseConfig) {
-      app = initializeApp(firebaseConfig);
+      const app = initializeApp(firebaseConfig);
       db = getDatabase(app);
     }
 
@@ -368,7 +361,7 @@ const firebaseConfig = {
       room: null,
       previewSpot: null,
       localGuess: null,
-      unsubscribeRoom: null
+      roomListenerReady: false
     };
     localStorage.setItem("cachecache_player_id", state.playerId);
 
@@ -388,18 +381,16 @@ const firebaseConfig = {
       worldCopyJump: true,
       minZoom: 2,
       maxZoom: 19,
-      zoomSnap: .25,
-      zoomDelta: .75,
-      wheelPxPerZoomLevel: 80,
+      zoomSnap: 0.25,
+      zoomDelta: 0.75,
       tap: true,
       dragging: true,
       touchZoom: true,
       doubleClickZoom: true,
-      scrollWheelZoom: true,
-      boxZoom: false
+      scrollWheelZoom: true
     }).setView([20, 0], 2.25);
 
-    L.control.zoom({ position: "right" }).addTo(map);
+    L.control.zoom({ position: "topright" }).addTo(map);
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       attribution: "&copy; OpenStreetMap &copy; CARTO",
@@ -425,6 +416,11 @@ const firebaseConfig = {
 
     function refreshIcons() {
       if (window.lucide) window.lucide.createIcons();
+    }
+
+    function ensureMapUsable() {
+      setTimeout(() => map.invalidateSize(true), 60);
+      setTimeout(() => map.invalidateSize(true), 300);
     }
 
     function roomRef(path = "") {
@@ -470,7 +466,7 @@ const firebaseConfig = {
       void toast.offsetWidth;
       toast.classList.add("toast-show");
       if (isBingo) toast.classList.add("bingo-glow");
-      setTimeout(() => toast.classList.add("hidden"), isBingo ? 3600 : 2500);
+      setTimeout(() => toast.classList.add("hidden"), isBingo ? 3600 : 2400);
     }
 
     function formatDistance(meters) {
@@ -534,39 +530,33 @@ const firebaseConfig = {
       }
     }
 
-    function ensureMapUsable() {
-      setTimeout(() => map.invalidateSize(true), 80);
-      setTimeout(() => map.invalidateSize(true), 400);
-    }
-
     function drawLine(secret, guess) {
       if (lineLayer) map.removeLayer(lineLayer);
       lineLayer = L.polyline([[secret.lat, secret.lng], [guess.lat, guess.lng]], {
         color: "#ff2bd6",
         weight: 4,
-        opacity: .85,
+        opacity: 0.85,
         dashArray: "8, 12"
       }).addTo(map);
     }
 
     function setPreview(point, fly = true) {
+      stopPlacementMode();
       state.previewSpot = point;
       setMarker("preview", point);
       $("#lockSpotBtn").disabled = false;
-      if (fly) map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 6), { duration: 1.1 });
+      if (fly) map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 7), { duration: 1.1 });
       ensureMapUsable();
     }
 
     function startPlacementMode() {
       document.body.classList.add("placing");
-      ensureMapUsable();
-      const center = map.getCenter();
-      state.previewSpot = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
       if (previewMarker) {
         map.removeLayer(previewMarker);
         previewMarker = null;
       }
-      showToast("Mode placement", "Déplace la carte et valide avec le bouton jaune.");
+      ensureMapUsable();
+      refreshIcons();
     }
 
     function stopPlacementMode() {
@@ -576,14 +566,21 @@ const firebaseConfig = {
 
     function setPreviewFromMapCenter() {
       const center = map.getCenter();
-      setPreview({ lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) }, false);
+      const point = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
       stopPlacementMode();
+      state.previewSpot = point;
+      setMarker("preview", point);
+      $("#lockSpotBtn").disabled = false;
       showToast("Pin placée", "Tu peux maintenant valider ta cachette.");
     }
 
     async function writePatch(patch) {
-      if (!db) return showToast("Firebase manquant", "Remplace les placeholders de configuration.");
+      if (!db) {
+        showToast("Firebase manquant", "Remplace les placeholders de configuration.");
+        return false;
+      }
       await update(roomRef(), patch);
+      return true;
     }
 
     async function createRoom() {
@@ -626,7 +623,7 @@ const firebaseConfig = {
         const used = Object.values(players).map(p => p.index);
         if (used.length >= 2) return showToast("Complet", "Ce salon a déjà deux joueurs.");
         state.playerIndex = used.includes(1) ? 2 : 1;
-        await update(roomRef(`players/${state.playerId}`), {
+        await set(roomRef(`players/${state.playerId}`), {
           index: state.playerIndex,
           name: `Joueur ${state.playerIndex}`,
           joinedAt: serverTimestamp()
@@ -637,6 +634,7 @@ const firebaseConfig = {
     }
 
     function subscribeRoom() {
+      if (!db || !state.roomCode) return;
       onValue(roomRef(), snapshot => {
         if (!snapshot.exists()) {
           state.room = null;
@@ -644,10 +642,8 @@ const firebaseConfig = {
           return;
         }
         state.room = snapshot.val();
-        if (!state.playerIndex) {
-          const mine = state.room.players?.[state.playerId];
-          if (mine) state.playerIndex = mine.index;
-        }
+        const mine = state.room.players?.[state.playerId];
+        if (mine) state.playerIndex = mine.index;
         render();
       });
     }
@@ -659,6 +655,7 @@ const firebaseConfig = {
       const playersCount = Object.keys(room.players || {}).length;
       const ready = playersCount === 2;
 
+      stopPlacementMode();
       $("#lobby").classList.add("hidden");
       $("#gameInfo").classList.remove("hidden");
       $("#shareBtn").classList.remove("hidden");
@@ -682,12 +679,13 @@ const firebaseConfig = {
       if (!ready) {
         $("#statusTitle").textContent = "En attente";
         $("#statusText").textContent = "Partage le code du salon avec l'autre joueur.";
+        ensureMapUsable();
         return;
       }
 
       if (room.status === "hiding") {
         $("#statusTitle").textContent = role === "cacheur" ? "Choisis ta cachette" : "Le cacheur choisit";
-        $("#statusText").textContent = role === "cacheur" ? "Dé, recherche ou tap sur la carte, puis valide." : "Prépare-toi à explorer le monde.";
+        $("#statusText").textContent = role === "cacheur" ? "Dé, Placer ou Ville, puis Valider." : "Prépare-toi à explorer le monde.";
         if (role === "cacheur") $("#hiderActions").classList.remove("hidden");
       }
 
@@ -709,6 +707,7 @@ const firebaseConfig = {
       }
 
       refreshIcons();
+      ensureMapUsable();
     }
 
     map.on("click", async event => {
@@ -719,7 +718,6 @@ const firebaseConfig = {
 
       if (room.status === "hiding" && role === "cacheur") {
         setPreview(point, false);
-        stopPlacementMode();
         showToast("Pin placée", "Tu peux maintenant valider ta cachette.");
       }
 
@@ -729,12 +727,6 @@ const firebaseConfig = {
         $("#guessBtn").disabled = false;
         await writePatch({ guess: point });
       }
-    });
-
-    map.on("moveend zoomend", () => {
-      if (!document.body.classList.contains("placing")) return;
-      const center = map.getCenter();
-      state.previewSpot = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
     });
 
     $("#createRoomBtn").addEventListener("click", createRoom);
@@ -801,16 +793,16 @@ const firebaseConfig = {
     }
 
     $("#lockSpotBtn").addEventListener("click", async () => {
-      if (!state.previewSpot) return;
+      if (!state.previewSpot) return showToast("Pas de pin", "Choisis d'abord un endroit avec Dé, Placer, Ville ou tap sur la carte.");
       const lockedSpot = state.previewSpot;
-      stopPlacementMode();
-      await writePatch({
+      const ok = await writePatch({
         secret: lockedSpot,
         guess: null,
         hint: null,
         result: null,
         status: "seeking"
       });
+      if (!ok) return;
       state.previewSpot = null;
       if (previewMarker) {
         map.removeLayer(previewMarker);
@@ -823,7 +815,7 @@ const firebaseConfig = {
 
     $("#guessBtn").addEventListener("click", async () => {
       const room = state.room;
-      const guess = state.localGuess || room.guess;
+      const guess = state.localGuess || room?.guess;
       if (!room?.secret || !guess) return;
       const distance = haversineMeters(room.secret, guess);
       const v = verdict(distance);
@@ -839,7 +831,7 @@ const firebaseConfig = {
     });
 
     $("#centerBtn").addEventListener("click", () => {
-      map.flyTo([20, 0], 2, { duration: 1.2 });
+      map.flyTo([20, 0], 2.25, { duration: 1.2 });
       showToast("Exploration", "Zoom fluide activé.");
     });
 
@@ -890,10 +882,11 @@ const firebaseConfig = {
     });
 
     window.addEventListener("load", () => {
+      stopPlacementMode();
       refreshIcons();
       ensureMapUsable();
       if (!hasFirebaseConfig) {
-        showToast("Mode démo", "Ajoute ta config Firebase pour jouer en ligne.");
+        showToast("Mode démo", "Ajoute ta config Firebase pour créer ou rejoindre un salon.");
       }
     });
   </script>
