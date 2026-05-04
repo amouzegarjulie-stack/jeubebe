@@ -50,23 +50,12 @@
       background: #dbeafe;
     }
 
-    /* Correctif indispensable avec Tailwind : sinon les tuiles Leaflet peuvent se déformer, se couper ou se superposer. */
+    /* Correctif Tailwind + Leaflet : ne jamais forcer la taille des tuiles, seulement empêcher Tailwind de les contraindre. */
     .leaflet-container img,
     .leaflet-container .leaflet-tile,
     .leaflet-tile-container img {
       max-width: none !important;
       max-height: none !important;
-      width: 256px !important;
-      height: 256px !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      object-fit: cover !important;
-    }
-
-    .leaflet-tile-pane,
-    .leaflet-tile-container,
-    .leaflet-layer {
-      overflow: visible !important;
     }
 
     .leaflet-control-zoom {
@@ -158,11 +147,11 @@
       overflow: auto;
     }
 
-    #topPanel, #searchPanel, #hintPanel, #bottomPanel, #toast {
+    #topPanel, #searchPanel, #hintPanel, #bottomPanel, #toast, #miniMapControls {
       pointer-events: none;
     }
 
-    #topPanel > *, #searchPanel > *, #hintPanel > *, #bottomPanel > *, #toast > * {
+    #topPanel > *, #searchPanel > *, #hintPanel > *, #bottomPanel > *, #toast > *, #miniMapControls > * {
       pointer-events: auto;
     }
 
@@ -174,7 +163,19 @@
     body.placing #topPanel,
     body.placing #bottomPanel,
     body.placing #searchPanel,
-    body.placing #hintPanel {
+    body.placing #hintPanel,
+    body.map-only #topPanel,
+    body.map-only #bottomPanel,
+    body.map-only #searchPanel,
+    body.map-only #hintPanel {
+      display: none !important;
+    }
+
+    body:not(.map-only) #showUiBtn {
+      display: none !important;
+    }
+
+    body.map-only #hideUiBtn {
       display: none !important;
     }
 
@@ -213,14 +214,18 @@
   <div id="map"></div>
 
   <main class="relative z-10 h-dvh pointer-events-none">
+    <div id="miniMapControls" class="fixed left-3 top-3 z-[8500] safe-top">
+      <button id="hideUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm shadow-lg">Carte</button>
+      <button id="showUiBtn" class="btn glass rounded-2xl px-3 py-2 font-black text-sm shadow-lg">Actions</button>
+    </div>
     <section id="topPanel" class="absolute top-0 left-0 right-0 safe-top px-3">
-      <div id="topCard" class="glass rounded-[28px] p-3 soft">
+      <div id="topCard" class="glass rounded-[22px] p-2 soft max-w-[calc(100vw-24px)] mx-auto">
         <div class="flex items-center gap-3">
           <div id="brandIcon" class="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
             <i data-lucide="globe-2" class="w-7 h-7"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h1 class="text-xl font-black tracking-tight leading-tight">Cache-Cache</h1>
+            <h1 class="text-base font-black tracking-tight leading-tight">Cache-Cache</h1>
             <p id="subtitle" class="text-xs text-white/75 truncate">Crée ou rejoins un salon mondial</p>
           </div>
           <button id="shareBtn" class="btn hidden rounded-2xl px-3 py-2 bg-white/15 border border-white/20 text-sm font-bold">
@@ -236,7 +241,7 @@
           </div>
         </div>
 
-        <div id="gameInfo" class="hidden mt-3 grid grid-cols-3 gap-2 text-center">
+        <div id="gameInfo" class="hidden mt-2 grid grid-cols-3 gap-1 text-center">
           <div class="rounded-2xl bg-white/12 p-2 border border-white/15">
             <p class="text-[10px] uppercase text-white/60 font-black">Salon</p>
             <p id="roomCodeText" class="font-black tracking-widest">------</p>
@@ -276,11 +281,11 @@
     </section>
 
     <section id="bottomPanel" class="absolute left-0 right-0 bottom-0 safe-bottom px-3">
-      <div id="actionPanel" class="glass rounded-t-[32px] rounded-b-[24px] p-3 soft compact-panel">
-        <div class="flex items-center gap-2 mb-3">
+      <div id="actionPanel" class="glass rounded-[24px] p-2 soft compact-panel">
+        <div class="flex items-center gap-2 mb-2">
           <div class="flex-1 min-w-0">
-            <p id="statusTitle" class="font-black text-lg leading-tight">Bienvenue</p>
-            <p id="statusText" class="text-sm text-white/75 leading-snug">Le cacheur choisit un lieu secret. Le chercheur pose son drapeau.</p>
+            <p id="statusTitle" class="font-black text-base leading-tight">Bienvenue</p>
+            <p id="statusText" class="text-xs text-white/75 leading-snug">Le cacheur choisit un lieu secret. Le chercheur pose son drapeau.</p>
           </div>
           <div id="distanceBadge" class="hidden shrink-0 rounded-2xl bg-white text-slate-950 px-3 py-2 font-black text-sm">0 km</div>
         </div>
@@ -343,7 +348,7 @@
   </div>
 
   <script>
-const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -352,6 +357,7 @@ const firebaseConfig = {
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
+
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let db = null;
 
@@ -669,6 +675,7 @@ const firebaseConfig = {
       const ready = playersCount === 2;
 
       stopPlacementMode();
+      document.body.classList.remove("map-only");
       $("#lobby").classList.add("hidden");
       $("#gameInfo").classList.remove("hidden");
       $("#shareBtn").classList.remove("hidden");
@@ -894,8 +901,19 @@ const firebaseConfig = {
       }
     });
 
+    $("#hideUiBtn").addEventListener("click", () => {
+      document.body.classList.add("map-only");
+      ensureMapUsable();
+    });
+
+    $("#showUiBtn").addEventListener("click", () => {
+      document.body.classList.remove("map-only");
+      ensureMapUsable();
+    });
+
     window.addEventListener("load", () => {
       stopPlacementMode();
+      document.body.classList.remove("map-only");
       refreshIcons();
       ensureMapUsable();
       if (!hasFirebaseConfig) {
