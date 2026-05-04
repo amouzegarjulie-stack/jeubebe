@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DrawDuel" />
-  <title>DrawDuel - Pictionnary mobile</title>
+  <title>DrawDuel Mobile v3</title>
 
   <!-- Tailwind CSS CDN. Pour production, compile Tailwind localement. -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -154,6 +154,340 @@
       #toolsPanel { gap: 6px; }
       .color-dot, .size-dot { width: 28px; height: 28px; border-width: 2px; }
     }
+
+
+    /**********************************************************************
+     * VERSION MOBILE V3
+     * Cette couche remplace la logique d'empilement précédente par une vraie
+     * app-shell iPhone : zones fixes, hauteur contrôlée, actions toujours visibles.
+     **********************************************************************/
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      inset: 0;
+    }
+
+    body {
+      -webkit-text-size-adjust: 100%;
+      padding: 0;
+    }
+
+    .hidden { display: none !important; }
+
+    #app {
+      position: relative;
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      height: 100svh;
+      height: 100dvh;
+      margin: 0 auto;
+      padding: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
+      overflow: hidden !important;
+      isolation: isolate;
+    }
+
+    .view {
+      position: absolute;
+      inset: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden !important;
+      display: none !important;
+    }
+
+    .view.active { display: grid !important; }
+
+    .btn, button, input, select {
+      font-size: 16px;
+      max-width: 100%;
+      touch-action: manipulation;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn {
+      min-height: 48px;
+      padding: 11px 14px;
+      border-radius: 16px;
+      line-height: 1.05;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    input, select {
+      min-height: 48px;
+      border-radius: 16px;
+      min-width: 0;
+    }
+
+    .glass {
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    }
+
+    /* Accueil : le formulaire reste toujours dans l'écran. */
+    #view-home {
+      grid-template-rows: minmax(0, .78fr) auto;
+      gap: 10px !important;
+    }
+
+    #view-home > div:first-child {
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      padding-top: 0 !important;
+    }
+
+    #view-home .inline-flex { margin-bottom: 10px !important; }
+    #view-home h1 { font-size: clamp(2.55rem, 14vw, 4.15rem) !important; line-height: .86 !important; }
+    #view-home p { margin-top: 10px !important; font-size: .94rem !important; line-height: 1.25; }
+
+    #view-home > .glass {
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px !important;
+      display: grid;
+      gap: 9px !important;
+    }
+
+    #view-home .grid.grid-cols-2 { gap: 8px !important; }
+    #view-home label { font-size: 10px !important; }
+    #joinRoomBtn { min-width: 58px; padding-left: 10px !important; padding-right: 10px !important; }
+
+    /* Salon : scroll interne uniquement si l'écran est très petit. */
+    #view-lobby {
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 10px !important;
+    }
+
+    #view-lobby header { min-height: 48px; }
+    #view-lobby main {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0;
+      padding: 12px !important;
+      gap: 10px !important;
+    }
+
+    /* Jeu : header compact, phase fixe, scène centrale, contrôles bas. */
+    #view-game {
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px !important;
+    }
+
+    #view-game header {
+      min-height: 48px;
+      gap: 6px !important;
+    }
+
+    #view-game header .glass {
+      padding: 7px 8px !important;
+      border-radius: 15px !important;
+      min-width: 0;
+    }
+
+    #view-game header .font-black {
+      font-size: .95rem;
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #view-game main {
+      display: grid !important;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+      overflow: hidden !important;
+      padding: 9px !important;
+      gap: 8px !important;
+      border-radius: 24px !important;
+    }
+
+    #phaseBanner {
+      min-height: 36px;
+      max-height: 54px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 8px 10px !important;
+      border-radius: 16px !important;
+      font-size: 12px !important;
+      line-height: 1.2;
+    }
+
+    #choosePanel, #roundEndPanel {
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      justify-content: center;
+      padding: 2px;
+    }
+
+    #choosePanel:not(.hidden), #roundEndPanel:not(.hidden) {
+      display: flex !important;
+    }
+
+    #choosePanel h2 { font-size: 1.35rem !important; }
+    #wordChoices { gap: 8px !important; }
+    #wordChoices .btn { min-height: 66px; padding: 10px 12px !important; }
+
+    #canvasPanel:not(.hidden) {
+      display: grid !important;
+      grid-template-rows: minmax(0, 1fr) auto;
+      min-height: 0;
+      overflow: hidden !important;
+      gap: 8px !important;
+    }
+
+    #canvasPanel > .relative {
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+
+    #drawCanvas, #watchCanvas {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0;
+      border-radius: 20px !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    #canvasLock {
+      z-index: 3;
+      pointer-events: none;
+      border-radius: 20px !important;
+    }
+
+    #toolsPanel:not(.hidden) {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      flex: none !important;
+      max-height: 142px;
+    }
+
+    #toolsPanel > .w-px { display: none !important; }
+    #palette, #sizes {
+      grid-column: 1 / -1;
+      display: grid !important;
+      gap: 5px !important;
+      min-width: 0;
+    }
+    #palette { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+    #sizes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .color-dot, .size-dot {
+      width: 100% !important;
+      height: 31px !important;
+      min-width: 0;
+      border-width: 2px !important;
+    }
+
+    #eraserBtn, #clearBtn, #finishDrawingBtn {
+      width: 100%;
+      min-width: 0;
+      min-height: 40px !important;
+      padding: 8px 6px !important;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    body[data-status="guess"] #view-game main {
+      grid-template-rows: auto minmax(0, .54fr) auto;
+    }
+
+    body[data-status="guess"] #canvasPanel:not(.hidden) {
+      grid-template-rows: minmax(0, 1fr);
+    }
+
+    body[data-status="guess"] #toolsPanel { display: none !important; }
+
+    #guessPanel:not(.hidden) {
+      display: grid !important;
+      grid-template-rows: auto auto minmax(26px, auto);
+      gap: 8px !important;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #guessPanel .rounded-\[24px\] {
+      padding: 9px !important;
+      border-radius: 17px !important;
+    }
+
+    #maskedWord {
+      font-size: clamp(1.25rem, 7vw, 2rem) !important;
+      line-height: 1.05;
+      letter-spacing: .12em !important;
+    }
+
+    #guessPanel .grid.grid-cols-\[1fr_auto\] {
+      grid-template-columns: minmax(0, 1fr) 62px !important;
+      gap: 7px !important;
+    }
+
+    #guessBtn { padding-left: 8px !important; padding-right: 8px !important; }
+    #guessLog { overflow: hidden; line-height: 1.2; }
+
+    #roundEndPanel .text-5xl { font-size: 2.5rem !important; }
+
+    #view-gallery {
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 8px !important;
+    }
+
+    #view-gallery .glass { padding: 10px !important; }
+    #galleryGrid {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      gap: 8px !important;
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      input, select, textarea { font-size: 16px !important; }
+    }
+
+    @media (max-height: 700px) {
+      #app { padding-left: 10px; padding-right: 10px; }
+      .view { inset: calc(7px + var(--safe-top)) 10px calc(7px + var(--safe-bottom)); }
+      .btn { min-height: 43px; padding: 9px 11px; border-radius: 14px; }
+      input, select { min-height: 43px; border-radius: 14px; }
+      #view-home { grid-template-rows: minmax(0, .55fr) auto; }
+      #view-home .inline-flex, #view-home p { display: none !important; }
+      #view-home h1 { font-size: clamp(2.15rem, 12vw, 3.2rem) !important; }
+      #view-home > .glass { padding: 10px !important; gap: 7px !important; }
+      #view-game header { min-height: 42px; }
+      #view-game header .glass { padding: 5px 7px !important; }
+      #phaseBanner { min-height: 31px; max-height: 42px; padding: 6px 8px !important; }
+      #view-game main { padding: 7px !important; gap: 6px !important; }
+      #toolsPanel:not(.hidden) { gap: 5px !important; max-height: 128px; }
+      .color-dot, .size-dot { height: 27px !important; }
+      #eraserBtn, #clearBtn, #finishDrawingBtn { min-height: 36px !important; font-size: 11px; }
+      #maskedWord { font-size: clamp(1.1rem, 6vw, 1.6rem) !important; }
+    }
+
+    @media (max-height: 620px) {
+      #view-home { grid-template-rows: auto minmax(0, 1fr); }
+      #view-home > div:first-child { display: none !important; }
+      #view-home > .glass { align-self: stretch; }
+      #view-game header .text-\[10px\] { display: none; }
+      #view-game header { min-height: 34px; }
+      body[data-status="guess"] #view-game main { grid-template-rows: auto minmax(0, .48fr) auto; }
+      #guessPanel .rounded-\[24px\] .text-xs { display: none; }
+      #attemptsLabel { margin-top: 4px !important; font-size: 12px !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -345,14 +679,14 @@
      *    }
      * 5. Pour une vraie mise en ligne, ajoute Firebase Auth anonyme et des règles strictes.
      **********************************************************************/
-const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+   const firebaseConfig = {
+  apiKey: "TON_API_KEY",
+  authDomain: "TON_PROJET.firebaseapp.com",
+  databaseURL: "https://TON_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "TON_PROJET",
+  storageBucket: "TON_PROJET.appspot.com",
+  messagingSenderId: "TON_SENDER_ID",
+  appId: "TON_APP_ID"
 };
 
     function firebaseLooksConfigured() {
@@ -431,6 +765,7 @@ const firebaseConfig = {
 
     function showView(name) {
       views.forEach(v => $('view-' + v).classList.toggle('active', v === name));
+      requestAnimationFrame(() => resizeCanvases());
     }
 
     function code() {
@@ -779,6 +1114,7 @@ const firebaseConfig = {
     }
 
     function renderGame() {
+      document.body.dataset.status = state.room?.status || '';
       if (!state.room || state.room.status === 'lobby' || state.room.status === 'gameOver') return;
       const room = state.room;
       const players = playerList();
