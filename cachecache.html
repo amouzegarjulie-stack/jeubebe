@@ -47,6 +47,26 @@
     .leaflet-container {
       touch-action: pan-x pan-y pinch-zoom;
       font: inherit;
+      background: #dbeafe;
+    }
+
+    /* Correctif indispensable avec Tailwind : sinon les tuiles Leaflet peuvent se déformer, se couper ou se superposer. */
+    .leaflet-container img,
+    .leaflet-container .leaflet-tile,
+    .leaflet-tile-container img {
+      max-width: none !important;
+      max-height: none !important;
+      width: 256px !important;
+      height: 256px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      object-fit: cover !important;
+    }
+
+    .leaflet-tile-pane,
+    .leaflet-tile-container,
+    .leaflet-layer {
+      overflow: visible !important;
     }
 
     .leaflet-control-zoom {
@@ -177,17 +197,7 @@
       filter: drop-shadow(0 14px 18px rgba(0,0,0,.36));
     }
 
-    .map-clear-zone {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      top: 126px;
-      bottom: 142px;
-      border: 2px dashed rgba(255,255,255,.38);
-      border-radius: 28px;
-      pointer-events: none;
-      z-index: 5;
-    }
+    
 
     @media (max-height: 720px) {
       #brandIcon { width: 40px; height: 40px; border-radius: 18px; }
@@ -312,7 +322,6 @@
   </main>
 
   <div id="placementHud" class="fixed inset-0 z-[9000]">
-    <div class="map-clear-zone"></div>
     <div class="crosshair-pin">
       <div class="marker-pin preview-pin"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
     </div>
@@ -334,7 +343,7 @@
   </div>
 
   <script>
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -343,7 +352,6 @@
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
-
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let db = null;
 
