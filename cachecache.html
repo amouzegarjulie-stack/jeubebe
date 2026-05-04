@@ -27,9 +27,7 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: radial-gradient(circle at top left, rgba(37, 99, 255, .35), transparent 32%),
-                  radial-gradient(circle at bottom right, rgba(255, 43, 214, .28), transparent 34%),
-                  #070a18;
+      background: #070a18;
       color: white;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -38,7 +36,27 @@
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: #0b1020;
+      background: #dbeafe;
+    }
+
+    /* Laisse Leaflet recevoir les gestes tactiles correctement */
+    .leaflet-container {
+      touch-action: pan-x pan-y pinch-zoom;
+      font: inherit;
+    }
+
+    .leaflet-control-zoom {
+      border: 0 !important;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, .25) !important;
+    }
+
+    .leaflet-control-zoom a {
+      width: 42px !important;
+      height: 42px !important;
+      line-height: 42px !important;
+      font-size: 24px !important;
+      color: #0f172a !important;
+      background: rgba(255, 255, 255, .92) !important;
     }
 
     .leaflet-control-attribution {
@@ -47,15 +65,15 @@
     }
 
     .glass {
-      background: rgba(255, 255, 255, .16);
-      border: 1px solid rgba(255, 255, 255, .24);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .26);
+      background: rgba(7, 10, 24, .64);
+      border: 1px solid rgba(255, 255, 255, .22);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .24);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
 
     .soft {
-      box-shadow: 8px 8px 20px rgba(0, 0, 0, .22), -8px -8px 20px rgba(255, 255, 255, .08);
+      box-shadow: 8px 8px 20px rgba(0, 0, 0, .20), -8px -8px 20px rgba(255, 255, 255, .06);
     }
 
     .btn {
@@ -104,16 +122,38 @@
     }
 
     .safe-bottom {
-      padding-bottom: max(14px, env(safe-area-inset-bottom));
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
 
     .safe-top {
-      padding-top: max(12px, env(safe-area-inset-top));
+      padding-top: max(8px, env(safe-area-inset-top));
     }
 
     .search-results {
-      max-height: 230px;
+      max-height: 210px;
       overflow: auto;
+    }
+
+    #topPanel, #searchPanel, #hintPanel, #bottomPanel, #toast {
+      pointer-events: none;
+    }
+
+    #topPanel > *, #searchPanel > *, #hintPanel > *, #bottomPanel > *, #toast > * {
+      pointer-events: auto;
+    }
+
+    .compact-panel {
+      max-height: 42dvh;
+      overflow: auto;
+    }
+
+    @media (max-height: 720px) {
+      #brandIcon { width: 40px; height: 40px; border-radius: 18px; }
+      #topCard { padding: 10px; border-radius: 22px; }
+      #actionPanel { border-radius: 24px; padding: 10px; }
+      .mobile-tight { padding-top: 10px !important; padding-bottom: 10px !important; }
+      #searchPanel { top: 136px !important; }
+      #hintPanel { top: 136px !important; }
     }
   </style>
 </head>
@@ -121,10 +161,10 @@
   <div id="map"></div>
 
   <main class="relative z-10 h-dvh pointer-events-none">
-    <section id="topPanel" class="pointer-events-auto absolute top-0 left-0 right-0 safe-top px-3">
-      <div class="glass rounded-[28px] p-3 soft">
+    <section id="topPanel" class="absolute top-0 left-0 right-0 safe-top px-3">
+      <div id="topCard" class="glass rounded-[28px] p-3 soft">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
+          <div id="brandIcon" class="w-12 h-12 rounded-2xl grid place-items-center bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-300 shadow-lg">
             <i data-lucide="globe-2" class="w-7 h-7"></i>
           </div>
           <div class="flex-1 min-w-0">
@@ -161,7 +201,7 @@
       </div>
     </section>
 
-    <section id="searchPanel" class="pointer-events-auto hidden absolute top-[176px] left-3 right-3">
+    <section id="searchPanel" class="hidden absolute top-[154px] left-3 right-3">
       <div class="glass rounded-[24px] p-3">
         <div class="flex gap-2">
           <input id="searchInput" class="flex-1 rounded-2xl px-4 py-3 bg-white text-slate-950 outline-none placeholder:text-slate-400 font-semibold" placeholder="Chercher une ville, un monument..." />
@@ -173,7 +213,7 @@
       </div>
     </section>
 
-    <section id="hintPanel" class="pointer-events-auto hidden absolute right-3 top-[176px] w-[72px]">
+    <section id="hintPanel" class="hidden absolute right-3 top-[154px] w-[72px]">
       <div class="glass rounded-[28px] p-2 grid gap-2">
         <button data-hint="⬆️ Nord" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬆️</button>
         <button data-hint="⬇️ Sud" class="hintBtn btn rounded-2xl h-12 bg-white/15 text-xl">⬇️</button>
@@ -183,8 +223,8 @@
       </div>
     </section>
 
-    <section class="pointer-events-auto absolute left-0 right-0 bottom-0 safe-bottom px-3">
-      <div id="actionPanel" class="glass rounded-t-[32px] rounded-b-[24px] p-3 soft">
+    <section id="bottomPanel" class="absolute left-0 right-0 bottom-0 safe-bottom px-3">
+      <div id="actionPanel" class="glass rounded-t-[32px] rounded-b-[24px] p-3 soft compact-panel">
         <div class="flex items-center gap-2 mb-3">
           <div class="flex-1 min-w-0">
             <p id="statusTitle" class="font-black text-lg leading-tight">Bienvenue</p>
@@ -194,22 +234,22 @@
         </div>
 
         <div id="hiderActions" class="hidden grid grid-cols-3 gap-2">
-          <button id="diceBtn" class="btn rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
+          <button id="diceBtn" class="btn mobile-tight rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
             <i data-lucide="dice-5" class="w-5 h-5"></i> Dé
           </button>
-          <button id="toggleSearchBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+          <button id="toggleSearchBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
             <i data-lucide="map-pin" class="w-5 h-5"></i> Lieu
           </button>
-          <button id="lockSpotBtn" class="btn rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+          <button id="lockSpotBtn" class="btn mobile-tight rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
             <i data-lucide="lock" class="w-5 h-5"></i> Valider
           </button>
         </div>
 
         <div id="seekerActions" class="hidden grid grid-cols-2 gap-2">
-          <button id="guessBtn" class="btn rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+          <button id="guessBtn" class="btn mobile-tight rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
             <i data-lucide="flag" class="w-5 h-5"></i> Tenter
           </button>
-          <button id="centerBtn" class="btn rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
+          <button id="centerBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
             <i data-lucide="crosshair" class="w-5 h-5"></i> Explorer
           </button>
         </div>
@@ -241,7 +281,7 @@
       3) Remplace ces valeurs par ta config.
       4) Pour une vraie publication, ajoute des règles Firebase plus strictes.
     */
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -250,7 +290,6 @@
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
-
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let app = null;
     let db = null;
@@ -289,15 +328,24 @@
       zoomControl: false,
       worldCopyJump: true,
       minZoom: 2,
-      maxZoom: 18
-    }).setView([20, 0], 2);
+      maxZoom: 19,
+      zoomSnap: .25,
+      zoomDelta: .75,
+      wheelPxPerZoomLevel: 80,
+      tap: true,
+      dragging: true,
+      touchZoom: true,
+      doubleClickZoom: true,
+      scrollWheelZoom: true,
+      boxZoom: false
+    }).setView([20, 0], 2.25);
 
-    L.control.zoom({ position: "bottomright" }).addTo(map);
+    L.control.zoom({ position: "right" }).addTo(map);
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       attribution: "&copy; OpenStreetMap &copy; CARTO",
       subdomains: "abcd",
-      maxZoom: 20
+      maxZoom: 19
     }).addTo(map);
 
     let secretMarker = null;
@@ -427,6 +475,11 @@
       }
     }
 
+    function ensureMapUsable() {
+      setTimeout(() => map.invalidateSize(true), 80);
+      setTimeout(() => map.invalidateSize(true), 400);
+    }
+
     function drawLine(secret, guess) {
       if (lineLayer) map.removeLayer(lineLayer);
       lineLayer = L.polyline([[secret.lat, secret.lng], [guess.lat, guess.lng]], {
@@ -536,7 +589,7 @@
       $("#hintPanel").classList.add("hidden");
       $("#distanceBadge").classList.add("hidden");
 
-      clearMarkers(true);
+      clearMarkers(role === "cacheur" && !!room.secret);
       if (role === "cacheur" && room.secret) setMarker("secret", room.secret);
       if (role === "chercheur" && room.status === "result" && room.secret) setMarker("secret", room.secret);
       if (room.guess) setMarker("guess", room.guess);
@@ -652,16 +705,22 @@
 
     $("#lockSpotBtn").addEventListener("click", async () => {
       if (!state.previewSpot) return;
+      const lockedSpot = state.previewSpot;
       await writePatch({
-        secret: state.previewSpot,
+        secret: lockedSpot,
         guess: null,
         hint: null,
         result: null,
         status: "seeking"
       });
       state.previewSpot = null;
-      clearMarkers(true);
-      showToast("Caché !", "Le chercheur peut commencer.");
+      if (previewMarker) {
+        map.removeLayer(previewMarker);
+        previewMarker = null;
+      }
+      setMarker("secret", lockedSpot);
+      map.flyTo([lockedSpot.lat, lockedSpot.lng], Math.max(map.getZoom(), 8), { duration: 1 });
+      showToast("Caché !", "Ta pin secrète reste visible pour toi.");
     });
 
     $("#guessBtn").addEventListener("click", async () => {
@@ -734,7 +793,7 @@
 
     window.addEventListener("load", () => {
       refreshIcons();
-      setTimeout(() => map.invalidateSize(), 250);
+      ensureMapUsable();
       if (!hasFirebaseConfig) {
         showToast("Mode démo", "Ajoute ta config Firebase pour jouer en ligne.");
       }
