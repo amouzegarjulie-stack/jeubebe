@@ -15,6 +15,10 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Firebase Compat, plus robuste dans un fichier HTML simple -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --blue: #2563ff;
@@ -329,11 +333,8 @@
     <p id="toastText" class="text-sm text-white/80 mt-1">Tu as trouvé la cachette.</p>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getDatabase, ref, set, update, onValue, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
-  const firebaseConfig = {
+  <script>
+ const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -346,9 +347,13 @@
     const hasFirebaseConfig = !Object.values(firebaseConfig).some(value => String(value).includes("YOUR_"));
     let db = null;
 
-    if (hasFirebaseConfig) {
-      const app = initializeApp(firebaseConfig);
-      db = getDatabase(app);
+    try {
+      if (hasFirebaseConfig && window.firebase) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }
+    } catch (error) {
+      console.error("Firebase init error", error);
     }
 
     const $ = selector => document.querySelector(selector);
@@ -360,8 +365,7 @@
       playerIndex: null,
       room: null,
       previewSpot: null,
-      localGuess: null,
-      roomListenerReady: false
+      localGuess: null
     };
     localStorage.setItem("cachecache_player_id", state.playerId);
 
@@ -424,7 +428,7 @@
     }
 
     function roomRef(path = "") {
-      return ref(db, `cachecache_rooms/${state.roomCode}${path ? "/" + path : ""}`);
+      return db.ref(`cachecache_rooms/${state.roomCode}${path ? "/" + path : ""}`);
     }
 
     function randomCode() {
@@ -442,7 +446,7 @@
     }
 
     function currentHiderIndex(room = state.room) {
-      return room?.round % 2 === 1 ? 1 : 2;
+      return room && room.round % 2 === 1 ? 1 : 2;
     }
 
     function myRole(room = state.room) {
@@ -579,7 +583,7 @@
         showToast("Firebase manquant", "Remplace les placeholders de configuration.");
         return false;
       }
-      await update(roomRef(), patch);
+      await roomRef().update(patch);
       return true;
     }
 
@@ -588,14 +592,14 @@
       const code = randomCode();
       state.roomCode = code;
       state.playerIndex = 1;
-      await set(roomRef(), {
+      await roomRef().set({
         code,
-        createdAt: serverTimestamp(),
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
         round: 1,
         maxRounds: 6,
         status: "hiding",
         players: {
-          [state.playerId]: { index: 1, name: "Joueur 1", joinedAt: serverTimestamp() }
+          [state.playerId]: { index: 1, name: "Joueur 1", joinedAt: firebase.database.ServerValue.TIMESTAMP }
         },
         secret: null,
         guess: null,
@@ -612,7 +616,7 @@
       const code = $("#joinCodeInput").value.trim().toUpperCase();
       if (code.length !== 6) return showToast("Code invalide", "Entre le code à 6 caractères.");
       state.roomCode = code;
-      const snap = await get(roomRef());
+      const snap = await roomRef().once("value");
       if (!snap.exists()) return showToast("Introuvable", "Ce salon n'existe pas.");
       const room = snap.val();
       const players = room.players || {};
@@ -623,10 +627,10 @@
         const used = Object.values(players).map(p => p.index);
         if (used.length >= 2) return showToast("Complet", "Ce salon a déjà deux joueurs.");
         state.playerIndex = used.includes(1) ? 2 : 1;
-        await set(roomRef(`players/${state.playerId}`), {
+        await roomRef(`players/${state.playerId}`).set({
           index: state.playerIndex,
           name: `Joueur ${state.playerIndex}`,
-          joinedAt: serverTimestamp()
+          joinedAt: firebase.database.ServerValue.TIMESTAMP
         });
       }
       subscribeRoom();
@@ -635,14 +639,15 @@
 
     function subscribeRoom() {
       if (!db || !state.roomCode) return;
-      onValue(roomRef(), snapshot => {
+      roomRef().off();
+      roomRef().on("value", snapshot => {
         if (!snapshot.exists()) {
           state.room = null;
           showToast("Salon fermé", "La partie a été réinitialisée.");
           return;
         }
         state.room = snapshot.val();
-        const mine = state.room.players?.[state.playerId];
+        const mine = state.room.players && state.room.players[state.playerId];
         if (mine) state.playerIndex = mine.index;
         render();
       });
@@ -698,9 +703,9 @@
       }
 
       if (room.status === "result") {
-        const d = room.result?.distance || 0;
-        $("#statusTitle").textContent = room.result?.title || "Résultat";
-        $("#statusText").textContent = `${room.result?.text || "Manche terminée."} Score : J1 ${room.scores?.p1 || 0} | J2 ${room.scores?.p2 || 0}`;
+        const d = room.result && room.result.distance ? room.result.distance : 0;
+        $("#statusTitle").textContent = room.result && room.result.title ? room.result.title : "Résultat";
+        $("#statusText").textContent = `${room.result && room.result.text ? room.result.text : "Manche terminée."} Score : J1 ${room.scores?.p1 || 0} | J2 ${room.scores?.p2 || 0}`;
         $("#distanceBadge").textContent = formatDistance(d);
         $("#distanceBadge").classList.remove("hidden");
         $("#betweenActions").classList.remove("hidden");
@@ -815,13 +820,13 @@
 
     $("#guessBtn").addEventListener("click", async () => {
       const room = state.room;
-      const guess = state.localGuess || room?.guess;
-      if (!room?.secret || !guess) return;
+      const guess = state.localGuess || (room && room.guess);
+      if (!room || !room.secret || !guess) return;
       const distance = haversineMeters(room.secret, guess);
       const v = verdict(distance);
       const seekerIndex = currentHiderIndex(room) === 1 ? 2 : 1;
       const scoreKey = seekerIndex === 1 ? "p1" : "p2";
-      const nextScore = (room.scores?.[scoreKey] || 0) + v.score;
+      const nextScore = (room.scores && room.scores[scoreKey] ? room.scores[scoreKey] : 0) + v.score;
       await writePatch({
         status: "result",
         result: { ...v, distance, at: Date.now() },
@@ -867,7 +872,7 @@
 
     $("#resetBtn").addEventListener("click", async () => {
       if (!state.roomCode || !db) return;
-      await remove(roomRef());
+      await roomRef().remove();
       location.reload();
     });
 
