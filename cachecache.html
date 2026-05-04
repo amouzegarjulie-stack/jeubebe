@@ -143,8 +143,46 @@
     }
 
     .compact-panel {
-      max-height: 42dvh;
+      max-height: 34dvh;
       overflow: auto;
+    }
+
+    body.placing #topPanel,
+    body.placing #bottomPanel,
+    body.placing #searchPanel,
+    body.placing #hintPanel {
+      display: none !important;
+    }
+
+    #placementHud {
+      display: none;
+      pointer-events: none;
+    }
+
+    body.placing #placementHud {
+      display: block;
+    }
+
+    .crosshair-pin {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -100%);
+      z-index: 9000;
+      pointer-events: none;
+      filter: drop-shadow(0 14px 18px rgba(0,0,0,.36));
+    }
+
+    .map-clear-zone {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      top: 126px;
+      bottom: 142px;
+      border: 2px dashed rgba(255,255,255,.38);
+      border-radius: 28px;
+      pointer-events: none;
+      z-index: 5;
     }
 
     @media (max-height: 720px) {
@@ -233,14 +271,17 @@
           <div id="distanceBadge" class="hidden shrink-0 rounded-2xl bg-white text-slate-950 px-3 py-2 font-black text-sm">0 km</div>
         </div>
 
-        <div id="hiderActions" class="hidden grid grid-cols-3 gap-2">
-          <button id="diceBtn" class="btn mobile-tight rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-2">
+        <div id="hiderActions" class="hidden grid grid-cols-4 gap-2">
+          <button id="diceBtn" class="btn mobile-tight rounded-2xl py-3 bg-yellow-300 text-slate-950 font-black flex items-center justify-center gap-1 text-sm">
             <i data-lucide="dice-5" class="w-5 h-5"></i> Dé
           </button>
-          <button id="toggleSearchBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-2">
-            <i data-lucide="map-pin" class="w-5 h-5"></i> Lieu
+          <button id="mapPickBtn" class="btn mobile-tight rounded-2xl py-3 bg-blue-500 font-black flex items-center justify-center gap-1 text-sm">
+            <i data-lucide="crosshair" class="w-5 h-5"></i> Placer
           </button>
-          <button id="lockSpotBtn" class="btn mobile-tight rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-2 disabled:opacity-40" disabled>
+          <button id="toggleSearchBtn" class="btn mobile-tight rounded-2xl py-3 bg-white/15 border border-white/20 font-black flex items-center justify-center gap-1 text-sm">
+            <i data-lucide="search" class="w-5 h-5"></i> Ville
+          </button>
+          <button id="lockSpotBtn" class="btn mobile-tight rounded-2xl py-3 bg-pink-500 font-black flex items-center justify-center gap-1 text-sm disabled:opacity-40" disabled>
             <i data-lucide="lock" class="w-5 h-5"></i> Valider
           </button>
         </div>
@@ -266,6 +307,23 @@
     </section>
   </main>
 
+  <div id="placementHud" class="fixed inset-0 z-[9000]">
+    <div class="map-clear-zone"></div>
+    <div class="crosshair-pin">
+      <div class="marker-pin preview-pin"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+    </div>
+    <div class="fixed left-3 right-3 top-3 safe-top pointer-events-auto">
+      <div class="glass rounded-[26px] p-3 text-center">
+        <p class="font-black text-lg">Place ta cachette</p>
+        <p class="text-sm text-white/75">Déplace la carte sous la pin jaune, puis valide.</p>
+      </div>
+    </div>
+    <div class="fixed left-3 right-3 bottom-3 safe-bottom pointer-events-auto grid grid-cols-2 gap-2">
+      <button id="cancelPlaceBtn" class="btn rounded-2xl py-4 bg-white/20 border border-white/25 font-black">Annuler</button>
+      <button id="confirmCenterBtn" class="btn rounded-2xl py-4 bg-yellow-300 text-slate-950 font-black">Valider ici</button>
+    </div>
+  </div>
+
   <div id="toast" class="hidden fixed left-1/2 top-24 z-[9999] -translate-x-1/2 glass rounded-[24px] px-5 py-4 text-center min-w-[260px] max-w-[90vw]">
     <p id="toastTitle" class="text-2xl font-black">BINGO !</p>
     <p id="toastText" class="text-sm text-white/80 mt-1">Tu as trouvé la cachette.</p>
@@ -281,7 +339,7 @@
       3) Remplace ces valeurs par ta config.
       4) Pour une vraie publication, ajoute des règles Firebase plus strictes.
     */
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -496,6 +554,31 @@
       setMarker("preview", point);
       $("#lockSpotBtn").disabled = false;
       if (fly) map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 6), { duration: 1.1 });
+      ensureMapUsable();
+    }
+
+    function startPlacementMode() {
+      document.body.classList.add("placing");
+      ensureMapUsable();
+      const center = map.getCenter();
+      state.previewSpot = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
+      if (previewMarker) {
+        map.removeLayer(previewMarker);
+        previewMarker = null;
+      }
+      showToast("Mode placement", "Déplace la carte et valide avec le bouton jaune.");
+    }
+
+    function stopPlacementMode() {
+      document.body.classList.remove("placing");
+      ensureMapUsable();
+    }
+
+    function setPreviewFromMapCenter() {
+      const center = map.getCenter();
+      setPreview({ lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) }, false);
+      stopPlacementMode();
+      showToast("Pin placée", "Tu peux maintenant valider ta cachette.");
     }
 
     async function writePatch(patch) {
@@ -636,7 +719,8 @@
 
       if (room.status === "hiding" && role === "cacheur") {
         setPreview(point, false);
-        showToast("Spot prêt", "Valide pour lancer la recherche.");
+        stopPlacementMode();
+        showToast("Pin placée", "Tu peux maintenant valider ta cachette.");
       }
 
       if (room.status === "seeking" && role === "chercheur") {
@@ -645,6 +729,12 @@
         $("#guessBtn").disabled = false;
         await writePatch({ guess: point });
       }
+    });
+
+    map.on("moveend zoomend", () => {
+      if (!document.body.classList.contains("placing")) return;
+      const center = map.getCenter();
+      state.previewSpot = { lat: +center.lat.toFixed(6), lng: +center.lng.toFixed(6) };
     });
 
     $("#createRoomBtn").addEventListener("click", createRoom);
@@ -656,8 +746,14 @@
       showToast("Destination secrète", point.label);
     });
 
+    $("#mapPickBtn").addEventListener("click", startPlacementMode);
+    $("#confirmCenterBtn").addEventListener("click", setPreviewFromMapCenter);
+    $("#cancelPlaceBtn").addEventListener("click", stopPlacementMode);
+
     $("#toggleSearchBtn").addEventListener("click", () => {
+      stopPlacementMode();
       $("#searchPanel").classList.toggle("hidden");
+      ensureMapUsable();
       $("#searchInput").focus();
     });
 
@@ -707,6 +803,7 @@
     $("#lockSpotBtn").addEventListener("click", async () => {
       if (!state.previewSpot) return;
       const lockedSpot = state.previewSpot;
+      stopPlacementMode();
       await writePatch({
         secret: lockedSpot,
         guess: null,
