@@ -120,6 +120,40 @@
       transition: .2s ease;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Correctifs iPhone : l'interface tient dans la hauteur utile, y compris iPhone SE. */
+    #app { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; }
+    .view { min-height: 0; overflow: hidden; }
+    main { min-height: 0; }
+
+    @media (max-height: 740px) {
+      #app { padding-left: 12px; padding-right: 12px; padding-top: calc(8px + var(--safe-top)); padding-bottom: calc(8px + var(--safe-bottom)); }
+      .btn { min-height: 44px; padding: 10px 14px; border-radius: 15px; }
+      input, select { min-height: 44px; border-radius: 15px; font-size: 16px; }
+      #view-home > div:first-child { padding-top: 4px; }
+      #view-home h1 { font-size: 2.7rem; line-height: .9; }
+      #view-home p { margin-top: 8px; font-size: .88rem; }
+      #view-home .glass { border-radius: 24px; padding: 12px; }
+      #view-home { gap: 8px; }
+      .color-dot, .size-dot { width: 30px; height: 30px; }
+      #phaseBanner { padding: 8px; border-radius: 18px; font-size: 12px; }
+      #view-game header > div { padding-top: 6px; padding-bottom: 6px; border-radius: 14px; }
+      #view-game main { border-radius: 22px; padding: 8px; gap: 8px; }
+      #maskedWord { font-size: 1.55rem; }
+    }
+
+    @media (max-height: 650px) {
+      #view-home .inline-flex { display: none; }
+      #view-home h1 { font-size: 2.25rem; }
+      #view-home p { display: none; }
+      #view-home .glass { gap: 8px; }
+      #view-home label { font-size: 10px; }
+      .btn { min-height: 40px; padding: 8px 12px; }
+      input, select { min-height: 40px; }
+      #view-lobby main, #view-gallery .glass { padding: 10px; border-radius: 22px; }
+      #toolsPanel { gap: 6px; }
+      .color-dot, .size-dot { width: 28px; height: 28px; border-width: 2px; }
+    }
   </style>
 </head>
 <body>
@@ -311,18 +345,30 @@
      *    }
      * 5. Pour une vraie mise en ligne, ajoute Firebase Auth anonyme et des règles strictes.
      **********************************************************************/
-    baseConfig = {
- apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
   projectId: "mille-bornes-355ca",
   storageBucket: "mille-bornes-355ca.appspot.com",
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-    };
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    function firebaseLooksConfigured() {
+      return firebaseConfig.apiKey &&
+        !firebaseConfig.apiKey.includes('COLLE_') &&
+        firebaseConfig.projectId && firebaseConfig.projectId !== 'TON_PROJET' &&
+        firebaseConfig.databaseURL && !firebaseConfig.databaseURL.includes('TON_PROJET');
+    }
+
+    const firebaseReady = firebaseLooksConfigured();
+    let app = null;
+    let db = null;
+    if (firebaseReady) {
+      app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+    }
 
     const WORDS = {
       easy: [
@@ -397,6 +443,7 @@
     }
 
     function roomRef(path = '') {
+      if (!db) throw new Error('Firebase non configuré');
       return ref(db, `rooms/${state.roomCode}${path ? '/' + path : ''}`);
     }
 
@@ -426,46 +473,69 @@
     function deadline(seconds) { return seconds > 0 ? now() + seconds * 1000 : 0; }
 
     async function createRoom() {
-      localStorage.setItem('drawduel_name', safeName());
-      const room = code();
-      state.roomCode = room;
-      const drawTimer = Number(els.drawTimerSetting.value);
-      const guessTimer = Number(els.guessTimerSetting.value);
-      await set(ref(db, `rooms/${room}`), {
-        createdAt: serverTimestamp(),
-        hostId: state.playerId,
-        status: 'lobby',
-        round: 1,
-        totalRounds: CONFIG.totalRounds,
-        settings: { drawTimer, guessTimer },
-        players: {
-          [state.playerId]: { name: safeName(), host: true, joinedAt: now() }
-        },
-        scores: { [state.playerId]: 0 },
-        gallery: {},
-        votes: {}
-      });
-      attachRoom(room);
-      showView('lobby');
-      showToast('Salon créé');
+      if (!firebaseReady || !db) return showToast('Colle d’abord tes clés Firebase dans firebaseConfig.');
+      els.createRoomBtn.disabled = true;
+      try {
+        localStorage.setItem('drawduel_name', safeName());
+        let room = code();
+        for (let i = 0; i < 5; i++) {
+          const exists = await get(ref(db, `rooms/${room}`));
+          if (!exists.exists()) break;
+          room = code();
+        }
+        state.roomCode = room;
+        const drawTimer = Number(els.drawTimerSetting.value);
+        const guessTimer = Number(els.guessTimerSetting.value);
+        await set(ref(db, `rooms/${room}`), {
+          createdAt: serverTimestamp(),
+          hostId: state.playerId,
+          status: 'lobby',
+          round: 1,
+          totalRounds: CONFIG.totalRounds,
+          settings: { drawTimer, guessTimer },
+          players: {
+            [state.playerId]: { name: safeName(), host: true, joinedAt: now() }
+          },
+          scores: { [state.playerId]: 0 },
+          gallery: {},
+          votes: {}
+        });
+        attachRoom(room);
+        showView('lobby');
+        showToast('Salon créé');
+      } catch (err) {
+        console.error(err);
+        showToast('Création impossible : vérifie databaseURL et règles Realtime Database.');
+      } finally {
+        els.createRoomBtn.disabled = false;
+      }
     }
 
     async function joinRoom() {
-      localStorage.setItem('drawduel_name', safeName());
-      const room = els.joinCode.value.trim().toUpperCase();
-      if (!room) return showToast('Entre un code salon');
-      const snap = await get(ref(db, `rooms/${room}`));
-      if (!snap.exists()) return showToast('Salon introuvable');
-      const data = snap.val();
-      if (Object.keys(data.players || {}).length >= 2 && !data.players[state.playerId]) return showToast('Salon déjà complet');
-      state.roomCode = room;
-      await update(ref(db, `rooms/${room}`), {
-        [`players/${state.playerId}`]: { name: safeName(), host: false, joinedAt: now() },
-        [`scores/${state.playerId}`]: data.scores?.[state.playerId] || 0
-      });
-      attachRoom(room);
-      showView('lobby');
-      showToast('Salon rejoint');
+      if (!firebaseReady || !db) return showToast('Colle d’abord tes clés Firebase dans firebaseConfig.');
+      els.joinRoomBtn.disabled = true;
+      try {
+        localStorage.setItem('drawduel_name', safeName());
+        const room = els.joinCode.value.trim().toUpperCase();
+        if (!room) return showToast('Entre un code salon');
+        const snap = await get(ref(db, `rooms/${room}`));
+        if (!snap.exists()) return showToast('Salon introuvable');
+        const data = snap.val();
+        if (Object.keys(data.players || {}).length >= 2 && !data.players[state.playerId]) return showToast('Salon déjà complet');
+        state.roomCode = room;
+        await update(ref(db, `rooms/${room}`), {
+          [`players/${state.playerId}`]: { name: safeName(), host: false, joinedAt: now() },
+          [`scores/${state.playerId}`]: data.scores?.[state.playerId] || 0
+        });
+        attachRoom(room);
+        showView('lobby');
+        showToast('Salon rejoint');
+      } catch (err) {
+        console.error(err);
+        showToast('Connexion impossible : vérifie le code, databaseURL et les règles.');
+      } finally {
+        els.joinRoomBtn.disabled = false;
+      }
     }
 
     function attachRoom(room) {
@@ -1067,6 +1137,11 @@
     els.newGameBtn.addEventListener('click', () => { detachRoom(); showView('home'); });
 
     els.playerName.value = localStorage.getItem('drawduel_name') || '';
+    if (!firebaseReady) {
+      els.createRoomBtn.textContent = 'Configurer Firebase d’abord';
+      els.joinRoomBtn.textContent = 'Config';
+      setTimeout(() => showToast('Firebase n’est pas encore configuré dans le fichier.'), 500);
+    }
     buildTools();
     installPwaManifest();
     setTimeout(resizeCanvases, 300);
