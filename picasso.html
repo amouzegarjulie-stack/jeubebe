@@ -2,527 +2,1074 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#09090f" />
-  <title>DrawDuel Fix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DrawDuel" />
+  <title>DrawDuel - Pictionnary mobile</title>
+
+  <!-- Tailwind CSS CDN. Pour production, compile Tailwind localement. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Arial'] },
+          boxShadow: { glow: '0 18px 60px rgba(99,102,241,.25)' }
+        }
+      }
+    }
+  </script>
+
   <style>
     :root {
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --vh: 1vh;
-      --bg: #09090f;
-      --panel: rgba(17,24,39,.86);
-      --panel2: rgba(255,255,255,.08);
-      --line: rgba(255,255,255,.14);
-      --text: #f9fafb;
-      --muted: rgba(255,255,255,.62);
+      --app-h: 100dvh;
+      touch-action: manipulation;
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif; -webkit-text-size-adjust: 100%; }
-    body { background: radial-gradient(circle at 0 0, rgba(34,211,238,.28), transparent 32%), radial-gradient(circle at 100% 100%, rgba(236,72,153,.22), transparent 32%), #09090f; }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(59,130,246,.28), transparent 34%),
+                  radial-gradient(circle at bottom right, rgba(236,72,153,.22), transparent 30%),
+                  #09090f;
+      color: #f9fafb;
+      font-family: Inter, ui-sans-serif, system-ui, Arial, sans-serif;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: var(--app-h);
+    }
 
-    button, input, select { font: inherit; font-size: 16px; }
-    button { border: 0; color: inherit; cursor: pointer; touch-action: manipulation; user-select: none; }
-    input, select { border: 1px solid var(--line); outline: 0; color: white; background: var(--panel2); }
+    .glass {
+      background: rgba(17, 24, 39, .68);
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .view { display: none; height: 100%; }
+    .view.active { display: flex; }
+
+    .btn {
+      border-radius: 18px;
+      padding: 14px 18px;
+      font-weight: 800;
+      min-height: 52px;
+      transition: transform .12s ease, opacity .12s ease, filter .12s ease;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; filter: grayscale(.4); }
+    .btn-primary { background: linear-gradient(135deg, #22d3ee, #6366f1, #ec4899); color: white; }
+    .btn-dark { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
+    .btn-danger { background: linear-gradient(135deg, #fb7185, #ef4444); color: white; }
+    .btn-good { background: linear-gradient(135deg, #34d399, #14b8a6); color: #061113; }
+
+    input, select {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      color: white;
+      min-height: 52px;
+      outline: none;
+      padding: 0 16px;
+      font-size: 16px;
+    }
     select option { color: #111827; }
 
-    #app { width: 100%; max-width: 430px; height: calc(var(--vh) * 100); margin: 0 auto; padding: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom)); overflow: hidden; }
-    .view { display: none; height: 100%; min-height: 0; overflow: hidden; }
-    .view.active { display: grid; }
-
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 18px 50px rgba(0,0,0,.25); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-    .btn { min-height: 48px; border-radius: 16px; padding: 12px 14px; font-weight: 900; display: grid; place-items: center; line-height: 1.05; }
-    .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .45; }
-    .primary { background: linear-gradient(135deg, #22d3ee, #6366f1, #ec4899); }
-    .dark { background: var(--panel2); border: 1px solid var(--line); }
-    .danger { background: linear-gradient(135deg, #fb7185, #ef4444); }
-    .good { background: linear-gradient(135deg, #34d399, #14b8a6); color: #061113; }
-    .field { width: 100%; min-height: 48px; border-radius: 16px; padding: 0 14px; }
-    .muted { color: var(--muted); }
-    .hidden { display: none !important; }
-
-    #home { grid-template-rows: auto 1fr auto; gap: 10px; }
-    .brand { align-self: end; min-height: 0; overflow: hidden; }
-    .brand h1 { margin: 0; font-size: clamp(44px, 14vw, 68px); line-height: .86; letter-spacing: -3px; }
-    .brand p { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
-    .homeBox { padding: 14px; display: grid; gap: 10px; align-self: end; overflow: auto; }
-    label { display: block; margin: 0 0 5px 4px; font-size: 10px; color: rgba(255,255,255,.48); text-transform: uppercase; letter-spacing: .12em; }
-
-    #lobby { grid-template-rows: auto minmax(0,1fr); gap: 10px; }
-    .topbar { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
-    .roomCode { text-align: right; font-size: 28px; font-weight: 1000; letter-spacing: .18em; }
-    .lobbyMain { padding: 12px; min-height: 0; overflow: auto; display: grid; align-content: start; gap: 12px; }
-    .playerRow { background: var(--panel2); border-radius: 18px; padding: 12px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
-    .playerName { font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    #game { grid-template-rows: auto minmax(0,1fr); gap: 8px; }
-    .hud { display: grid; grid-template-columns: 1fr auto 1fr; gap: 7px; }
-    .hudItem { padding: 8px 10px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); min-width: 0; }
-    .hudLabel { font-size: 10px; color: rgba(255,255,255,.48); text-transform: uppercase; }
-    .hudValue { font-weight: 1000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gameMain { padding: 9px; min-height: 0; overflow: hidden; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 8px; }
-    #phase { min-height: 38px; border-radius: 16px; background: var(--panel2); color: rgba(255,255,255,.75); padding: 8px 10px; display: grid; place-items: center; text-align: center; font-size: 13px; line-height: 1.2; }
-    #playArea { min-height: 0; overflow: hidden; display: grid; }
-
-    #choosePanel { min-height: 0; overflow: auto; display: grid; align-content: center; gap: 10px; }
-    #choosePanel h2 { text-align: center; margin: 0; font-size: 24px; }
-    .wordBtn { width: 100%; min-height: 72px; text-align: left; align-items: stretch; place-items: stretch; }
-    .wordTop { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
-    .word { font-size: 20px; font-weight: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .points { background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 900; flex: none; }
-    #waitingPanel { min-height: 0; display: grid; place-items: center; text-align: center; padding: 20px; }
-
-    #drawPanel { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0,1fr) auto; gap: 7px; }
-    .canvasWrap { min-height: 0; background: white; border-radius: 20px; overflow: hidden; position: relative; }
-    canvas { width: 100%; height: 100%; display: block; background: white; touch-action: none; }
-    #tools { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
-    #colors, #sizes { grid-column: 1 / -1; display: grid; gap: 5px; }
-    #colors { grid-template-columns: repeat(10, minmax(0,1fr)); }
-    #sizes { grid-template-columns: repeat(4, minmax(0,1fr)); }
-    .dot, .sizeDot { height: 30px; border-radius: 999px; border: 2px solid rgba(255,255,255,.22); }
-    .dot.active, .sizeDot.active { border-color: white; transform: scale(1.04); }
-    .sizeDot { background: white; display: grid; place-items: center; }
-    .sizeDot span { display: block; background: #111827; border-radius: 999px; }
-
-    #guessPanel { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0,1fr) auto; gap: 8px; }
-    #guessCanvasWrap { min-height: 0; background: white; border-radius: 20px; overflow: hidden; }
-    .guessBox { display: grid; gap: 7px; }
-    #masked { padding: 10px; border-radius: 18px; background: var(--panel2); text-align: center; font-size: clamp(20px, 7vw, 32px); font-weight: 1000; letter-spacing: .14em; overflow-wrap: anywhere; }
-    .guessRow { display: grid; grid-template-columns: 1fr 64px; gap: 7px; }
-
-    #endPanel { min-height: 0; overflow: auto; display: grid; align-content: center; text-align: center; gap: 12px; }
-    #gallery { grid-template-rows: auto auto minmax(0,1fr); gap: 8px; }
-    #ranking { padding: 12px; display: grid; gap: 8px; }
-    #galleryGrid { min-height: 0; overflow: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .thumb { padding: 8px; overflow: hidden; }
-    .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; background: white; border-radius: 16px; display: block; }
-
-    #toast { position: fixed; left: 14px; right: 14px; bottom: calc(16px + var(--safe-bottom)); z-index: 99; opacity: 0; transform: translateY(16px); pointer-events: none; transition: .18s ease; padding: 12px 14px; border-radius: 18px; background: rgba(17,24,39,.94); border: 1px solid var(--line); color: white; }
-    #toast.show { opacity: 1; transform: translateY(0); }
-
-    @media (max-height: 700px) {
-      #app { padding-top: calc(7px + var(--safe-top)); padding-bottom: calc(7px + var(--safe-bottom)); }
-      .brand p { display: none; }
-      .brand h1 { font-size: 42px; }
-      .btn, .field { min-height: 42px; border-radius: 14px; }
-      .homeBox { padding: 10px; gap: 7px; }
-      .gameMain { padding: 7px; gap: 6px; }
-      .dot, .sizeDot { height: 26px; }
-      #tools .btn { min-height: 36px; font-size: 12px; padding: 8px 5px; }
+    #drawCanvas, #watchCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #ffffff;
+      border-radius: 24px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    @media (max-height: 610px) {
-      #home { grid-template-rows: minmax(0,1fr) auto; }
-      .brand { display: none; }
+
+    .color-dot, .size-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 3px solid rgba(255,255,255,.18);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.08);
     }
+    .color-dot.active, .size-dot.active { border-color: white; transform: scale(1.08); }
+    .size-dot { background: white; display: grid; place-items: center; }
+    .size-dot span { display: block; border-radius: 999px; background: #111827; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .toast {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: calc(18px + var(--safe-bottom));
+      z-index: 80;
+      transform: translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
   </style>
 </head>
 <body>
-  <div id="app">
-    <section id="home" class="view active">
-      <div class="brand">
-        <h1>Draw<br><span style="background:linear-gradient(90deg,#67e8f9,#a5b4fc,#f9a8d4);-webkit-background-clip:text;background-clip:text;color:transparent;">Duel</span></h1>
-        <p>Version simplifiée et robuste pour iPhone.</p>
+  <div id="app" class="h-full w-full max-w-[430px] mx-auto px-4 pt-[calc(14px+var(--safe-top))] pb-[calc(12px+var(--safe-bottom))]">
+
+    <!-- HOME -->
+    <section id="view-home" class="view active flex-col justify-between gap-4">
+      <div class="pt-8">
+        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full glass text-xs text-cyan-100 mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Firebase Realtime Multiplayer
+        </div>
+        <h1 class="text-5xl font-black leading-[.95] tracking-tight">Draw<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-indigo-300 to-pink-300">Duel</span></h1>
+        <p class="mt-4 text-white/70 text-base">Un Pictionnary mobile-first pour 2 joueurs, synchronisé en temps réel.</p>
       </div>
-      <div></div>
-      <div class="homeBox card">
-        <div id="homeStatus" class="muted" style="font-size:13px;line-height:1.25;background:var(--panel2);border-radius:16px;padding:9px;">Initialisation...</div>
-        <div>
-          <label>Pseudo</label>
-          <input id="playerName" class="field" maxlength="18" placeholder="Ton pseudo" autocomplete="nickname" />
+
+      <div class="glass rounded-[32px] p-4 shadow-glow space-y-3">
+        <label class="text-xs uppercase tracking-widest text-white/45 ml-1">Pseudo</label>
+        <input id="playerName" class="w-full" maxlength="18" placeholder="Ton pseudo" autocomplete="nickname" />
+
+        <button id="createRoomBtn" class="btn btn-primary w-full">Créer un salon</button>
+
+        <div class="grid grid-cols-[1fr_auto] gap-2">
+          <input id="joinCode" class="uppercase tracking-[.25em] text-center font-black" maxlength="6" placeholder="CODE" autocomplete="off" />
+          <button id="joinRoomBtn" class="btn btn-dark px-5">OK</button>
         </div>
-        <button id="createBtn" class="btn primary">Créer un salon</button>
-        <div style="display:grid;grid-template-columns:1fr 64px;gap:8px;">
-          <input id="joinCode" class="field" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" style="text-align:center;font-weight:1000;letter-spacing:.22em;text-transform:uppercase;" />
-          <button id="joinBtn" class="btn dark">OK</button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><label>Dessin</label><select id="drawTimer" class="field"><option value="0">Infini</option><option value="60">1 min</option><option value="180" selected>3 min</option></select></div>
-          <div><label>Deviner</label><select id="guessTimer" class="field"><option value="180">3 min</option><option value="300" selected>5 min</option><option value="600">10 min</option></select></div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <div>
+            <label class="text-[11px] text-white/45 ml-1">Timer dessin</label>
+            <select id="drawTimerSetting" class="w-full mt-1">
+              <option value="60">1 min</option>
+              <option value="180" selected>3 min</option>
+              <option value="0">Infini</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-white/45 ml-1">Timer devinette</label>
+            <select id="guessTimerSetting" class="w-full mt-1">
+              <option value="180">3 min</option>
+              <option value="300" selected>5 min</option>
+              <option value="600">10 min</option>
+            </select>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="lobby" class="view">
-      <header class="topbar">
-        <button id="leaveBtn" class="btn dark" style="min-height:40px;padding:8px 12px;">Quitter</button>
-        <div>
-          <div class="muted" style="text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.12em;">Salon</div>
-          <div id="roomCodeLabel" class="roomCode"></div>
+    <!-- LOBBY -->
+    <section id="view-lobby" class="view flex-col gap-4">
+      <header class="flex items-center justify-between">
+        <button id="leaveBtn" class="btn btn-dark !min-h-0 !py-2 !px-4">Quitter</button>
+        <div class="text-right">
+          <div class="text-xs text-white/45 uppercase tracking-widest">Salon</div>
+          <div id="roomCodeLabel" class="text-2xl font-black tracking-[.2em]"></div>
         </div>
       </header>
-      <main class="lobbyMain card">
-        <div style="font-size:13px;line-height:1.3;background:var(--panel2);border-radius:16px;padding:10px;" id="lobbyStatus">Salon connecté.</div>
-        <div>
-          <div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;">Joueurs</div>
-          <div id="playersList" style="display:grid;gap:8px;"></div>
+
+      <main class="glass rounded-[32px] p-4 flex-1 min-h-0 flex flex-col gap-4">
+        <div class="rounded-[28px] bg-white/[.06] p-4">
+          <div class="text-xs uppercase tracking-widest text-white/45 mb-2">Joueurs</div>
+          <div id="playersList" class="space-y-2"></div>
         </div>
-        <p id="lobbyHint" class="muted" style="margin:0;font-size:14px;line-height:1.35;"></p>
-        <button id="startBtn" class="btn primary">Lancer la partie</button>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-[24px] bg-cyan-400/10 p-4 border border-cyan-300/10">
+            <div class="text-xs text-cyan-100/70">Manches</div>
+            <div class="text-3xl font-black">6</div>
+          </div>
+          <div class="rounded-[24px] bg-pink-400/10 p-4 border border-pink-300/10">
+            <div class="text-xs text-pink-100/70">Mode</div>
+            <div class="text-xl font-black">Duel</div>
+          </div>
+        </div>
+
+        <p id="lobbyHint" class="text-white/60 text-sm leading-relaxed"></p>
+        <button id="startGameBtn" class="btn btn-primary mt-auto">Lancer la partie</button>
       </main>
     </section>
 
-    <section id="game" class="view">
-      <header class="hud">
-        <div class="hudItem"><div class="hudLabel">Manche</div><div id="roundLabel" class="hudValue">1/6</div></div>
-        <div class="hudItem" style="text-align:center;"><div class="hudLabel">Timer</div><div id="timerLabel" class="hudValue">∞</div></div>
-        <div class="hudItem" style="text-align:right;"><div class="hudLabel">Score</div><div id="scoreLabel" class="hudValue">0 - 0</div></div>
+    <!-- GAME -->
+    <section id="view-game" class="view flex-col gap-3">
+      <header class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div class="glass rounded-2xl px-3 py-2">
+          <div class="text-[10px] text-white/45 uppercase">Manche</div>
+          <div id="roundLabel" class="font-black">1/6</div>
+        </div>
+        <div class="glass rounded-2xl px-4 py-2 text-center">
+          <div class="text-[10px] text-white/45 uppercase">Timer</div>
+          <div id="timerLabel" class="font-black tabular-nums">--:--</div>
+        </div>
+        <div class="glass rounded-2xl px-3 py-2 text-right">
+          <div class="text-[10px] text-white/45 uppercase">Score</div>
+          <div id="scoreLabel" class="font-black">0 - 0</div>
+        </div>
       </header>
-      <main class="gameMain card">
-        <div id="phase">Chargement...</div>
-        <div id="playArea">
-          <div id="waitingPanel" class="hidden">
-            <div>
-              <div style="font-size:42px;">⌛</div>
-              <h2 id="waitingTitle" style="margin:8px 0 4px;font-size:24px;">Patiente</h2>
-              <p id="waitingText" class="muted" style="margin:0;line-height:1.35;">L’autre joueur doit agir.</p>
-            </div>
-          </div>
 
-          <div id="choosePanel" class="hidden">
-            <h2>Choisis le mot à dessiner</h2>
-            <div id="wordChoices" style="display:grid;gap:8px;"></div>
-          </div>
+      <main class="glass rounded-[30px] p-3 flex-1 min-h-0 flex flex-col gap-3">
+        <div id="phaseBanner" class="rounded-[24px] bg-white/[.06] p-3 text-center text-sm text-white/75"></div>
 
-          <div id="drawPanel" class="hidden">
-            <div class="canvasWrap"><canvas id="drawCanvas"></canvas></div>
-            <div id="tools">
-              <div id="colors"></div>
-              <div id="sizes"></div>
-              <button id="eraserBtn" class="btn dark">Gomme</button>
-              <button id="clearBtn" class="btn danger">Effacer</button>
-              <button id="finishBtn" class="btn good">Terminer</button>
-            </div>
-          </div>
+        <div id="choosePanel" class="hidden flex-1 min-h-0 flex flex-col gap-3 justify-center">
+          <h2 class="text-2xl font-black text-center">Choisis ton mot</h2>
+          <div id="wordChoices" class="grid gap-3"></div>
+        </div>
 
-          <div id="guessPanel" class="hidden">
-            <div id="guessCanvasWrap"><canvas id="watchCanvas"></canvas></div>
-            <div class="guessBox">
-              <div id="masked">_ _ _</div>
-              <div id="attempts" class="muted" style="text-align:center;font-size:13px;">0/5 erreurs</div>
-              <div class="guessRow">
-                <input id="guessInput" class="field" placeholder="Réponse" autocomplete="off" autocapitalize="none" />
-                <button id="guessBtn" class="btn primary">Go</button>
+        <div id="canvasPanel" class="hidden flex-1 min-h-0 flex flex-col gap-2">
+          <div class="relative flex-1 min-h-0">
+            <canvas id="drawCanvas" class="hidden"></canvas>
+            <canvas id="watchCanvas" class="hidden"></canvas>
+            <div id="canvasLock" class="hidden absolute inset-0 rounded-[24px] bg-black/45 backdrop-blur-sm place-items-center text-center p-6">
+              <div>
+                <div class="text-2xl font-black">À l'autre joueur</div>
+                <p class="text-white/70 text-sm mt-1">Le dessinateur prépare son chef-d'œuvre.</p>
               </div>
             </div>
           </div>
 
-          <div id="endPanel" class="hidden">
-            <div style="font-size:48px;">🏁</div>
-            <h2 id="endTitle" style="margin:0;font-size:25px;">Fin de manche</h2>
-            <p id="endText" class="muted" style="margin:0;line-height:1.35;"></p>
-            <button id="nextBtn" class="btn primary">Manche suivante</button>
+          <div id="toolsPanel" class="hidden gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div id="palette" class="flex gap-2"></div>
+            <div class="w-px bg-white/10 mx-1"></div>
+            <div id="sizes" class="flex gap-2"></div>
+            <button id="eraserBtn" class="btn btn-dark !min-h-0 !py-2 !px-3 whitespace-nowrap">Gomme</button>
+            <button id="clearBtn" class="btn btn-danger !min-h-0 !py-2 !px-3 whitespace-nowrap">Effacer</button>
+            <button id="finishDrawingBtn" class="btn btn-good !min-h-0 !py-2 !px-3 whitespace-nowrap">Terminer</button>
           </div>
+        </div>
+
+        <div id="guessPanel" class="hidden flex-1 min-h-0 flex flex-col gap-3">
+          <div class="rounded-[24px] bg-white/[.06] p-4 text-center">
+            <div class="text-xs uppercase tracking-widest text-white/45 mb-2">Mot à deviner</div>
+            <div id="maskedWord" class="text-3xl font-black tracking-[.18em] break-all"></div>
+            <div id="attemptsLabel" class="mt-2 text-sm text-white/55">0/5 erreurs</div>
+          </div>
+          <div class="grid grid-cols-[1fr_auto] gap-2">
+            <input id="guessInput" placeholder="Ta réponse" autocapitalize="none" autocomplete="off" />
+            <button id="guessBtn" class="btn btn-primary px-5">Go</button>
+          </div>
+          <div id="guessLog" class="text-sm text-white/60 min-h-[44px]"></div>
+        </div>
+
+        <div id="roundEndPanel" class="hidden flex-1 min-h-0 flex flex-col justify-center text-center gap-4">
+          <div class="text-5xl">🏁</div>
+          <h2 id="roundEndTitle" class="text-2xl font-black"></h2>
+          <p id="roundEndText" class="text-white/65"></p>
+          <button id="nextRoundBtn" class="btn btn-primary">Manche suivante</button>
         </div>
       </main>
     </section>
 
-    <section id="gallery" class="view">
-      <header class="topbar">
-        <div><div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;">Final</div><div style="font-size:30px;font-weight:1000;">Galerie</div></div>
-        <button id="homeBtn" class="btn dark" style="min-height:40px;padding:8px 12px;">Accueil</button>
+    <!-- GALLERY -->
+    <section id="view-gallery" class="view flex-col gap-3">
+      <header class="flex items-center justify-between">
+        <div>
+          <div class="text-xs text-white/45 uppercase tracking-widest">Trophée final</div>
+          <h2 class="text-3xl font-black">Galerie</h2>
+        </div>
+        <button id="newGameBtn" class="btn btn-dark !min-h-0 !py-2 !px-4">Accueil</button>
       </header>
-      <div id="ranking" class="card"></div>
-      <div id="galleryGrid"></div>
+
+      <div class="glass rounded-[30px] p-4">
+        <div id="rankingBox" class="space-y-2"></div>
+      </div>
+
+      <div id="galleryGrid" class="flex-1 min-h-0 overflow-y-auto no-scrollbar grid grid-cols-2 gap-3 pb-2"></div>
     </section>
   </div>
 
-  <div id="toast"></div>
+  <div id="toast" class="toast glass rounded-2xl px-4 py-3 text-sm text-white/90"></div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-    import { getDatabase, ref, set, update, get, onValue, onChildAdded, push, serverTimestamp, remove, off } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
+    import {
+      getDatabase, ref, set, update, get, onValue, onChildAdded, push,
+      serverTimestamp, remove, off, runTransaction
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-      authDomain: "mille-bornes-355ca.firebaseapp.com",
-      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-      projectId: "mille-bornes-355ca",
-      storageBucket: "mille-bornes-355ca.appspot.com",
-      messagingSenderId: "1018160779227",
-      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-    };
+    /**********************************************************************
+     * CONFIGURATION FIREBASE
+     * 1. Crée un projet Firebase.
+     * 2. Active Realtime Database.
+     * 3. Colle ici ton objet firebaseConfig.
+     * 4. Règles de test recommandées pendant le développement uniquement :
+     *    {
+     *      "rules": {
+     *        "rooms": {
+     *          "$room": { ".read": true, ".write": true }
+     *        }
+     *      }
+     *    }
+     * 5. Pour une vraie mise en ligne, ajoute Firebase Auth anonyme et des règles strictes.
+     **********************************************************************/
+const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     const WORDS = {
-      easy: ['chat','chien','soleil','lune','maison','arbre','fleur','pomme','vélo','voiture','bateau','avion','livre','chaise','table','clé','étoile','nuage','pizza','oiseau','poisson','robot','train','montagne','banane','chapeau','téléphone'],
-      medium: ['astronaute','volcan','dinosaure','parapluie','bibliothèque','caméléon','hélicoptère','labyrinthe','sirène','pirate','cascade','squelette','tornade','méduse','kangourou','accordéon','boussole','camping','grenouille'],
-      hard: ['impressionnisme','paradoxe','microscope','constellation','montgolfière','météorite','équilibriste','sous-marin','illusion optique','trou noir','station spatiale','archéologue','écosystème','gravitation','kaléidoscope','nébuleuse','radiographie','biodiversité','quantique']
+      easy: [
+        'chat','chien','soleil','lune','maison','arbre','fleur','pomme','vélo','voiture','bateau','avion','livre','chaise','table','lit','porte','clé','cœur','étoile','nuage','pluie','feu','main','nez','œil','ballon','pizza','glace','bonbon','oiseau','poisson','serpent','tasse','lampe','montre','robot','cadeau','train','bus','pont','route','montagne','plage','fromage','pain','banane','fraise','citron','couronne','brosse','crayon','sac','chapeau','lunettes','téléphone','ordinateur','casque','micro'
+      ],
+      medium: [
+        'astronaute','volcan','dinosaure','parapluie','bibliothèque','caméléon','hélicoptère','labyrinthe','sirène','phare','pirate','dragon','cascade','détective','jongleur','squelette','tornade','méduse','fusée','échelle','kangourou','accordéon','ancre','boussole','camping','champignon','coccinelle','domino','écureuil','éventail','fontaine','guitare','hamac','igloo','jardinier','karaté','licorne','marteau','nénuphar','orchestre','pyramide','quilles','renard','sablier','tambour','ukulele','vampire','wagon','xylophone','yoyo','zèbre','aquarium','bouclier','carnaval','dentiste','électricité','fermeture','grenouille','hippocampe','internet'
+      ],
+      hard: [
+        'impressionnisme','paradoxe','microscope','constellation','montgolfière','architecte','météorite','équilibriste','hippopotame','sous-marin','labyrinthe mental','illusion optique','machine à remonter le temps','énergie solaire','trou noir','station spatiale','photographe','révolution','catapulte','marionnette','archéologue','bactérie','caricature','démocratie','écosystème','fractale','gravitation','hiéroglyphe','inspiration','kaléidoscope','mécanisme','nébuleuse','oxygène','perspective','quarantaine','radiographie','symétrie','télépathie','utopie','vortex','wifi','xénon','yéti','zodiaque','biodiversité','cryptographie','diplomatie','expédition','fossile','géométrie','horlogerie','intelligence','jurassique','kinésithérapie','lévitation','métamorphose','nanotechnologie','océanographie','psychologie','quantique'
+      ]
     };
 
-    const CONFIG = { totalRounds: 6, maxAttempts: 5, colors: ['#111827','#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#06b6d4','#3b82f6','#8b5cf6','#ec4899'], sizes: [4, 8, 14, 22] };
-    const $ = id => document.getElementById(id);
+    const CONFIG = {
+      totalRounds: 6,
+      maxAttempts: 5,
+      colors: ['#111827','#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#06b6d4','#3b82f6','#8b5cf6','#ec4899'],
+      sizes: [4, 8, 14, 22],
+      canvasMaxDataUrl: 900000
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const views = ['home','lobby','game','gallery'];
     const els = {
-      homeStatus: $('homeStatus'), playerName: $('playerName'), joinCode: $('joinCode'), createBtn: $('createBtn'), joinBtn: $('joinBtn'), drawTimer: $('drawTimer'), guessTimer: $('guessTimer'),
-      leaveBtn: $('leaveBtn'), roomCodeLabel: $('roomCodeLabel'), lobbyStatus: $('lobbyStatus'), playersList: $('playersList'), lobbyHint: $('lobbyHint'), startBtn: $('startBtn'),
-      roundLabel: $('roundLabel'), timerLabel: $('timerLabel'), scoreLabel: $('scoreLabel'), phase: $('phase'), waitingPanel: $('waitingPanel'), waitingTitle: $('waitingTitle'), waitingText: $('waitingText'),
-      choosePanel: $('choosePanel'), wordChoices: $('wordChoices'), drawPanel: $('drawPanel'), drawCanvas: $('drawCanvas'), colors: $('colors'), sizes: $('sizes'), eraserBtn: $('eraserBtn'), clearBtn: $('clearBtn'), finishBtn: $('finishBtn'),
-      guessPanel: $('guessPanel'), watchCanvas: $('watchCanvas'), masked: $('masked'), attempts: $('attempts'), guessInput: $('guessInput'), guessBtn: $('guessBtn'),
-      endPanel: $('endPanel'), endTitle: $('endTitle'), endText: $('endText'), nextBtn: $('nextBtn'), ranking: $('ranking'), galleryGrid: $('galleryGrid'), homeBtn: $('homeBtn'), toast: $('toast')
+      playerName: $('playerName'), joinCode: $('joinCode'), createRoomBtn: $('createRoomBtn'), joinRoomBtn: $('joinRoomBtn'),
+      drawTimerSetting: $('drawTimerSetting'), guessTimerSetting: $('guessTimerSetting'), leaveBtn: $('leaveBtn'), roomCodeLabel: $('roomCodeLabel'),
+      playersList: $('playersList'), lobbyHint: $('lobbyHint'), startGameBtn: $('startGameBtn'), roundLabel: $('roundLabel'),
+      timerLabel: $('timerLabel'), scoreLabel: $('scoreLabel'), phaseBanner: $('phaseBanner'), choosePanel: $('choosePanel'), wordChoices: $('wordChoices'),
+      canvasPanel: $('canvasPanel'), drawCanvas: $('drawCanvas'), watchCanvas: $('watchCanvas'), canvasLock: $('canvasLock'), toolsPanel: $('toolsPanel'),
+      palette: $('palette'), sizes: $('sizes'), eraserBtn: $('eraserBtn'), clearBtn: $('clearBtn'), finishDrawingBtn: $('finishDrawingBtn'),
+      guessPanel: $('guessPanel'), maskedWord: $('maskedWord'), attemptsLabel: $('attemptsLabel'), guessInput: $('guessInput'), guessBtn: $('guessBtn'),
+      guessLog: $('guessLog'), roundEndPanel: $('roundEndPanel'), roundEndTitle: $('roundEndTitle'), roundEndText: $('roundEndText'), nextRoundBtn: $('nextRoundBtn'),
+      rankingBox: $('rankingBox'), galleryGrid: $('galleryGrid'), newGameBtn: $('newGameBtn'), toast: $('toast')
     };
 
     const state = {
-      app: null, db: null, ready: false, roomCode: null, room: null,
-      playerId: getPlayerId(), unsubs: [], childUnsubs: [], timer: null,
-      color: CONFIG.colors[0], size: CONFIG.sizes[1], eraser: false, drawing: false, last: null,
-      segments: [], strokesKey: '', ctx: null, watchCtx: null
+      playerId: localStorage.getItem('drawduel_pid') || crypto.randomUUID(),
+      roomCode: null,
+      room: null,
+      unsub: [],
+      childUnsub: [],
+      selectedColor: CONFIG.colors[0],
+      selectedSize: CONFIG.sizes[1],
+      eraser: false,
+      drawing: false,
+      lastPoint: null,
+      ctx: null,
+      watchCtx: null,
+      timerInterval: null,
+      revealedIndexes: []
     };
+    localStorage.setItem('drawduel_pid', state.playerId);
 
-    boot();
-
-    function boot() {
-      setVh();
-      window.addEventListener('resize', () => { setVh(); setTimeout(() => resizeCanvas(true), 80); }, { passive: true });
-      window.addEventListener('orientationchange', () => setTimeout(() => { setVh(); resizeCanvas(true); }, 260), { passive: true });
-      els.playerName.value = localStorage.getItem('dd_name') || '';
-      buildTools();
-      bindEvents();
-      initFirebase();
-      setTimeout(() => resizeCanvas(true), 250);
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add('show');
+      clearTimeout(showToast.t);
+      showToast.t = setTimeout(() => els.toast.classList.remove('show'), 2600);
     }
 
-    function setVh() { document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`); }
-    function getPlayerId() {
-      const saved = localStorage.getItem('dd_pid');
-      if (saved) return saved;
-      const id = window.crypto?.randomUUID ? crypto.randomUUID() : 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
-      localStorage.setItem('dd_pid', id);
-      return id;
-    }
-    function bindEvents() {
-      els.createBtn.addEventListener('click', createRoom);
-      els.joinBtn.addEventListener('click', joinRoom);
-      els.joinCode.addEventListener('input', () => els.joinCode.value = els.joinCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0,5));
-      els.leaveBtn.addEventListener('click', leaveRoom);
-      els.startBtn.addEventListener('click', startGame);
-      els.eraserBtn.addEventListener('click', () => { state.eraser = !state.eraser; updateTools(); });
-      els.clearBtn.addEventListener('click', () => { if (!amArtist()) return toast('Seul le dessinateur peut effacer.'); clearCanvas(true); });
-      els.finishBtn.addEventListener('click', finishDrawing);
-      els.guessBtn.addEventListener('click', submitGuess);
-      els.guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
-      els.nextBtn.addEventListener('click', nextRound);
-      els.homeBtn.addEventListener('click', () => { detach(); showView('home'); });
-    }
-    function initFirebase() {
-      try {
-        state.app = initializeApp(firebaseConfig);
-        state.db = getDatabase(state.app);
-        state.ready = true;
-        status('Firebase prêt. Crée ou rejoins un salon.');
-      } catch (err) {
-        status('Firebase ne démarre pas : ' + (err.message || err), true);
-      }
+    function showView(name) {
+      views.forEach(v => $('view-' + v).classList.toggle('active', v === name));
     }
 
-    function status(msg, bad = false) { els.homeStatus.textContent = msg; els.homeStatus.style.color = bad ? '#fecdd3' : 'rgba(255,255,255,.72)'; console.log('[DrawDuel]', msg); }
-    function toast(msg) { els.toast.textContent = msg; els.toast.classList.add('show'); console.log('[DrawDuel]', msg); clearTimeout(toast.t); toast.t = setTimeout(() => els.toast.classList.remove('show'), 2600); }
-    function error(where, err) {
-      console.error(where, err);
-      const msg = err?.code === 'PERMISSION_DENIED' || String(err?.message || '').includes('Permission') ? 'Firebase bloque les droits. Dans Realtime Database > Rules, mets .read et .write à true sous rooms pour tester.' : `${where} : ${err?.message || err}`;
-      toast(msg); status(msg, true); if (state.roomCode) els.lobbyStatus.textContent = msg;
+    function code() {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 5 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     }
-    function showView(name) { ['home','lobby','game','gallery'].forEach(v => $(v).classList.toggle('active', v === name)); requestAnimationFrame(() => resizeCanvas(true)); }
-    function safeName() { return (els.playerName.value || localStorage.getItem('dd_name') || 'Joueur').trim().slice(0,18) || 'Joueur'; }
-    function makeCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length:5}, () => a[Math.floor(Math.random()*a.length)]).join(''); }
+
+    function safeName() {
+      return (els.playerName.value || localStorage.getItem('drawduel_name') || 'Joueur').trim().slice(0, 18) || 'Joueur';
+    }
+
+    function roomRef(path = '') {
+      return ref(db, `rooms/${state.roomCode}${path ? '/' + path : ''}`);
+    }
+
+    function playerList(room = state.room) {
+      return Object.entries(room?.players || {}).sort((a,b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0));
+    }
+
+    function myPlayer() { return state.room?.players?.[state.playerId]; }
+    function isHost() { return myPlayer()?.host === true; }
+    function currentArtistId(room = state.room) {
+      const players = playerList(room).map(([id]) => id);
+      if (players.length < 2) return players[0];
+      return players[(Math.max(1, room.round || 1) - 1) % players.length];
+    }
+    function isArtist() { return currentArtistId() === state.playerId; }
+    function opponentName(id) { return state.room?.players?.[id]?.name || 'Joueur'; }
+    function scoreOf(id) { return state.room?.scores?.[id] || 0; }
+
+    function formatTime(sec) {
+      if (!sec || sec <= 0) return '∞';
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
     function now() { return Date.now(); }
-    function roomRef(path = '') { return ref(state.db, `rooms/${state.roomCode}${path ? '/' + path : ''}`); }
-    function players(room = state.room) { return Object.entries(room?.players || {}).sort((a,b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0)); }
-    function my() { return state.room?.players?.[state.playerId]; }
-    function artistId(room = state.room) { const list = players(room).map(([id]) => id); return list.length ? list[((room?.round || 1) - 1) % list.length] : null; }
-    function amArtist() { return artistId() === state.playerId; }
-    function nameOf(id) { return state.room?.players?.[id]?.name || 'Joueur'; }
-    function score(id) { return Number(state.room?.scores?.[id] || 0); }
     function deadline(seconds) { return seconds > 0 ? now() + seconds * 1000 : 0; }
-    function fmt(sec) { if (!sec || sec <= 0) return '∞'; return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
 
     async function createRoom() {
-      if (!state.ready) return toast('Firebase pas prêt.');
-      els.createBtn.disabled = true;
-      try {
-        localStorage.setItem('dd_name', safeName());
-        let code = makeCode();
-        for (let i = 0; i < 8; i++) {
-          const s = await get(ref(state.db, `rooms/${code}`));
-          if (!s.exists()) break;
-          code = makeCode();
-        }
-        state.roomCode = code;
-        await set(ref(state.db, `rooms/${code}`), {
-          createdAt: serverTimestamp(), status: 'lobby', round: 1, totalRounds: CONFIG.totalRounds,
-          settings: { drawTimer: Number(els.drawTimer.value), guessTimer: Number(els.guessTimer.value) },
-          players: { [state.playerId]: { name: safeName(), joinedAt: now() } },
-          scores: { [state.playerId]: 0 }, gallery: {}, votes: {}, hostId: state.playerId
-        });
-        attach(code); showView('lobby'); toast('Salon créé.');
-      } catch (err) { error('Création impossible', err); }
-      finally { els.createBtn.disabled = false; }
-    }
-    async function joinRoom() {
-      if (!state.ready) return toast('Firebase pas prêt.');
-      els.joinBtn.disabled = true;
-      try {
-        localStorage.setItem('dd_name', safeName());
-        const code = els.joinCode.value.trim().toUpperCase();
-        if (code.length !== 5) throw new Error('Entre un code à 5 caractères.');
-        const s = await get(ref(state.db, `rooms/${code}`));
-        if (!s.exists()) throw new Error('Salon introuvable.');
-        const data = s.val();
-        const count = Object.keys(data.players || {}).length;
-        if (count >= 2 && !data.players?.[state.playerId]) throw new Error('Salon déjà complet.');
-        state.roomCode = code;
-        await update(ref(state.db, `rooms/${code}`), {
-          [`players/${state.playerId}`]: { name: safeName(), joinedAt: data.players?.[state.playerId]?.joinedAt || now() },
-          [`scores/${state.playerId}`]: data.scores?.[state.playerId] || 0
-        });
-        attach(code); showView('lobby'); toast('Salon rejoint.');
-      } catch (err) { error('Connexion impossible', err); }
-      finally { els.joinBtn.disabled = false; }
-    }
-    function attach(code) {
-      detach(false); state.roomCode = code; els.roomCodeLabel.textContent = code;
-      const r = ref(state.db, `rooms/${code}`);
-      const cb = snap => { state.room = snap.val(); if (!state.room) { detach(); showView('home'); toast('Salon fermé.'); return; } render(); };
-      onValue(r, cb, err => error('Lecture impossible', err));
-      state.unsubs.push(() => off(r, 'value', cb));
-    }
-    function detach(clearCode = true) { state.unsubs.forEach(f => f()); state.childUnsubs.forEach(f => f()); state.unsubs = []; state.childUnsubs = []; clearInterval(state.timer); state.timer = null; state.room = null; state.strokesKey = ''; state.segments = []; if (clearCode) state.roomCode = null; }
-    async function leaveRoom() {
-      try {
-        if (state.roomCode && state.room) {
-          const list = players();
-          if (list.length <= 1) await remove(roomRef()); else await remove(roomRef(`players/${state.playerId}`));
-        }
-      } catch (err) { error('Sortie impossible', err); }
-      detach(); showView('home');
+      localStorage.setItem('drawduel_name', safeName());
+      const room = code();
+      state.roomCode = room;
+      const drawTimer = Number(els.drawTimerSetting.value);
+      const guessTimer = Number(els.guessTimerSetting.value);
+      await set(ref(db, `rooms/${room}`), {
+        createdAt: serverTimestamp(),
+        hostId: state.playerId,
+        status: 'lobby',
+        round: 1,
+        totalRounds: CONFIG.totalRounds,
+        settings: { drawTimer, guessTimer },
+        players: {
+          [state.playerId]: { name: safeName(), host: true, joinedAt: now() }
+        },
+        scores: { [state.playerId]: 0 },
+        gallery: {},
+        votes: {}
+      });
+      attachRoom(room);
+      showView('lobby');
+      showToast('Salon créé');
     }
 
-    function pick(diff) { const arr = WORDS[diff]; return arr[Math.floor(Math.random()*arr.length)]; }
-    function choices() { return [{ label:'Facile', points:1, word:pick('easy') }, { label:'Moyen', points:2, word:pick('medium') }, { label:'Difficile', points:3, word:pick('hard') }]; }
+    async function joinRoom() {
+      localStorage.setItem('drawduel_name', safeName());
+      const room = els.joinCode.value.trim().toUpperCase();
+      if (!room) return showToast('Entre un code salon');
+      const snap = await get(ref(db, `rooms/${room}`));
+      if (!snap.exists()) return showToast('Salon introuvable');
+      const data = snap.val();
+      if (Object.keys(data.players || {}).length >= 2 && !data.players[state.playerId]) return showToast('Salon déjà complet');
+      state.roomCode = room;
+      await update(ref(db, `rooms/${room}`), {
+        [`players/${state.playerId}`]: { name: safeName(), host: false, joinedAt: now() },
+        [`scores/${state.playerId}`]: data.scores?.[state.playerId] || 0
+      });
+      attachRoom(room);
+      showView('lobby');
+      showToast('Salon rejoint');
+    }
+
+    function attachRoom(room) {
+      detachRoom();
+      state.roomCode = room;
+      els.roomCodeLabel.textContent = room;
+      const mainRef = ref(db, `rooms/${room}`);
+      const cb = (snap) => {
+        state.room = snap.val();
+        if (!state.room) {
+          showView('home');
+          showToast('Salon fermé');
+          detachRoom();
+          return;
+        }
+        render();
+      };
+      onValue(mainRef, cb);
+      state.unsub.push(() => off(mainRef, 'value', cb));
+    }
+
+    function detachRoom() {
+      state.unsub.forEach(fn => fn());
+      state.childUnsub.forEach(fn => fn());
+      state.unsub = [];
+      state.childUnsub = [];
+      clearInterval(state.timerInterval);
+      state.room = null;
+      state.roomCode = null;
+    }
+
+    async function leaveRoom() {
+      if (!state.roomCode) return;
+      const room = state.room;
+      const players = Object.keys(room?.players || {});
+      if (players.length <= 1 || isHost()) await remove(roomRef());
+      else await remove(roomRef(`players/${state.playerId}`));
+      detachRoom();
+      showView('home');
+    }
+
+    function pickWord(difficulty) {
+      const arr = WORDS[difficulty];
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function makeChoices() {
+      return [
+        { difficulty: 'easy', label: 'Facile', points: 1, word: pickWord('easy') },
+        { difficulty: 'medium', label: 'Moyen', points: 2, word: pickWord('medium') },
+        { difficulty: 'hard', label: 'Difficile', points: 3, word: pickWord('hard') }
+      ];
+    }
+
     async function startGame() {
-      if (!state.room) return toast('Le salon n’est pas synchronisé.');
-      if (players().length !== 2) return toast('Il faut être 2 joueurs.');
-      els.startBtn.disabled = true;
-      try {
-        await update(roomRef(), { status:'choose', round:1, choices:choices(), activeWord:null, attempts:{}, revealed:[], roundWinner:null, phaseStartedAt:now(), phaseDeadline:0, strokes:null, clearSignal:now() });
-        toast('Partie lancée.');
-      } catch (err) { error('Lancement impossible', err); }
-      finally { els.startBtn.disabled = false; }
+      const players = playerList();
+      if (players.length !== 2) return showToast('Il faut exactement 2 joueurs');
+      const choices = makeChoices();
+      await update(roomRef(), {
+        status: 'choose',
+        round: 1,
+        choices,
+        activeWord: null,
+        attempts: {},
+        revealed: [],
+        roundWinner: null,
+        phaseStartedAt: now(),
+        phaseDeadline: 0,
+        strokes: null,
+        clearSignal: 0
+      });
     }
-    async function chooseWord(c) {
-      if (!amArtist()) return toast('C’est à l’autre joueur de choisir.');
-      try {
-        await update(roomRef(), { status:'draw', activeWord:c, attempts:{}, revealed:[], roundWinner:null, phaseStartedAt:now(), phaseDeadline:deadline(Number(state.room.settings?.drawTimer || 0)), strokes:null, clearSignal:now() });
-        clearCanvas(false);
-      } catch (err) { error('Choix impossible', err); }
+
+    async function chooseWord(choice) {
+      if (!isArtist()) return;
+      await update(roomRef(), {
+        status: 'draw',
+        activeWord: choice,
+        attempts: {},
+        revealed: [],
+        roundWinner: null,
+        phaseStartedAt: now(),
+        phaseDeadline: deadline(Number(state.room.settings?.drawTimer || 0)),
+        strokes: null,
+        clearSignal: now()
+      });
+      resetCanvas(true);
     }
-    async function finishDrawing() {
-      if (!amArtist()) return toast('Seul le dessinateur peut terminer.');
-      try {
-        await saveDrawing();
-        await update(roomRef(), { status:'guess', phaseStartedAt:now(), phaseDeadline:deadline(Number(state.room.settings?.guessTimer || 300)), attempts:{}, revealed:[] });
-      } catch (err) { error('Fin du dessin impossible', err); }
+
+    function normalizeText(str) {
+      return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
     }
-    function norm(s) { return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+
     async function submitGuess() {
-      if (amArtist()) return toast('Le dessinateur ne devine pas.');
-      const g = els.guessInput.value.trim(); if (!g) return;
+      if (isArtist()) return;
+      const guess = els.guessInput.value.trim();
+      if (!guess) return;
       els.guessInput.value = '';
-      try {
-        const word = state.room.activeWord?.word || '';
-        if (norm(g) === norm(word)) { await winRound(); return; }
-        const tries = Number(state.room.attempts?.[state.playerId] || 0) + 1;
-        const up = { [`attempts/${state.playerId}`]: tries };
-        const revealed = [...(state.room.revealed || [])];
-        if ((tries === 2 || tries === 3) && revealed.length < 2) { const idx = hiddenIndex(word, revealed); if (idx !== null) revealed.push(idx); up.revealed = revealed; }
-        if (tries >= CONFIG.maxAttempts) { up.status = 'roundEnd'; up.roundWinner = 'artist'; up.roundEndedAt = now(); }
-        await update(roomRef(), up);
-      } catch (err) { error('Réponse impossible', err); }
+      const word = state.room?.activeWord?.word || '';
+      if (normalizeText(guess) === normalizeText(word)) {
+        await winRound();
+        return;
+      }
+      const attempts = (state.room?.attempts?.[state.playerId] || 0) + 1;
+      const updates = { [`attempts/${state.playerId}`]: attempts };
+      const revealed = [...(state.room?.revealed || [])];
+      if ((attempts === 2 || attempts === 3) && revealed.length < 2) {
+        const idx = randomHiddenIndex(word, revealed);
+        if (idx !== null) revealed.push(idx);
+        updates.revealed = revealed;
+      }
+      if (attempts >= CONFIG.maxAttempts) {
+        updates.status = 'roundEnd';
+        updates.roundWinner = 'artist';
+        updates.roundEndedAt = now();
+      }
+      await update(roomRef(), updates);
     }
-    function hiddenIndex(word, revealed) { const cand = [...word].map((ch,i) => /[a-zA-ZÀ-ÿ0-9]/.test(ch) && !revealed.includes(i) ? i : null).filter(v => v !== null); return cand.length ? cand[Math.floor(Math.random()*cand.length)] : null; }
+
+    function randomHiddenIndex(word, revealed) {
+      const candidates = [...word].map((ch, i) => /[a-zA-ZÀ-ÿ0-9]/.test(ch) && !revealed.includes(i) ? i : null).filter(v => v !== null);
+      if (!candidates.length) return null;
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
     async function winRound() {
-      const pts = Number(state.room.activeWord?.points || 1), a = artistId(), g = state.playerId;
-      await update(roomRef(), { status:'roundEnd', roundWinner:g, roundEndedAt:now(), [`scores/${g}`]:score(g)+pts, [`scores/${a}`]:score(a)+Math.max(1, Math.floor(pts/2)) });
+      const wordPoints = Number(state.room.activeWord?.points || 1);
+      const artist = currentArtistId();
+      const guesser = state.playerId;
+      const updates = {
+        status: 'roundEnd',
+        roundWinner: guesser,
+        roundEndedAt: now(),
+        [`scores/${guesser}`]: scoreOf(guesser) + wordPoints,
+        [`scores/${artist}`]: scoreOf(artist) + Math.max(1, Math.floor(wordPoints / 2))
+      };
+      await update(roomRef(), updates);
     }
+
+    async function finishDrawing() {
+      if (!isArtist()) return;
+      await saveCurrentDrawing();
+      await update(roomRef(), {
+        status: 'guess',
+        phaseStartedAt: now(),
+        phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)),
+        attempts: {},
+        revealed: []
+      });
+    }
+
     async function nextRound() {
-      if (!state.room) return;
-      try {
-        const r = Number(state.room.round || 1);
-        if (r >= CONFIG.totalRounds) { await update(roomRef(), { status:'gameOver', phaseStartedAt:now() }); return; }
-        await update(roomRef(), { status:'choose', round:r+1, choices:choices(), activeWord:null, attempts:{}, revealed:[], roundWinner:null, phaseStartedAt:now(), phaseDeadline:0, strokes:null, clearSignal:now() });
-      } catch (err) { error('Manche suivante impossible', err); }
+      if (!isHost()) return;
+      const round = Number(state.room.round || 1);
+      if (round >= CONFIG.totalRounds) {
+        await update(roomRef(), { status: 'gameOver', phaseStartedAt: now() });
+        return;
+      }
+      await update(roomRef(), {
+        status: 'choose',
+        round: round + 1,
+        choices: makeChoices(),
+        activeWord: null,
+        attempts: {},
+        revealed: [],
+        roundWinner: null,
+        phaseStartedAt: now(),
+        phaseDeadline: 0,
+        strokes: null,
+        clearSignal: now()
+      });
+      resetCanvas(true);
     }
-    async function saveDrawing() {
-      const canvas = els.drawCanvas;
-      const out = document.createElement('canvas'); out.width = 900; out.height = 900;
-      const ctx = out.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,900,900); ctx.drawImage(canvas,0,0,900,900);
-      await update(roomRef(`gallery/${state.room.round || 1}`), { dataUrl:out.toDataURL('image/jpeg', .82), word:state.room.activeWord?.word || '', difficulty:state.room.activeWord?.label || '', artistName:nameOf(artistId()), artistId:artistId(), createdAt:now() });
+
+    async function saveCurrentDrawing() {
+      const canvas = els.drawCanvas.classList.contains('hidden') ? els.watchCanvas : els.drawCanvas;
+      const dataUrl = shrinkCanvasDataUrl(canvas);
+      const roundKey = String(state.room.round || 1);
+      await update(roomRef(`gallery/${roundKey}`), {
+        dataUrl,
+        word: state.room.activeWord?.word || '',
+        difficulty: state.room.activeWord?.label || '',
+        points: state.room.activeWord?.points || 1,
+        artistId: currentArtistId(),
+        artistName: opponentName(currentArtistId()),
+        createdAt: now()
+      });
+    }
+
+    function shrinkCanvasDataUrl(canvas) {
+      const out = document.createElement('canvas');
+      const maxW = 900;
+      const scale = Math.min(1, maxW / canvas.width);
+      out.width = Math.round(canvas.width * scale);
+      out.height = Math.round(canvas.height * scale);
+      const ctx = out.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,out.width,out.height);
+      ctx.drawImage(canvas, 0, 0, out.width, out.height);
+      let q = .9;
+      let url = out.toDataURL('image/jpeg', q);
+      while (url.length > CONFIG.canvasMaxDataUrl && q > .45) {
+        q -= .1;
+        url = out.toDataURL('image/jpeg', q);
+      }
+      return url;
     }
 
     function render() {
-      const r = state.room; if (!r) return;
-      if (r.status === 'lobby') showView('lobby');
-      if (['choose','draw','guess','roundEnd'].includes(r.status)) showView('game');
-      if (r.status === 'gameOver') showView('gallery');
-      renderLobby(); renderGame(); renderGallery(); ensureTimer();
+      const room = state.room;
+      if (!room) return;
+      if (room.status === 'lobby') showView('lobby');
+      if (['choose','draw','guess','roundEnd'].includes(room.status)) showView('game');
+      if (room.status === 'gameOver') showView('gallery');
+
+      renderLobby();
+      renderGame();
+      renderGallery();
+      syncTimerGuard();
     }
+
     function renderLobby() {
-      const list = players(); els.roomCodeLabel.textContent = state.roomCode || '';
-      els.lobbyStatus.textContent = `Connecté. État : ${state.room.status}. Joueurs : ${list.length}/2.`;
-      els.playersList.innerHTML = list.map(([id,p],i) => `<div class="playerRow"><div style="min-width:0;"><div class="playerName">${esc(p.name)}${id === state.playerId ? ' · toi' : ''}</div><div class="muted" style="font-size:12px;">Joueur ${i+1}${id === artistId() ? ' · dessinateur prochain' : ''}</div></div><div style="font-weight:1000;font-size:22px;">${score(id)}</div></div>`).join('');
-      els.lobbyHint.textContent = list.length < 2 ? 'Le bouton ne lancera pas tant que le second joueur n’est pas dans le salon.' : 'Vous êtes deux. Appuie sur Lancer la partie. Si rien ne change, regarde le message rouge ou la console Safari.';
-      els.startBtn.textContent = list.length === 2 ? 'Lancer la partie' : 'En attente du 2e joueur';
+      if (!state.room) return;
+      els.roomCodeLabel.textContent = state.roomCode || '';
+      const players = playerList();
+      els.playersList.innerHTML = players.map(([id, p], idx) => `
+        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-cyan-400 text-slate-950' : 'bg-pink-400 text-slate-950'}">${idx + 1}</div>
+            <div>
+              <div class="font-black">${escapeHtml(p.name || 'Joueur')}</div>
+              <div class="text-xs text-white/45">${p.host ? 'Hôte' : 'Invité'}${id === state.playerId ? ' • toi' : ''}</div>
+            </div>
+          </div>
+          <div class="text-xl font-black">${scoreOf(id)}</div>
+        </div>
+      `).join('');
+      els.lobbyHint.textContent = players.length < 2 ? 'Partage le code avec ton adversaire. Le bouton de lancement sera actif dès que vous êtes deux.' : 'Les deux joueurs sont prêts. Que le meilleur gribouillage gagne.';
+      els.startGameBtn.disabled = !isHost() || players.length !== 2;
+      els.startGameBtn.textContent = isHost() ? 'Lancer la partie' : 'En attente de l’hôte';
     }
+
     function renderGame() {
-      const r = state.room; if (!r || r.status === 'lobby' || r.status === 'gameOver') return;
-      const list = players(), a = artistId(), meA = amArtist(), word = r.activeWord?.word || '';
-      els.roundLabel.textContent = `${r.round || 1}/${CONFIG.totalRounds}`; els.scoreLabel.textContent = list.map(([id]) => score(id)).join(' - ');
-      [els.waitingPanel, els.choosePanel, els.drawPanel, els.guessPanel, els.endPanel].forEach(el => el.classList.add('hidden'));
-      if (r.status === 'choose') {
-        els.phase.textContent = meA ? 'À toi : choisis un mot.' : `${nameOf(a)} choisit un mot.`;
-        if (meA) { els.choosePanel.classList.remove('hidden'); renderChoices(r.choices || []); } else { wait('L’autre joueur choisit', 'Dès qu’il choisit, il verra le tableau de dessin.'); }
+      if (!state.room || state.room.status === 'lobby' || state.room.status === 'gameOver') return;
+      const room = state.room;
+      const players = playerList();
+      els.roundLabel.textContent = `${room.round || 1}/${CONFIG.totalRounds}`;
+      els.scoreLabel.textContent = players.map(([id]) => scoreOf(id)).join(' - ');
+
+      const artistId = currentArtistId();
+      const artistName = opponentName(artistId);
+      const meArtist = artistId === state.playerId;
+      const word = room.activeWord?.word || '';
+
+      hidePanels();
+
+      if (room.status === 'choose') {
+        els.choosePanel.classList.remove('hidden');
+        els.phaseBanner.textContent = meArtist ? 'Tu dessines cette manche. Choisis un mot.' : `${artistName} choisit un mot.`;
+        renderChoices(meArtist);
       }
-      if (r.status === 'draw') {
-        els.phase.textContent = meA ? `À toi de dessiner : ${word}` : `${nameOf(a)} dessine. Attends qu’il termine.`;
-        if (meA) { els.drawPanel.classList.remove('hidden'); setupCanvas(true); } else { wait('Dessin en cours', 'Le tableau de réponse arrivera quand le dessinateur appuie sur Terminer.'); attachStrokes(); setupCanvas(false); }
+
+      if (room.status === 'draw') {
+        els.canvasPanel.classList.remove('hidden');
+        els.phaseBanner.textContent = meArtist ? `Tu dessines : ${word}` : `${artistName} dessine en direct.`;
+        setupCanvasMode(meArtist);
+        attachStrokesListener();
       }
-      if (r.status === 'guess') {
-        els.phase.textContent = meA ? 'L’autre joueur devine ton dessin.' : 'À toi de deviner.';
-        els.guessPanel.classList.remove('hidden'); setupCanvas(false); attachStrokes(); renderMask();
-        els.guessInput.disabled = meA; els.guessBtn.disabled = meA;
-        els.attempts.textContent = `${Number(r.attempts?.[state.playerId] || 0)}/${CONFIG.maxAttempts} erreurs`;
+
+      if (room.status === 'guess') {
+        els.canvasPanel.classList.remove('hidden');
+        els.guessPanel.classList.remove('hidden');
+        els.phaseBanner.textContent = meArtist ? 'Ton dessin est visible. L’autre joueur devine.' : 'Devine le mot en 5 tentatives maximum.';
+        setupCanvasMode(false);
+        attachStrokesListener();
+        renderMaskedWord();
+        const attempts = room.attempts?.[state.playerId] || 0;
+        els.attemptsLabel.textContent = `${attempts}/${CONFIG.maxAttempts} erreurs`;
+        els.guessInput.disabled = meArtist;
+        els.guessBtn.disabled = meArtist;
       }
-      if (r.status === 'roundEnd') {
-        els.phase.textContent = 'Manche terminée.'; els.endPanel.classList.remove('hidden');
-        const guessed = r.roundWinner && r.roundWinner !== 'artist';
-        els.endTitle.textContent = guessed ? 'Mot trouvé !' : 'Fin de manche';
-        els.endText.textContent = guessed ? `${nameOf(r.roundWinner)} a trouvé « ${word} ».` : `Personne n’a trouvé « ${word} ».`;
-        els.nextBtn.textContent = Number(r.round || 1) >= CONFIG.totalRounds ? 'Voir la galerie' : 'Manche suivante';
+
+      if (room.status === 'roundEnd') {
+        els.roundEndPanel.classList.remove('hidden');
+        const guessed = room.roundWinner && room.roundWinner !== 'artist';
+        els.roundEndTitle.textContent = guessed ? 'Mot trouvé !' : 'Fin de manche';
+        els.roundEndText.textContent = guessed ? `${opponentName(room.roundWinner)} a trouvé « ${word} ».` : `Personne n’a trouvé « ${word} ».`;
+        els.nextRoundBtn.disabled = !isHost();
+        els.nextRoundBtn.textContent = isHost() ? (room.round >= CONFIG.totalRounds ? 'Voir la galerie' : 'Manche suivante') : 'En attente de l’hôte';
       }
+
       renderTimer();
     }
-    function wait(title, text) { els.waitingPanel.classList.remove('hidden'); els.waitingTitle.textContent = title; els.waitingText.textContent = text; }
-    function renderChoices(cs) { els.wordChoices.innerHTML = cs.map((c,i) => `<button class="btn dark wordBtn" data-i="${i}"><div class="wordTop"><span class="word">${esc(c.word)}</span><span class="points">${c.points} pt${c.points > 1 ? 's' : ''}</span></div><div class="muted" style="font-size:14px;margin-top:6px;">${esc(c.label)}</div></button>`).join(''); els.wordChoices.querySelectorAll('[data-i]').forEach(b => b.addEventListener('click', () => chooseWord(cs[Number(b.dataset.i)]))); }
-    function renderMask() { const w = state.room.activeWord?.word || '', rev = state.room.revealed || []; els.masked.textContent = [...w].map((ch,i) => /[a-zA-ZÀ-ÿ0-9]/.test(ch) ? (rev.includes(i) ? ch.toUpperCase() : '_') : ch).join(' '); }
-    function renderTimer() { const d = Number(state.room?.phaseDeadline || 0); if (!d) { els.timerLabel.textContent = '∞'; return; } els.timerLabel.textContent = fmt(Math.max(0, Math.ceil((d - now()) / 1000))); }
-    function ensureTimer() { if (state.timer) return; state.timer = setInterval(async () => { if (!state.room) return; renderTimer(); const d = Number(state.room.phaseDeadline || 0); if (!d || now() < d) return; try { if (state.room.status === 'draw' && amArtist()) await finishDrawing(); if (state.room.status === 'guess') await update(roomRef(), { status:'roundEnd', roundWinner:'artist', roundEndedAt:now() }); } catch (e) { console.error(e); } }, 500); }
-    function renderGallery() { if (!state.room || state.room.status !== 'gameOver') return; const list = players().sort((a,b) => score(b[0])-score(a[0])); els.ranking.innerHTML = list.map(([id,p],i) => `<div class="playerRow"><div class="playerName">${i+1}. ${esc(p.name)}${id === state.playerId ? ' · toi' : ''}</div><div style="font-weight:1000;font-size:22px;">${score(id)}</div></div>`).join(''); const g = Object.entries(state.room.gallery || {}).sort((a,b)=>Number(a[0])-Number(b[0])); els.galleryGrid.innerHTML = g.map(([round,item]) => `<article class="card thumb"><img src="${item.dataUrl}" alt="Dessin"><div style="padding:7px 2px 2px;"><div class="muted" style="font-size:12px;">Manche ${round}</div><div style="font-weight:1000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(item.word || '')}</div></div></article>`).join(''); }
 
-    function buildTools() { els.colors.innerHTML = CONFIG.colors.map(c => `<button class="dot" data-c="${c}" style="background:${c}"></button>`).join(''); els.colors.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => { state.color = b.dataset.c; state.eraser = false; updateTools(); })); els.sizes.innerHTML = CONFIG.sizes.map(s => `<button class="sizeDot" data-s="${s}"><span style="width:${Math.min(s,18)}px;height:${Math.min(s,18)}px"></span></button>`).join(''); els.sizes.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => { state.size = Number(b.dataset.s); updateTools(); })); updateTools(); }
-    function updateTools() { els.colors.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('active', b.dataset.c === state.color && !state.eraser)); els.sizes.querySelectorAll('[data-s]').forEach(b => b.classList.toggle('active', Number(b.dataset.s) === state.size)); els.eraserBtn.style.outline = state.eraser ? '2px solid white' : '0'; }
-    function setupCanvas(draw) { resizeCanvas(true); if (draw) initDrawEvents(); }
-    function resizeCanvas(replay=false) { [els.drawCanvas, els.watchCanvas].forEach(c => { const r = c.getBoundingClientRect(); if (!r.width || !r.height) return; const ratio = Math.max(1, devicePixelRatio || 1); const w = Math.max(240, Math.round(r.width * ratio)), h = Math.max(240, Math.round(r.height * ratio)); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; fill(c.getContext('2d')); } }); state.ctx = els.drawCanvas.getContext('2d'); state.watchCtx = els.watchCanvas.getContext('2d'); if (replay) replay(); }
-    function fill(ctx) { if (!ctx) return; ctx.fillStyle = '#fff'; ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height); }
-    function clearCanvas(emit=false) { state.segments = []; resizeCanvas(false); fill(state.ctx); fill(state.watchCtx); if (emit) update(roomRef(), { strokes:null, clearSignal:now() }).catch(e => error('Effacement impossible', e)); }
-    let eventsReady = false;
-    function initDrawEvents() { if (eventsReady) return; eventsReady = true; const c = els.drawCanvas; c.addEventListener('pointerdown', down, { passive:false }); c.addEventListener('pointermove', move, { passive:false }); c.addEventListener('pointerup', up, { passive:false }); c.addEventListener('pointercancel', up, { passive:false }); c.addEventListener('touchstart', e => e.preventDefault(), { passive:false }); c.addEventListener('touchmove', e => e.preventDefault(), { passive:false }); }
-    function p(e) { const r = els.drawCanvas.getBoundingClientRect(); return { x: Math.max(0, Math.min(1, (e.clientX-r.left)/Math.max(1,r.width))), y: Math.max(0, Math.min(1, (e.clientY-r.top)/Math.max(1,r.height))) }; }
-    function down(e) { if (!amArtist() || state.room?.status !== 'draw') return; e.preventDefault(); state.drawing = true; state.last = p(e); els.drawCanvas.setPointerCapture?.(e.pointerId); }
-    function move(e) { if (!state.drawing || !state.last) return; e.preventDefault(); const to = p(e); const s = { from:state.last, to, color:state.eraser?'#ffffff':state.color, size:state.eraser?state.size*2.2:state.size, t:now() }; state.segments.push(s); draw(state.ctx,s); push(roomRef('strokes'), s).catch(err => error('Trait impossible', err)); state.last = to; }
-    function up() { state.drawing = false; state.last = null; }
-    function draw(ctx,s) { if (!ctx || !s?.from || !s?.to) return; const w = ctx.canvas.width, h = ctx.canvas.height; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=s.color; ctx.lineWidth=Math.max(1, s.size * Math.max(w,h) / 430); ctx.beginPath(); ctx.moveTo(s.from.x*w, s.from.y*h); ctx.lineTo(s.to.x*w, s.to.y*h); ctx.stroke(); }
-    function replay() { fill(state.ctx); fill(state.watchCtx); state.segments.forEach(s => { draw(state.ctx,s); draw(state.watchCtx,s); }); }
-    function attachStrokes() { const key = `${state.roomCode}:${state.room?.round || 1}`; if (state.strokesKey === key) return; state.childUnsubs.forEach(f => f()); state.childUnsubs = []; state.strokesKey = key; clearCanvas(false); const sr = roomRef('strokes'); const cb = snap => { const s = snap.val(); state.segments.push(s); draw(state.watchCtx,s); if (!amArtist()) draw(state.ctx,s); }; onChildAdded(sr, cb); state.childUnsubs.push(() => off(sr, 'child_added', cb)); let lastClear = state.room?.clearSignal || 0; const cr = roomRef('clearSignal'); const ccb = snap => { const v = snap.val() || 0; if (!v || v === lastClear) return; lastClear = v; clearCanvas(false); }; onValue(cr, ccb); state.childUnsubs.push(() => off(cr, 'value', ccb)); }
-    function esc(s) { return String(s ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+    function hidePanels() {
+      [els.choosePanel, els.canvasPanel, els.guessPanel, els.roundEndPanel].forEach(el => el.classList.add('hidden'));
+    }
+
+    function renderChoices(enabled) {
+      const choices = state.room.choices || [];
+      els.wordChoices.innerHTML = choices.map((c, i) => `
+        <button data-choice="${i}" class="btn btn-dark w-full text-left ${enabled ? '' : 'opacity-50'}" ${enabled ? '' : 'disabled'}>
+          <div class="flex items-center justify-between">
+            <span class="text-xl font-black">${escapeHtml(c.word)}</span>
+            <span class="rounded-full px-3 py-1 text-xs font-black bg-white/10">${c.points} pt${c.points > 1 ? 's' : ''}</span>
+          </div>
+          <div class="text-sm text-white/50 mt-1">${c.label}</div>
+        </button>
+      `).join('');
+      [...els.wordChoices.querySelectorAll('[data-choice]')].forEach(btn => {
+        btn.addEventListener('click', () => chooseWord(choices[Number(btn.dataset.choice)]));
+      });
+    }
+
+    function renderMaskedWord() {
+      const word = state.room.activeWord?.word || '';
+      const revealed = state.room.revealed || [];
+      els.maskedWord.textContent = [...word].map((ch, i) => {
+        if (!/[a-zA-ZÀ-ÿ0-9]/.test(ch)) return ch;
+        return revealed.includes(i) ? ch.toUpperCase() : '_';
+      }).join(' ');
+    }
+
+    function renderTimer() {
+      const deadlineMs = Number(state.room?.phaseDeadline || 0);
+      if (!deadlineMs) {
+        els.timerLabel.textContent = '∞';
+        return;
+      }
+      const remain = Math.max(0, Math.ceil((deadlineMs - now()) / 1000));
+      els.timerLabel.textContent = formatTime(remain);
+    }
+
+    function syncTimerGuard() {
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(async () => {
+        if (!state.room) return;
+        renderTimer();
+        const deadlineMs = Number(state.room.phaseDeadline || 0);
+        if (!deadlineMs || now() < deadlineMs || !isHost()) return;
+        if (state.room.status === 'draw') {
+          await update(roomRef(), { status: 'guess', phaseStartedAt: now(), phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)) });
+        } else if (state.room.status === 'guess') {
+          await update(roomRef(), { status: 'roundEnd', roundWinner: 'artist', roundEndedAt: now() });
+        }
+      }, 500);
+    }
+
+    function setupCanvasMode(canDraw) {
+      resizeCanvases();
+      els.drawCanvas.classList.toggle('hidden', !canDraw);
+      els.watchCanvas.classList.toggle('hidden', canDraw);
+      els.toolsPanel.classList.toggle('hidden', !canDraw);
+      els.toolsPanel.classList.toggle('flex', canDraw);
+      els.canvasLock.classList.toggle('hidden', state.room.status !== 'draw' || canDraw);
+      els.canvasLock.classList.toggle('grid', state.room.status === 'draw' && !canDraw);
+      if (canDraw) initDrawEvents();
+    }
+
+    function resizeCanvases() {
+      [els.drawCanvas, els.watchCanvas].forEach(canvas => {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const w = Math.max(320, Math.floor(rect.width * ratio));
+        const h = Math.max(320, Math.floor(rect.height * ratio));
+        if (canvas.width !== w || canvas.height !== h) {
+          const old = document.createElement('canvas');
+          old.width = canvas.width;
+          old.height = canvas.height;
+          old.getContext('2d').drawImage(canvas, 0, 0);
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          if (old.width) ctx.drawImage(old, 0, 0, w, h);
+        }
+      });
+      state.ctx = els.drawCanvas.getContext('2d');
+      state.watchCtx = els.watchCanvas.getContext('2d');
+    }
+
+    function resetCanvas(emit = false) {
+      resizeCanvases();
+      [state.ctx, state.watchCtx].forEach(ctx => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      });
+      if (emit && state.roomCode) update(roomRef(), { strokes: null, clearSignal: now() });
+    }
+
+    let drawEventsReady = false;
+    function initDrawEvents() {
+      if (drawEventsReady) return;
+      drawEventsReady = true;
+      const canvas = els.drawCanvas;
+      canvas.addEventListener('pointerdown', startStroke, { passive: false });
+      canvas.addEventListener('pointermove', moveStroke, { passive: false });
+      canvas.addEventListener('pointerup', endStroke, { passive: false });
+      canvas.addEventListener('pointercancel', endStroke, { passive: false });
+      canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+      canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    }
+
+    function pointFromEvent(e) {
+      const canvas = els.drawCanvas;
+      const rect = canvas.getBoundingClientRect();
+      const ratioX = canvas.width / rect.width;
+      const ratioY = canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * ratioX,
+        y: (e.clientY - rect.top) * ratioY
+      };
+    }
+
+    function startStroke(e) {
+      if (!isArtist() || state.room?.status !== 'draw') return;
+      e.preventDefault();
+      state.drawing = true;
+      state.lastPoint = pointFromEvent(e);
+      els.drawCanvas.setPointerCapture?.(e.pointerId);
+    }
+
+    function moveStroke(e) {
+      if (!state.drawing || !state.lastPoint) return;
+      e.preventDefault();
+      const to = pointFromEvent(e);
+      const segment = {
+        from: state.lastPoint,
+        to,
+        color: state.eraser ? '#ffffff' : state.selectedColor,
+        size: state.eraser ? state.selectedSize * 2.2 : state.selectedSize,
+        t: now()
+      };
+      drawSegment(state.ctx, segment);
+      push(roomRef('strokes'), segment);
+      state.lastPoint = to;
+    }
+
+    function endStroke() {
+      state.drawing = false;
+      state.lastPoint = null;
+    }
+
+    function drawSegment(ctx, s) {
+      if (!ctx || !s?.from || !s?.to) return;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.size;
+      ctx.beginPath();
+      ctx.moveTo(s.from.x, s.from.y);
+      ctx.lineTo(s.to.x, s.to.y);
+      ctx.stroke();
+    }
+
+    function attachStrokesListener() {
+      if (state.strokesRoom === state.roomCode && state.strokesRound === state.room?.round) return;
+      state.childUnsub.forEach(fn => fn());
+      state.childUnsub = [];
+      state.strokesRoom = state.roomCode;
+      state.strokesRound = state.room?.round;
+      resetCanvas(false);
+      const strokes = roomRef('strokes');
+      const cb = snap => {
+        const segment = snap.val();
+        drawSegment(state.watchCtx, segment);
+        if (!isArtist()) drawSegment(state.ctx, segment);
+      };
+      onChildAdded(strokes, cb);
+      state.childUnsub.push(() => off(strokes, 'child_added', cb));
+      const clear = roomRef('clearSignal');
+      const clearCb = () => resetCanvas(false);
+      onValue(clear, clearCb);
+      state.childUnsub.push(() => off(clear, 'value', clearCb));
+    }
+
+    function buildTools() {
+      els.palette.innerHTML = CONFIG.colors.map(c => `<button class="color-dot" data-color="${c}" style="background:${c}"></button>`).join('');
+      [...els.palette.children].forEach(btn => btn.addEventListener('click', () => {
+        state.selectedColor = btn.dataset.color;
+        state.eraser = false;
+        updateToolState();
+      }));
+
+      els.sizes.innerHTML = CONFIG.sizes.map(s => `<button class="size-dot" data-size="${s}"><span style="width:${Math.min(s,18)}px;height:${Math.min(s,18)}px"></span></button>`).join('');
+      [...els.sizes.children].forEach(btn => btn.addEventListener('click', () => {
+        state.selectedSize = Number(btn.dataset.size);
+        updateToolState();
+      }));
+      updateToolState();
+    }
+
+    function updateToolState() {
+      [...els.palette.children].forEach(btn => btn.classList.toggle('active', btn.dataset.color === state.selectedColor && !state.eraser));
+      [...els.sizes.children].forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === state.selectedSize));
+      els.eraserBtn.classList.toggle('ring-2', state.eraser);
+      els.eraserBtn.classList.toggle('ring-white', state.eraser);
+    }
+
+    function renderGallery() {
+      if (!state.room || state.room.status !== 'gameOver') return;
+      const players = playerList();
+      const sorted = [...players].sort((a,b) => scoreOf(b[0]) - scoreOf(a[0]));
+      els.rankingBox.innerHTML = sorted.map(([id, p], idx) => `
+        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-yellow-300 text-slate-950' : 'bg-white/10'}">${idx + 1}</div>
+            <div class="font-black">${escapeHtml(p.name || 'Joueur')}${id === state.playerId ? ' <span class="text-white/40 text-xs">toi</span>' : ''}</div>
+          </div>
+          <div class="text-2xl font-black">${scoreOf(id)}</div>
+        </div>
+      `).join('');
+
+      const gallery = Object.entries(state.room.gallery || {}).sort((a,b) => Number(a[0]) - Number(b[0]));
+      els.galleryGrid.innerHTML = gallery.map(([round, item]) => {
+        const votes = state.room.votes || {};
+        const voteCount = Object.values(votes).filter(v => String(v) === String(round)).length;
+        const voted = String(votes[state.playerId] || '') === String(round);
+        return `
+          <article class="glass rounded-[24px] p-2 overflow-hidden">
+            <img src="${item.dataUrl}" alt="Dessin manche ${round}" class="w-full aspect-square object-cover rounded-[18px] bg-white" />
+            <div class="p-2">
+              <div class="text-xs text-white/45">Manche ${round} • ${escapeHtml(item.difficulty || '')}</div>
+              <div class="font-black truncate">${escapeHtml(item.word || '')}</div>
+              <div class="text-xs text-white/50 truncate">par ${escapeHtml(item.artistName || 'Joueur')}</div>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <button data-vote="${round}" class="btn btn-dark !min-h-0 !py-2 !px-2 text-xs ${voted ? 'ring-2 ring-yellow-300' : ''}">🏆 ${voteCount}</button>
+                <button data-download="${round}" class="btn btn-dark !min-h-0 !py-2 !px-2 text-xs">PNG</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      [...els.galleryGrid.querySelectorAll('[data-vote]')].forEach(btn => btn.addEventListener('click', () => voteFor(btn.dataset.vote)));
+      [...els.galleryGrid.querySelectorAll('[data-download]')].forEach(btn => btn.addEventListener('click', () => downloadDrawing(btn.dataset.download)));
+    }
+
+    async function voteFor(round) {
+      await update(roomRef(`votes`), { [state.playerId]: String(round) });
+      showToast('Vote enregistré');
+    }
+
+    function downloadDrawing(round) {
+      const item = state.room?.gallery?.[round];
+      if (!item?.dataUrl) return;
+      const a = document.createElement('a');
+      a.href = item.dataUrl;
+      a.download = `drawduel-manche-${round}-${slug(item.word || 'dessin')}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function slug(str) {
+      return normalizeText(str).slice(0, 28) || 'dessin';
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+    }
+
+    function installPwaManifest() {
+      const manifest = {
+        name: 'DrawDuel', short_name: 'DrawDuel', start_url: '.', display: 'standalone',
+        background_color: '#09090f', theme_color: '#111827', orientation: 'portrait',
+        icons: [
+          { src: iconSvg('#22d3ee'), sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: iconSvg('#ec4899'), sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = URL.createObjectURL(blob);
+      document.head.appendChild(link);
+    }
+
+    function iconSvg(color) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#09090f"/><circle cx="160" cy="170" r="66" fill="${color}"/><path d="M128 350c92-142 162-162 256-208-46 96-78 168-224 256-20 12-44-28-32-48z" fill="#fff"/></svg>`;
+      return 'data:image/svg+xml;base64,' + btoa(svg);
+    }
+
+    window.addEventListener('resize', () => setTimeout(resizeCanvases, 120));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) renderTimer(); });
+
+    els.createRoomBtn.addEventListener('click', createRoom);
+    els.joinRoomBtn.addEventListener('click', joinRoom);
+    els.joinCode.addEventListener('input', () => els.joinCode.value = els.joinCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
+    els.leaveBtn.addEventListener('click', leaveRoom);
+    els.startGameBtn.addEventListener('click', startGame);
+    els.eraserBtn.addEventListener('click', () => { state.eraser = !state.eraser; updateToolState(); });
+    els.clearBtn.addEventListener('click', () => resetCanvas(true));
+    els.finishDrawingBtn.addEventListener('click', finishDrawing);
+    els.guessBtn.addEventListener('click', submitGuess);
+    els.guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
+    els.nextRoundBtn.addEventListener('click', nextRound);
+    els.newGameBtn.addEventListener('click', () => { detachRoom(); showView('home'); });
+
+    els.playerName.value = localStorage.getItem('drawduel_name') || '';
+    buildTools();
+    installPwaManifest();
+    setTimeout(resizeCanvases, 300);
   </script>
 </body>
 </html>
