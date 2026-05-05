@@ -618,6 +618,7 @@
     }
 
     function showToast(message) {
+      console.log('[DrawDuel]', message);
       els.toast.textContent = message;
       els.toast.classList.add('show');
       clearTimeout(showToast.t);
@@ -664,6 +665,8 @@
 
     function myPlayer() { return state.room?.players?.[state.playerId]; }
     function isHost() { return myPlayer()?.host === true; }
+    function canControlRoom() { return playerList().length > 0; }
+    function canStartGame() { return playerList().length === 2; }
     function now() { return Date.now(); }
     function deadline(seconds) { return seconds > 0 ? now() + seconds * 1000 : 0; }
 
@@ -828,8 +831,7 @@
     }
 
     async function startGame() {
-      if (!isHost()) return;
-      if (playerList().length !== 2) return showToast('Il faut exactement 2 joueurs.');
+      if (!canStartGame()) return showToast('Il faut exactement 2 joueurs pour lancer.');
       try {
         await update(roomRef(), {
           status: 'choose',
@@ -942,7 +944,7 @@
     }
 
     async function nextRound() {
-      if (!isHost()) return;
+      if (!canControlRoom()) return showToast('Salon non synchronisé. Reviens à l’accueil puis rejoins le code.');
       try {
         const round = Number(state.room.round || 1);
         if (round >= CONFIG.totalRounds) {
@@ -1030,8 +1032,9 @@
         </div>
       `).join('');
       els.lobbyHint.textContent = players.length < 2 ? 'Partage ce code avec ton adversaire. Dès que vous êtes deux, l’hôte peut lancer.' : 'Les deux joueurs sont là. L’hôte peut lancer la partie.';
-      els.startGameBtn.disabled = !isHost() || players.length !== 2;
-      els.startGameBtn.textContent = isHost() ? 'Lancer la partie' : 'En attente de l’hôte';
+      els.startGameBtn.disabled = false;
+      els.startGameBtn.classList.toggle('opacity-50', players.length !== 2);
+      els.startGameBtn.textContent = players.length === 2 ? 'Lancer la partie' : 'En attente du 2e joueur';
     }
 
     function renderGame() {
@@ -1080,8 +1083,8 @@
         const guessed = room.roundWinner && room.roundWinner !== 'artist';
         els.roundEndTitle.textContent = guessed ? 'Mot trouvé !' : 'Fin de manche';
         els.roundEndText.textContent = guessed ? `${playerNameById(room.roundWinner)} a trouvé « ${word} ».` : `Personne n’a trouvé « ${word} ».`;
-        els.nextRoundBtn.disabled = !isHost();
-        els.nextRoundBtn.textContent = isHost() ? (room.round >= CONFIG.totalRounds ? 'Voir la galerie' : 'Manche suivante') : 'En attente de l’hôte';
+        els.nextRoundBtn.disabled = false;
+        els.nextRoundBtn.textContent = room.round >= CONFIG.totalRounds ? 'Voir la galerie' : 'Manche suivante';
       }
 
       renderTimer();
@@ -1290,7 +1293,13 @@
       state.childUnsub.push(() => off(strokesRef, 'child_added', cb));
 
       const clearRef = roomRef('clearSignal');
-      const clearCb = () => resetCanvas(false);
+      let lastClearSignal = state.room?.clearSignal || 0;
+      const clearCb = snap => {
+        const value = snap.val() || 0;
+        if (!value || value === lastClearSignal) return;
+        lastClearSignal = value;
+        resetCanvas(false);
+      };
       onValue(clearRef, clearCb);
       state.childUnsub.push(() => off(clearRef, 'value', clearCb));
     }
@@ -1378,9 +1387,18 @@
     els.leaveBtn.addEventListener('click', leaveRoom);
     els.startGameBtn.addEventListener('click', startGame);
     els.toolEraser.addEventListener('click', () => { state.eraser = !state.eraser; updateToolState(); });
-    els.toolClear.addEventListener('click', () => resetCanvas(true));
-    els.toolDone.addEventListener('click', finishDrawing);
-    els.guessBtn.addEventListener('click', submitGuess);
+    els.toolClear.addEventListener('click', () => {
+      if (!isArtist()) return showToast('Seul le dessinateur peut effacer.');
+      resetCanvas(true);
+    });
+    els.toolDone.addEventListener('click', () => {
+      if (!isArtist()) return showToast('Seul le dessinateur peut terminer le dessin.');
+      finishDrawing();
+    });
+    els.guessBtn.addEventListener('click', () => {
+      if (isArtist()) return showToast('Le dessinateur ne peut pas deviner son propre mot.');
+      submitGuess();
+    });
     els.guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
     els.nextRoundBtn.addEventListener('click', nextRound);
     els.newGameBtn.addEventListener('click', () => { detachRoom(); showView('home'); });
