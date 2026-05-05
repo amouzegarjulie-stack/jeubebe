@@ -2,531 +2,393 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#111827" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DrawDuel" />
-  <title>DrawDuel Mobile v3</title>
-
-  <!-- Tailwind CSS CDN. Pour production, compile Tailwind localement. -->
+  <title>DrawDuel Mobile corrigé</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Arial'] },
-          boxShadow: { glow: '0 18px 60px rgba(99,102,241,.25)' }
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Arial'] }
         }
       }
-    }
+    };
   </script>
-
   <style>
     :root {
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --app-h: 100dvh;
-      touch-action: manipulation;
+      --vh: 1vh;
+      --panel: rgba(17, 24, 39, .76);
+      --line: rgba(255,255,255,.12);
     }
 
-    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-    body {
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
       margin: 0;
-      background: radial-gradient(circle at top left, rgba(59,130,246,.28), transparent 34%),
-                  radial-gradient(circle at bottom right, rgba(236,72,153,.22), transparent 30%),
-                  #09090f;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: #09090f;
       color: #f9fafb;
       font-family: Inter, ui-sans-serif, system-ui, Arial, sans-serif;
-      position: fixed;
-      inset: 0;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 15% 0%, rgba(34,211,238,.30), transparent 33%),
+        radial-gradient(circle at 100% 100%, rgba(236,72,153,.23), transparent 33%),
+        #09090f;
+    }
+
+    button, input, select {
+      font: inherit;
+      font-size: 16px;
+      border: 0;
+      outline: 0;
+    }
+
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    #app {
       width: 100%;
-      height: var(--app-h);
+      max-width: 430px;
+      height: calc(var(--vh) * 100);
+      min-height: 0;
+      margin: 0 auto;
+      padding: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
+      overflow: hidden;
+    }
+
+    .view {
+      display: none;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .view.active {
+      display: grid;
     }
 
     .glass {
-      background: rgba(17, 24, 39, .68);
-      border: 1px solid rgba(255,255,255,.12);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 55px rgba(0,0,0,.25);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
 
-    .view { display: none; height: 100%; }
-    .view.active { display: flex; }
-
     .btn {
-      border-radius: 18px;
-      padding: 14px 18px;
-      font-weight: 800;
-      min-height: 52px;
+      min-height: 48px;
+      border-radius: 16px;
+      padding: 11px 14px;
+      display: inline-grid;
+      place-items: center;
+      font-weight: 900;
+      line-height: 1.05;
+      color: white;
       transition: transform .12s ease, opacity .12s ease, filter .12s ease;
-      touch-action: manipulation;
-      user-select: none;
     }
+
     .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .45; filter: grayscale(.4); }
-    .btn-primary { background: linear-gradient(135deg, #22d3ee, #6366f1, #ec4899); color: white; }
+    .btn:disabled { opacity: .45; filter: grayscale(.4); cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, #22d3ee, #6366f1, #ec4899); }
     .btn-dark { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
-    .btn-danger { background: linear-gradient(135deg, #fb7185, #ef4444); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #fb7185, #ef4444); }
     .btn-good { background: linear-gradient(135deg, #34d399, #14b8a6); color: #061113; }
 
     input, select {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 18px;
+      width: 100%;
+      min-height: 48px;
+      border-radius: 16px;
+      padding: 0 14px;
       color: white;
-      min-height: 52px;
-      outline: none;
-      padding: 0 16px;
-      font-size: 16px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
     }
+
     select option { color: #111827; }
-
-    #drawCanvas, #watchCanvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #ffffff;
-      border-radius: 24px;
-      touch-action: none;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .color-dot, .size-dot {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 3px solid rgba(255,255,255,.18);
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.08);
-    }
-    .color-dot.active, .size-dot.active { border-color: white; transform: scale(1.08); }
-    .size-dot { background: white; display: grid; place-items: center; }
-    .size-dot span { display: block; border-radius: 999px; background: #111827; }
-
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    .toast {
-      position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: calc(18px + var(--safe-bottom));
-      z-index: 80;
-      transform: translateY(18px);
-      opacity: 0;
-      pointer-events: none;
-      transition: .2s ease;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-
-    /* Correctifs iPhone : l'interface tient dans la hauteur utile, y compris iPhone SE. */
-    #app { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; }
-    .view { min-height: 0; overflow: hidden; }
-    main { min-height: 0; }
-
-    @media (max-height: 740px) {
-      #app { padding-left: 12px; padding-right: 12px; padding-top: calc(8px + var(--safe-top)); padding-bottom: calc(8px + var(--safe-bottom)); }
-      .btn { min-height: 44px; padding: 10px 14px; border-radius: 15px; }
-      input, select { min-height: 44px; border-radius: 15px; font-size: 16px; }
-      #view-home > div:first-child { padding-top: 4px; }
-      #view-home h1 { font-size: 2.7rem; line-height: .9; }
-      #view-home p { margin-top: 8px; font-size: .88rem; }
-      #view-home .glass { border-radius: 24px; padding: 12px; }
-      #view-home { gap: 8px; }
-      .color-dot, .size-dot { width: 30px; height: 30px; }
-      #phaseBanner { padding: 8px; border-radius: 18px; font-size: 12px; }
-      #view-game header > div { padding-top: 6px; padding-bottom: 6px; border-radius: 14px; }
-      #view-game main { border-radius: 22px; padding: 8px; gap: 8px; }
-      #maskedWord { font-size: 1.55rem; }
-    }
-
-    @media (max-height: 650px) {
-      #view-home .inline-flex { display: none; }
-      #view-home h1 { font-size: 2.25rem; }
-      #view-home p { display: none; }
-      #view-home .glass { gap: 8px; }
-      #view-home label { font-size: 10px; }
-      .btn { min-height: 40px; padding: 8px 12px; }
-      input, select { min-height: 40px; }
-      #view-lobby main, #view-gallery .glass { padding: 10px; border-radius: 22px; }
-      #toolsPanel { gap: 6px; }
-      .color-dot, .size-dot { width: 28px; height: 28px; border-width: 2px; }
-    }
-
-
-    /**********************************************************************
-     * VERSION MOBILE V3
-     * Cette couche remplace la logique d'empilement précédente par une vraie
-     * app-shell iPhone : zones fixes, hauteur contrôlée, actions toujours visibles.
-     **********************************************************************/
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden !important;
-      position: fixed;
-      inset: 0;
-    }
-
-    body {
-      -webkit-text-size-adjust: 100%;
-      padding: 0;
-    }
-
     .hidden { display: none !important; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 
-    #app {
-      position: relative;
-      width: 100%;
-      max-width: 430px;
-      height: 100vh;
-      height: 100svh;
-      height: 100dvh;
-      margin: 0 auto;
-      padding: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
-      overflow: hidden !important;
-      isolation: isolate;
-    }
-
-    .view {
-      position: absolute;
-      inset: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden !important;
-      display: none !important;
-    }
-
-    .view.active { display: grid !important; }
-
-    .btn, button, input, select {
-      font-size: 16px;
-      max-width: 100%;
-      touch-action: manipulation;
-      position: relative;
-      z-index: 2;
-    }
-
-    .btn {
-      min-height: 48px;
-      padding: 11px 14px;
-      border-radius: 16px;
-      line-height: 1.05;
-      display: inline-grid;
-      place-items: center;
-    }
-
-    input, select {
-      min-height: 48px;
-      border-radius: 16px;
-      min-width: 0;
-    }
-
-    .glass {
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.22);
-    }
-
-    /* Accueil : le formulaire reste toujours dans l'écran. */
     #view-home {
-      grid-template-rows: minmax(0, .78fr) auto;
-      gap: 10px !important;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
     }
 
-    #view-home > div:first-child {
+    .home-title {
       min-height: 0;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: end;
-      padding-top: 0 !important;
+      display: grid;
+      align-content: end;
+      padding-top: 4px;
     }
 
-    #view-home .inline-flex { margin-bottom: 10px !important; }
-    #view-home h1 { font-size: clamp(2.55rem, 14vw, 4.15rem) !important; line-height: .86 !important; }
-    #view-home p { margin-top: 10px !important; font-size: .94rem !important; line-height: 1.25; }
-
-    #view-home > .glass {
+    .home-card {
+      align-self: end;
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 12px !important;
+      border-radius: 28px;
+      padding: 14px;
       display: grid;
-      gap: 9px !important;
+      gap: 10px;
     }
 
-    #view-home .grid.grid-cols-2 { gap: 8px !important; }
-    #view-home label { font-size: 10px !important; }
-    #joinRoomBtn { min-width: 58px; padding-left: 10px !important; padding-right: 10px !important; }
-
-    /* Salon : scroll interne uniquement si l'écran est très petit. */
     #view-lobby {
       grid-template-rows: auto minmax(0, 1fr);
-      gap: 10px !important;
+      gap: 10px;
     }
 
-    #view-lobby header { min-height: 48px; }
-    #view-lobby main {
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      min-height: 0;
-      padding: 12px !important;
-      gap: 10px !important;
-    }
-
-    /* Jeu : header compact, phase fixe, scène centrale, contrôles bas. */
     #view-game {
       grid-template-rows: auto minmax(0, 1fr);
-      gap: 8px !important;
+      gap: 8px;
     }
 
-    #view-game header {
-      min-height: 48px;
-      gap: 6px !important;
+    #view-gallery {
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 8px;
     }
 
-    #view-game header .glass {
-      padding: 7px 8px !important;
-      border-radius: 15px !important;
-      min-width: 0;
-    }
-
-    #view-game header .font-black {
-      font-size: .95rem;
-      line-height: 1.05;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #view-game main {
-      display: grid !important;
-      grid-template-rows: auto minmax(0, 1fr);
+    .game-shell {
       min-height: 0;
-      overflow: hidden !important;
-      padding: 9px !important;
-      gap: 8px !important;
-      border-radius: 24px !important;
+      overflow: hidden;
+      border-radius: 26px;
+      padding: 9px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
     }
 
     #phaseBanner {
       min-height: 36px;
       max-height: 54px;
       overflow: hidden;
+      border-radius: 16px;
+      padding: 8px 10px;
       display: grid;
       place-items: center;
-      padding: 8px 10px !important;
-      border-radius: 16px !important;
-      font-size: 12px !important;
+      text-align: center;
+      font-size: 12px;
       line-height: 1.2;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.76);
     }
 
     #choosePanel, #roundEndPanel {
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      justify-content: center;
-      padding: 2px;
     }
 
-    #choosePanel:not(.hidden), #roundEndPanel:not(.hidden) {
-      display: flex !important;
-    }
-
-    #choosePanel h2 { font-size: 1.35rem !important; }
-    #wordChoices { gap: 8px !important; }
-    #wordChoices .btn { min-height: 66px; padding: 10px 12px !important; }
-
-    #canvasPanel:not(.hidden) {
-      display: grid !important;
-      grid-template-rows: minmax(0, 1fr) auto;
+    #canvasPanel {
       min-height: 0;
-      overflow: hidden !important;
-      gap: 8px !important;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 7px;
     }
 
-    #canvasPanel > .relative {
+    body[data-status="guess"] #canvasPanel {
+      grid-template-rows: minmax(0, 1fr);
+    }
+
+    .canvas-wrap {
+      position: relative;
       min-height: 0;
       overflow: hidden;
       border-radius: 20px;
+      background: white;
     }
 
-    #drawCanvas, #watchCanvas {
-      width: 100% !important;
-      height: 100% !important;
-      min-height: 0;
-      border-radius: 20px !important;
-      position: relative;
-      z-index: 1;
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #fff;
+      border-radius: 20px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     #canvasLock {
-      z-index: 3;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: none;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       pointer-events: none;
-      border-radius: 20px !important;
     }
 
-    #toolsPanel:not(.hidden) {
-      display: grid !important;
+    #canvasLock.show { display: grid; }
+
+    #toolsPanel {
+      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 7px !important;
-      overflow: visible !important;
-      padding: 0 !important;
-      flex: none !important;
+      gap: 7px;
       max-height: 142px;
     }
 
-    #toolsPanel > .w-px { display: none !important; }
     #palette, #sizes {
       grid-column: 1 / -1;
-      display: grid !important;
-      gap: 5px !important;
-      min-width: 0;
+      display: grid;
+      gap: 5px;
     }
+
     #palette { grid-template-columns: repeat(10, minmax(0, 1fr)); }
     #sizes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
     .color-dot, .size-dot {
-      width: 100% !important;
-      height: 31px !important;
-      min-width: 0;
-      border-width: 2px !important;
-    }
-
-    #eraserBtn, #clearBtn, #finishDrawingBtn {
       width: 100%;
-      min-width: 0;
-      min-height: 40px !important;
-      padding: 8px 6px !important;
-      font-size: 12px;
-      white-space: nowrap;
+      height: 31px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.18);
     }
 
-    body[data-status="guess"] #view-game main {
-      grid-template-rows: auto minmax(0, .54fr) auto;
+    .color-dot.active, .size-dot.active {
+      border-color: #fff;
+      transform: scale(1.04);
     }
 
-    body[data-status="guess"] #canvasPanel:not(.hidden) {
-      grid-template-rows: minmax(0, 1fr);
+    .size-dot {
+      display: grid;
+      place-items: center;
+      background: white;
     }
 
-    body[data-status="guess"] #toolsPanel { display: none !important; }
+    .size-dot span {
+      display: block;
+      border-radius: 999px;
+      background: #111827;
+    }
 
-    #guessPanel:not(.hidden) {
-      display: grid !important;
-      grid-template-rows: auto auto minmax(26px, auto);
-      gap: 8px !important;
+    #guessPanel {
       min-height: 0;
       overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto minmax(24px, auto);
+      gap: 8px;
     }
 
-    #guessPanel .rounded-\[24px\] {
-      padding: 9px !important;
-      border-radius: 17px !important;
+    body[data-status="guess"] .game-shell {
+      grid-template-rows: auto minmax(0, .56fr) auto;
     }
 
     #maskedWord {
-      font-size: clamp(1.25rem, 7vw, 2rem) !important;
+      font-size: clamp(1.1rem, 6vw, 1.85rem);
       line-height: 1.05;
-      letter-spacing: .12em !important;
+      letter-spacing: .12em;
+      overflow-wrap: anywhere;
     }
 
-    #guessPanel .grid.grid-cols-\[1fr_auto\] {
-      grid-template-columns: minmax(0, 1fr) 62px !important;
-      gap: 7px !important;
+    .toast {
+      position: fixed;
+      left: max(14px, env(safe-area-inset-left));
+      right: max(14px, env(safe-area-inset-right));
+      bottom: calc(16px + var(--safe-bottom));
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+      transition: .2s ease;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 14px;
     }
 
-    #guessBtn { padding-left: 8px !important; padding-right: 8px !important; }
-    #guessLog { overflow: hidden; line-height: 1.2; }
-
-    #roundEndPanel .text-5xl { font-size: 2.5rem !important; }
-
-    #view-gallery {
-      grid-template-rows: auto auto minmax(0, 1fr);
-      gap: 8px !important;
-    }
-
-    #view-gallery .glass { padding: 10px !important; }
-    #galleryGrid {
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      gap: 8px !important;
-    }
-
-    @supports (-webkit-touch-callout: none) {
-      input, select, textarea { font-size: 16px !important; }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     @media (max-height: 700px) {
-      #app { padding-left: 10px; padding-right: 10px; }
-      .view { inset: calc(7px + var(--safe-top)) 10px calc(7px + var(--safe-bottom)); }
-      .btn { min-height: 43px; padding: 9px 11px; border-radius: 14px; }
-      input, select { min-height: 43px; border-radius: 14px; }
-      #view-home { grid-template-rows: minmax(0, .55fr) auto; }
-      #view-home .inline-flex, #view-home p { display: none !important; }
-      #view-home h1 { font-size: clamp(2.15rem, 12vw, 3.2rem) !important; }
-      #view-home > .glass { padding: 10px !important; gap: 7px !important; }
-      #view-game header { min-height: 42px; }
-      #view-game header .glass { padding: 5px 7px !important; }
-      #phaseBanner { min-height: 31px; max-height: 42px; padding: 6px 8px !important; }
-      #view-game main { padding: 7px !important; gap: 6px !important; }
-      #toolsPanel:not(.hidden) { gap: 5px !important; max-height: 128px; }
-      .color-dot, .size-dot { height: 27px !important; }
-      #eraserBtn, #clearBtn, #finishDrawingBtn { min-height: 36px !important; font-size: 11px; }
-      #maskedWord { font-size: clamp(1.1rem, 6vw, 1.6rem) !important; }
+      #app { padding-left: 10px; padding-right: 10px; padding-top: calc(7px + var(--safe-top)); padding-bottom: calc(7px + var(--safe-bottom)); }
+      .btn { min-height: 42px; padding: 8px 10px; border-radius: 14px; }
+      input, select { min-height: 42px; border-radius: 14px; }
+      .home-title p, .home-pill { display: none !important; }
+      .home-title h1 { font-size: 2.45rem !important; }
+      .home-card { padding: 10px; gap: 7px; }
+      #phaseBanner { min-height: 31px; max-height: 42px; padding: 6px 8px; }
+      .game-shell { padding: 7px; gap: 6px; }
+      .color-dot, .size-dot { height: 27px; }
+      #toolsPanel { gap: 5px; max-height: 128px; }
+      #toolClear, #toolDone, #toolEraser { min-height: 36px !important; font-size: 11px; padding: 7px 5px; }
     }
 
-    @media (max-height: 620px) {
-      #view-home { grid-template-rows: auto minmax(0, 1fr); }
-      #view-home > div:first-child { display: none !important; }
-      #view-home > .glass { align-self: stretch; }
-      #view-game header .text-\[10px\] { display: none; }
-      #view-game header { min-height: 34px; }
-      body[data-status="guess"] #view-game main { grid-template-rows: auto minmax(0, .48fr) auto; }
-      #guessPanel .rounded-\[24px\] .text-xs { display: none; }
-      #attemptsLabel { margin-top: 4px !important; font-size: 12px !important; }
+    @media (max-height: 610px) {
+      #view-home { grid-template-rows: minmax(0, 1fr) auto; }
+      .home-title { display: none; }
+      .home-card { align-self: stretch; }
+      .game-header .label { display: none; }
+      .game-header .glass { padding: 5px 7px !important; }
     }
-
   </style>
 </head>
 <body>
-  <div id="app" class="h-full w-full max-w-[430px] mx-auto px-4 pt-[calc(14px+var(--safe-top))] pb-[calc(12px+var(--safe-bottom))]">
-
-    <!-- HOME -->
-    <section id="view-home" class="view active flex-col justify-between gap-4">
-      <div class="pt-8">
-        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full glass text-xs text-cyan-100 mb-5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          Firebase Realtime Multiplayer
+  <div id="app">
+    <section id="view-home" class="view active">
+      <div class="home-title">
+        <div class="home-pill inline-flex w-max items-center gap-2 px-3 py-2 rounded-full glass text-xs text-cyan-100 mb-4">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          Multiplayer Firebase
         </div>
-        <h1 class="text-5xl font-black leading-[.95] tracking-tight">Draw<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-indigo-300 to-pink-300">Duel</span></h1>
-        <p class="mt-4 text-white/70 text-base">Un Pictionnary mobile-first pour 2 joueurs, synchronisé en temps réel.</p>
+        <h1 class="text-5xl font-black leading-[.88] tracking-tight">Draw<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-indigo-300 to-pink-300">Duel</span></h1>
+        <p class="mt-3 text-white/65 text-sm leading-snug">Pictionary mobile pour 2 joueurs, pensé iPhone.</p>
       </div>
 
-      <div class="glass rounded-[32px] p-4 shadow-glow space-y-3">
-        <label class="text-xs uppercase tracking-widest text-white/45 ml-1">Pseudo</label>
-        <input id="playerName" class="w-full" maxlength="18" placeholder="Ton pseudo" autocomplete="nickname" />
+      <div></div>
+
+      <div class="home-card glass">
+        <div id="statusLine" class="rounded-2xl bg-white/[.06] px-3 py-2 text-xs text-white/65 leading-snug">Prêt.</div>
+
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-white/45 ml-1">Pseudo</label>
+          <input id="playerName" maxlength="18" placeholder="Ton pseudo" autocomplete="nickname" />
+        </div>
 
         <button id="createRoomBtn" class="btn btn-primary w-full">Créer un salon</button>
 
-        <div class="grid grid-cols-[1fr_auto] gap-2">
-          <input id="joinCode" class="uppercase tracking-[.25em] text-center font-black" maxlength="6" placeholder="CODE" autocomplete="off" />
-          <button id="joinRoomBtn" class="btn btn-dark px-5">OK</button>
+        <div class="grid grid-cols-[1fr_62px] gap-2">
+          <input id="joinCode" class="uppercase tracking-[.22em] text-center font-black" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" />
+          <button id="joinRoomBtn" class="btn btn-dark">OK</button>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 pt-2">
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-[11px] text-white/45 ml-1">Timer dessin</label>
-            <select id="drawTimerSetting" class="w-full mt-1">
+            <label class="text-[10px] text-white/45 ml-1">Dessin</label>
+            <select id="drawTimerSetting" class="mt-1">
               <option value="60">1 min</option>
               <option value="180" selected>3 min</option>
               <option value="0">Infini</option>
             </select>
           </div>
           <div>
-            <label class="text-[11px] text-white/45 ml-1">Timer devinette</label>
-            <select id="guessTimerSetting" class="w-full mt-1">
+            <label class="text-[10px] text-white/45 ml-1">Devinette</label>
+            <select id="guessTimerSetting" class="mt-1">
               <option value="180">3 min</option>
               <option value="300" selected>5 min</option>
               <option value="600">10 min</option>
@@ -536,99 +398,84 @@
       </div>
     </section>
 
-    <!-- LOBBY -->
-    <section id="view-lobby" class="view flex-col gap-4">
-      <header class="flex items-center justify-between">
+    <section id="view-lobby" class="view">
+      <header class="flex items-center justify-between gap-2">
         <button id="leaveBtn" class="btn btn-dark !min-h-0 !py-2 !px-4">Quitter</button>
-        <div class="text-right">
-          <div class="text-xs text-white/45 uppercase tracking-widest">Salon</div>
-          <div id="roomCodeLabel" class="text-2xl font-black tracking-[.2em]"></div>
+        <div class="text-right min-w-0">
+          <div class="text-[10px] text-white/45 uppercase tracking-widest">Salon</div>
+          <div id="roomCodeLabel" class="text-2xl font-black tracking-[.18em]"></div>
         </div>
       </header>
 
-      <main class="glass rounded-[32px] p-4 flex-1 min-h-0 flex flex-col gap-4">
-        <div class="rounded-[28px] bg-white/[.06] p-4">
-          <div class="text-xs uppercase tracking-widest text-white/45 mb-2">Joueurs</div>
-          <div id="playersList" class="space-y-2"></div>
+      <main class="glass rounded-[28px] p-3 min-h-0 overflow-y-auto no-scrollbar grid content-start gap-3">
+        <div class="rounded-[22px] bg-white/[.06] p-3">
+          <div class="text-[10px] uppercase tracking-widest text-white/45 mb-2">Joueurs</div>
+          <div id="playersList" class="grid gap-2"></div>
         </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-[24px] bg-cyan-400/10 p-4 border border-cyan-300/10">
-            <div class="text-xs text-cyan-100/70">Manches</div>
-            <div class="text-3xl font-black">6</div>
-          </div>
-          <div class="rounded-[24px] bg-pink-400/10 p-4 border border-pink-300/10">
-            <div class="text-xs text-pink-100/70">Mode</div>
-            <div class="text-xl font-black">Duel</div>
-          </div>
-        </div>
-
-        <p id="lobbyHint" class="text-white/60 text-sm leading-relaxed"></p>
-        <button id="startGameBtn" class="btn btn-primary mt-auto">Lancer la partie</button>
+        <p id="lobbyHint" class="text-sm text-white/65 leading-snug"></p>
+        <button id="startGameBtn" class="btn btn-primary w-full self-end">Lancer la partie</button>
       </main>
     </section>
 
-    <!-- GAME -->
-    <section id="view-game" class="view flex-col gap-3">
-      <header class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <div class="glass rounded-2xl px-3 py-2">
-          <div class="text-[10px] text-white/45 uppercase">Manche</div>
-          <div id="roundLabel" class="font-black">1/6</div>
+    <section id="view-game" class="view">
+      <header class="game-header grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div class="glass rounded-2xl px-3 py-2 min-w-0">
+          <div class="label text-[10px] text-white/45 uppercase">Manche</div>
+          <div id="roundLabel" class="font-black truncate">1/6</div>
         </div>
         <div class="glass rounded-2xl px-4 py-2 text-center">
-          <div class="text-[10px] text-white/45 uppercase">Timer</div>
-          <div id="timerLabel" class="font-black tabular-nums">--:--</div>
+          <div class="label text-[10px] text-white/45 uppercase">Timer</div>
+          <div id="timerLabel" class="font-black tabular-nums">∞</div>
         </div>
-        <div class="glass rounded-2xl px-3 py-2 text-right">
-          <div class="text-[10px] text-white/45 uppercase">Score</div>
-          <div id="scoreLabel" class="font-black">0 - 0</div>
+        <div class="glass rounded-2xl px-3 py-2 text-right min-w-0">
+          <div class="label text-[10px] text-white/45 uppercase">Score</div>
+          <div id="scoreLabel" class="font-black truncate">0 - 0</div>
         </div>
       </header>
 
-      <main class="glass rounded-[30px] p-3 flex-1 min-h-0 flex flex-col gap-3">
-        <div id="phaseBanner" class="rounded-[24px] bg-white/[.06] p-3 text-center text-sm text-white/75"></div>
+      <main class="game-shell glass">
+        <div id="phaseBanner"></div>
 
-        <div id="choosePanel" class="hidden flex-1 min-h-0 flex flex-col gap-3 justify-center">
+        <div id="choosePanel" class="hidden min-h-0 grid content-center gap-3">
           <h2 class="text-2xl font-black text-center">Choisis ton mot</h2>
-          <div id="wordChoices" class="grid gap-3"></div>
+          <div id="wordChoices" class="grid gap-2"></div>
         </div>
 
-        <div id="canvasPanel" class="hidden flex-1 min-h-0 flex flex-col gap-2">
-          <div class="relative flex-1 min-h-0">
+        <div id="canvasPanel" class="hidden">
+          <div class="canvas-wrap">
             <canvas id="drawCanvas" class="hidden"></canvas>
             <canvas id="watchCanvas" class="hidden"></canvas>
-            <div id="canvasLock" class="hidden absolute inset-0 rounded-[24px] bg-black/45 backdrop-blur-sm place-items-center text-center p-6">
+            <div id="canvasLock">
               <div>
-                <div class="text-2xl font-black">À l'autre joueur</div>
-                <p class="text-white/70 text-sm mt-1">Le dessinateur prépare son chef-d'œuvre.</p>
+                <div class="text-2xl font-black">À l’autre joueur</div>
+                <p class="text-white/70 text-sm mt-1">Le dessinateur prépare son chef-d’œuvre.</p>
               </div>
             </div>
           </div>
 
-          <div id="toolsPanel" class="hidden gap-2 overflow-x-auto no-scrollbar pb-1">
-            <div id="palette" class="flex gap-2"></div>
-            <div class="w-px bg-white/10 mx-1"></div>
-            <div id="sizes" class="flex gap-2"></div>
-            <button id="eraserBtn" class="btn btn-dark !min-h-0 !py-2 !px-3 whitespace-nowrap">Gomme</button>
-            <button id="clearBtn" class="btn btn-danger !min-h-0 !py-2 !px-3 whitespace-nowrap">Effacer</button>
-            <button id="finishDrawingBtn" class="btn btn-good !min-h-0 !py-2 !px-3 whitespace-nowrap">Terminer</button>
+          <div id="toolsPanel" class="hidden">
+            <div id="palette"></div>
+            <div id="sizes"></div>
+            <button id="toolEraser" class="btn btn-dark">Gomme</button>
+            <button id="toolClear" class="btn btn-danger">Effacer</button>
+            <button id="toolDone" class="btn btn-good">Terminer</button>
           </div>
         </div>
 
-        <div id="guessPanel" class="hidden flex-1 min-h-0 flex flex-col gap-3">
-          <div class="rounded-[24px] bg-white/[.06] p-4 text-center">
-            <div class="text-xs uppercase tracking-widest text-white/45 mb-2">Mot à deviner</div>
-            <div id="maskedWord" class="text-3xl font-black tracking-[.18em] break-all"></div>
+        <div id="guessPanel" class="hidden">
+          <div class="rounded-[20px] bg-white/[.06] p-3 text-center">
+            <div class="text-[10px] uppercase tracking-widest text-white/45 mb-2">Mot à deviner</div>
+            <div id="maskedWord" class="font-black"></div>
             <div id="attemptsLabel" class="mt-2 text-sm text-white/55">0/5 erreurs</div>
           </div>
-          <div class="grid grid-cols-[1fr_auto] gap-2">
-            <input id="guessInput" placeholder="Ta réponse" autocapitalize="none" autocomplete="off" />
-            <button id="guessBtn" class="btn btn-primary px-5">Go</button>
+          <div class="grid grid-cols-[1fr_62px] gap-2">
+            <input id="guessInput" placeholder="Réponse" autocapitalize="none" autocomplete="off" />
+            <button id="guessBtn" class="btn btn-primary">Go</button>
           </div>
-          <div id="guessLog" class="text-sm text-white/60 min-h-[44px]"></div>
+          <div id="guessLog" class="text-sm text-white/60 min-h-[24px] overflow-hidden"></div>
         </div>
 
-        <div id="roundEndPanel" class="hidden flex-1 min-h-0 flex flex-col justify-center text-center gap-4">
+        <div id="roundEndPanel" class="hidden min-h-0 grid content-center text-center gap-3">
           <div class="text-5xl">🏁</div>
           <h2 id="roundEndTitle" class="text-2xl font-black"></h2>
           <p id="roundEndText" class="text-white/65"></p>
@@ -637,83 +484,55 @@
       </main>
     </section>
 
-    <!-- GALLERY -->
-    <section id="view-gallery" class="view flex-col gap-3">
-      <header class="flex items-center justify-between">
+    <section id="view-gallery" class="view">
+      <header class="flex items-center justify-between gap-2">
         <div>
-          <div class="text-xs text-white/45 uppercase tracking-widest">Trophée final</div>
+          <div class="text-[10px] text-white/45 uppercase tracking-widest">Final</div>
           <h2 class="text-3xl font-black">Galerie</h2>
         </div>
         <button id="newGameBtn" class="btn btn-dark !min-h-0 !py-2 !px-4">Accueil</button>
       </header>
-
-      <div class="glass rounded-[30px] p-4">
-        <div id="rankingBox" class="space-y-2"></div>
+      <div class="glass rounded-[24px] p-3">
+        <div id="rankingBox" class="grid gap-2"></div>
       </div>
-
-      <div id="galleryGrid" class="flex-1 min-h-0 overflow-y-auto no-scrollbar grid grid-cols-2 gap-3 pb-2"></div>
+      <div id="galleryGrid" class="min-h-0 overflow-y-auto no-scrollbar grid grid-cols-2 gap-2 pb-2"></div>
     </section>
   </div>
 
-  <div id="toast" class="toast glass rounded-2xl px-4 py-3 text-sm text-white/90"></div>
+  <div id="toast" class="toast glass"></div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
     import {
-      getDatabase, ref, set, update, get, onValue, onChildAdded, push,
-      serverTimestamp, remove, off, runTransaction
+      getDatabase, ref, set, update, get, onValue, onChildAdded,
+      push, serverTimestamp, remove, off
     } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 
-    /**********************************************************************
-     * CONFIGURATION FIREBASE
-     * 1. Crée un projet Firebase.
-     * 2. Active Realtime Database.
-     * 3. Colle ici ton objet firebaseConfig.
-     * 4. Règles de test recommandées pendant le développement uniquement :
-     *    {
-     *      "rules": {
-     *        "rooms": {
-     *          "$room": { ".read": true, ".write": true }
-     *        }
-     *      }
-     *    }
-     * 5. Pour une vraie mise en ligne, ajoute Firebase Auth anonyme et des règles strictes.
-     **********************************************************************/
- const firebaseConfig = {
-  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
-  authDomain: "mille-bornes-355ca.firebaseapp.com",
-  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
-  projectId: "mille-bornes-355ca",
-  storageBucket: "mille-bornes-355ca.appspot.com",
-  messagingSenderId: "1018160779227",
-  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+      authDomain: "mille-bornes-355ca.firebaseapp.com",
+      databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+      projectId: "mille-bornes-355ca",
+      storageBucket: "mille-bornes-355ca.appspot.com",
+      messagingSenderId: "1018160779227",
+      appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+    };
 
-    function firebaseLooksConfigured() {
-      return firebaseConfig.apiKey &&
-        !firebaseConfig.apiKey.includes('COLLE_') &&
-        firebaseConfig.projectId && firebaseConfig.projectId !== 'TON_PROJET' &&
-        firebaseConfig.databaseURL && !firebaseConfig.databaseURL.includes('TON_PROJET');
-    }
-
-    const firebaseReady = firebaseLooksConfigured();
-    let app = null;
-    let db = null;
-    if (firebaseReady) {
-      app = initializeApp(firebaseConfig);
-      db = getDatabase(app);
-    }
+    const FIREBASE_RULES_TO_TEST = `{
+      "rules": {
+        "rooms": {
+          "$room": {
+            ".read": true,
+            ".write": true
+          }
+        }
+      }
+    }`;
 
     const WORDS = {
-      easy: [
-        'chat','chien','soleil','lune','maison','arbre','fleur','pomme','vélo','voiture','bateau','avion','livre','chaise','table','lit','porte','clé','cœur','étoile','nuage','pluie','feu','main','nez','œil','ballon','pizza','glace','bonbon','oiseau','poisson','serpent','tasse','lampe','montre','robot','cadeau','train','bus','pont','route','montagne','plage','fromage','pain','banane','fraise','citron','couronne','brosse','crayon','sac','chapeau','lunettes','téléphone','ordinateur','casque','micro'
-      ],
-      medium: [
-        'astronaute','volcan','dinosaure','parapluie','bibliothèque','caméléon','hélicoptère','labyrinthe','sirène','phare','pirate','dragon','cascade','détective','jongleur','squelette','tornade','méduse','fusée','échelle','kangourou','accordéon','ancre','boussole','camping','champignon','coccinelle','domino','écureuil','éventail','fontaine','guitare','hamac','igloo','jardinier','karaté','licorne','marteau','nénuphar','orchestre','pyramide','quilles','renard','sablier','tambour','ukulele','vampire','wagon','xylophone','yoyo','zèbre','aquarium','bouclier','carnaval','dentiste','électricité','fermeture','grenouille','hippocampe','internet'
-      ],
-      hard: [
-        'impressionnisme','paradoxe','microscope','constellation','montgolfière','architecte','météorite','équilibriste','hippopotame','sous-marin','labyrinthe mental','illusion optique','machine à remonter le temps','énergie solaire','trou noir','station spatiale','photographe','révolution','catapulte','marionnette','archéologue','bactérie','caricature','démocratie','écosystème','fractale','gravitation','hiéroglyphe','inspiration','kaléidoscope','mécanisme','nébuleuse','oxygène','perspective','quarantaine','radiographie','symétrie','télépathie','utopie','vortex','wifi','xénon','yéti','zodiaque','biodiversité','cryptographie','diplomatie','expédition','fossile','géométrie','horlogerie','intelligence','jurassique','kinésithérapie','lévitation','métamorphose','nanotechnologie','océanographie','psychologie','quantique'
-      ]
+      easy: ['chat','chien','soleil','lune','maison','arbre','fleur','pomme','vélo','voiture','bateau','avion','livre','chaise','table','lit','porte','clé','cœur','étoile','nuage','pluie','feu','main','nez','œil','ballon','pizza','glace','oiseau','poisson','lampe','robot','train','bus','montagne','plage','banane','fraise','chapeau','lunettes','téléphone','ordinateur'],
+      medium: ['astronaute','volcan','dinosaure','parapluie','bibliothèque','caméléon','hélicoptère','labyrinthe','sirène','phare','pirate','cascade','détective','jongleur','squelette','tornade','méduse','fusée','kangourou','accordéon','boussole','camping','coccinelle','écureuil','guitare','igloo','licorne','tambour','xylophone','aquarium','grenouille'],
+      hard: ['impressionnisme','paradoxe','microscope','constellation','montgolfière','architecte','météorite','équilibriste','sous-marin','illusion optique','machine à remonter le temps','énergie solaire','trou noir','station spatiale','archéologue','écosystème','gravitation','hiéroglyphe','kaléidoscope','nébuleuse','perspective','radiographie','symétrie','vortex','biodiversité','cryptographie','métamorphose','nanotechnologie','océanographie','psychologie','quantique']
     };
 
     const CONFIG = {
@@ -724,22 +543,23 @@
       canvasMaxDataUrl: 900000
     };
 
-    const $ = (id) => document.getElementById(id);
-    const views = ['home','lobby','game','gallery'];
+    const $ = id => document.getElementById(id);
     const els = {
+      app: $('app'),
+      toast: $('toast'),
+      statusLine: $('statusLine'),
       playerName: $('playerName'), joinCode: $('joinCode'), createRoomBtn: $('createRoomBtn'), joinRoomBtn: $('joinRoomBtn'),
       drawTimerSetting: $('drawTimerSetting'), guessTimerSetting: $('guessTimerSetting'), leaveBtn: $('leaveBtn'), roomCodeLabel: $('roomCodeLabel'),
-      playersList: $('playersList'), lobbyHint: $('lobbyHint'), startGameBtn: $('startGameBtn'), roundLabel: $('roundLabel'),
-      timerLabel: $('timerLabel'), scoreLabel: $('scoreLabel'), phaseBanner: $('phaseBanner'), choosePanel: $('choosePanel'), wordChoices: $('wordChoices'),
-      canvasPanel: $('canvasPanel'), drawCanvas: $('drawCanvas'), watchCanvas: $('watchCanvas'), canvasLock: $('canvasLock'), toolsPanel: $('toolsPanel'),
-      palette: $('palette'), sizes: $('sizes'), eraserBtn: $('eraserBtn'), clearBtn: $('clearBtn'), finishDrawingBtn: $('finishDrawingBtn'),
-      guessPanel: $('guessPanel'), maskedWord: $('maskedWord'), attemptsLabel: $('attemptsLabel'), guessInput: $('guessInput'), guessBtn: $('guessBtn'),
-      guessLog: $('guessLog'), roundEndPanel: $('roundEndPanel'), roundEndTitle: $('roundEndTitle'), roundEndText: $('roundEndText'), nextRoundBtn: $('nextRoundBtn'),
-      rankingBox: $('rankingBox'), galleryGrid: $('galleryGrid'), newGameBtn: $('newGameBtn'), toast: $('toast')
+      playersList: $('playersList'), lobbyHint: $('lobbyHint'), startGameBtn: $('startGameBtn'), roundLabel: $('roundLabel'), timerLabel: $('timerLabel'), scoreLabel: $('scoreLabel'),
+      phaseBanner: $('phaseBanner'), choosePanel: $('choosePanel'), wordChoices: $('wordChoices'), canvasPanel: $('canvasPanel'), drawCanvas: $('drawCanvas'), watchCanvas: $('watchCanvas'), canvasLock: $('canvasLock'),
+      toolsPanel: $('toolsPanel'), palette: $('palette'), sizes: $('sizes'), toolEraser: $('toolEraser'), toolClear: $('toolClear'), toolDone: $('toolDone'),
+      guessPanel: $('guessPanel'), maskedWord: $('maskedWord'), attemptsLabel: $('attemptsLabel'), guessInput: $('guessInput'), guessBtn: $('guessBtn'), guessLog: $('guessLog'),
+      roundEndPanel: $('roundEndPanel'), roundEndTitle: $('roundEndTitle'), roundEndText: $('roundEndText'), nextRoundBtn: $('nextRoundBtn'),
+      rankingBox: $('rankingBox'), galleryGrid: $('galleryGrid'), newGameBtn: $('newGameBtn')
     };
 
     const state = {
-      playerId: localStorage.getItem('drawduel_pid') || crypto.randomUUID(),
+      playerId: getStablePlayerId(),
       roomCode: null,
       room: null,
       unsub: [],
@@ -749,23 +569,83 @@
       eraser: false,
       drawing: false,
       lastPoint: null,
+      segments: [],
       ctx: null,
       watchCtx: null,
       timerInterval: null,
-      revealedIndexes: []
+      db: null,
+      firebaseReady: false
     };
-    localStorage.setItem('drawduel_pid', state.playerId);
+
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(() => { setAppHeight(); resizeCanvases(true); }, 250), { passive: true });
+
+    function setAppHeight() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+
+    function getStablePlayerId() {
+      const saved = localStorage.getItem('drawduel_pid');
+      if (saved) return saved;
+      let id;
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        id = window.crypto.randomUUID();
+      } else {
+        id = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+      }
+      localStorage.setItem('drawduel_pid', id);
+      return id;
+    }
+
+    function initFirebase() {
+      try {
+        if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) throw new Error('Config Firebase incomplète.');
+        const app = initializeApp(firebaseConfig);
+        state.db = getDatabase(app);
+        state.firebaseReady = true;
+        setStatus('Firebase initialisé. Tu peux créer ou rejoindre un salon.');
+      } catch (err) {
+        console.error(err);
+        state.firebaseReady = false;
+        setStatus('Firebase ne démarre pas : vérifie firebaseConfig.', true);
+      }
+    }
+
+    function setStatus(message, danger = false) {
+      els.statusLine.textContent = message;
+      els.statusLine.classList.toggle('text-rose-200', danger);
+    }
 
     function showToast(message) {
       els.toast.textContent = message;
       els.toast.classList.add('show');
       clearTimeout(showToast.t);
-      showToast.t = setTimeout(() => els.toast.classList.remove('show'), 2600);
+      showToast.t = setTimeout(() => els.toast.classList.remove('show'), 2800);
+    }
+
+    function showError(prefix, err) {
+      console.error(prefix, err);
+      const code = err && err.code ? String(err.code) : '';
+      if (code.includes('permission-denied')) {
+        const msg = 'Firebase refuse l’accès. Mets les règles de test Realtime Database en lecture/écriture sur rooms.';
+        setStatus(msg, true);
+        showToast(msg);
+        console.info('Règles de test à coller dans Realtime Database > Rules :', FIREBASE_RULES_TO_TEST);
+        return;
+      }
+      const msg = `${prefix} ${err?.message || 'Erreur inconnue'}`;
+      setStatus(msg, true);
+      showToast(msg);
+    }
+
+    function safeName() {
+      return (els.playerName.value || localStorage.getItem('drawduel_name') || 'Joueur').trim().slice(0, 18) || 'Joueur';
     }
 
     function showView(name) {
-      views.forEach(v => $('view-' + v).classList.toggle('active', v === name));
-      requestAnimationFrame(() => resizeCanvases());
+      ['home','lobby','game','gallery'].forEach(v => $('view-' + v).classList.toggle('active', v === name));
+      requestAnimationFrame(() => resizeCanvases(true));
     }
 
     function code() {
@@ -773,13 +653,9 @@
       return Array.from({ length: 5 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     }
 
-    function safeName() {
-      return (els.playerName.value || localStorage.getItem('drawduel_name') || 'Joueur').trim().slice(0, 18) || 'Joueur';
-    }
-
     function roomRef(path = '') {
-      if (!db) throw new Error('Firebase non configuré');
-      return ref(db, `rooms/${state.roomCode}${path ? '/' + path : ''}`);
+      if (!state.db || !state.roomCode) throw new Error('Salon non initialisé.');
+      return ref(state.db, `rooms/${state.roomCode}${path ? '/' + path : ''}`);
     }
 
     function playerList(room = state.room) {
@@ -788,14 +664,18 @@
 
     function myPlayer() { return state.room?.players?.[state.playerId]; }
     function isHost() { return myPlayer()?.host === true; }
+    function now() { return Date.now(); }
+    function deadline(seconds) { return seconds > 0 ? now() + seconds * 1000 : 0; }
+
     function currentArtistId(room = state.room) {
       const players = playerList(room).map(([id]) => id);
-      if (players.length < 2) return players[0];
-      return players[(Math.max(1, room.round || 1) - 1) % players.length];
+      if (!players.length) return null;
+      return players[(Math.max(1, room?.round || 1) - 1) % players.length];
     }
+
     function isArtist() { return currentArtistId() === state.playerId; }
-    function opponentName(id) { return state.room?.players?.[id]?.name || 'Joueur'; }
-    function scoreOf(id) { return state.room?.scores?.[id] || 0; }
+    function playerNameById(id) { return state.room?.players?.[id]?.name || 'Joueur'; }
+    function scoreOf(id) { return Number(state.room?.scores?.[id] || 0); }
 
     function formatTime(sec) {
       if (!sec || sec <= 0) return '∞';
@@ -804,30 +684,32 @@
       return `${m}:${s}`;
     }
 
-    function now() { return Date.now(); }
-    function deadline(seconds) { return seconds > 0 ? now() + seconds * 1000 : 0; }
-
     async function createRoom() {
-      if (!firebaseReady || !db) return showToast('Colle d’abord tes clés Firebase dans firebaseConfig.');
+      if (!state.firebaseReady) return showToast('Firebase n’est pas initialisé.');
       els.createRoomBtn.disabled = true;
+      setStatus('Création du salon...');
       try {
         localStorage.setItem('drawduel_name', safeName());
         let room = code();
-        for (let i = 0; i < 5; i++) {
-          const exists = await get(ref(db, `rooms/${room}`));
-          if (!exists.exists()) break;
+        let free = false;
+        for (let i = 0; i < 12; i++) {
+          const snap = await get(ref(state.db, `rooms/${room}`));
+          if (!snap.exists()) { free = true; break; }
           room = code();
         }
+        if (!free) throw new Error('Impossible de trouver un code libre.');
+
         state.roomCode = room;
-        const drawTimer = Number(els.drawTimerSetting.value);
-        const guessTimer = Number(els.guessTimerSetting.value);
-        await set(ref(db, `rooms/${room}`), {
+        await set(ref(state.db, `rooms/${room}`), {
           createdAt: serverTimestamp(),
           hostId: state.playerId,
           status: 'lobby',
           round: 1,
           totalRounds: CONFIG.totalRounds,
-          settings: { drawTimer, guessTimer },
+          settings: {
+            drawTimer: Number(els.drawTimerSetting.value),
+            guessTimer: Number(els.guessTimerSetting.value)
+          },
           players: {
             [state.playerId]: { name: safeName(), host: true, joinedAt: now() }
           },
@@ -835,79 +717,99 @@
           gallery: {},
           votes: {}
         });
+
         attachRoom(room);
         showView('lobby');
         showToast('Salon créé');
       } catch (err) {
-        console.error(err);
-        showToast('Création impossible : vérifie databaseURL et règles Realtime Database.');
+        state.roomCode = null;
+        showError('Création impossible.', err);
       } finally {
         els.createRoomBtn.disabled = false;
       }
     }
 
     async function joinRoom() {
-      if (!firebaseReady || !db) return showToast('Colle d’abord tes clés Firebase dans firebaseConfig.');
+      if (!state.firebaseReady) return showToast('Firebase n’est pas initialisé.');
       els.joinRoomBtn.disabled = true;
+      setStatus('Connexion au salon...');
       try {
         localStorage.setItem('drawduel_name', safeName());
-        const room = els.joinCode.value.trim().toUpperCase();
-        if (!room) return showToast('Entre un code salon');
-        const snap = await get(ref(db, `rooms/${room}`));
-        if (!snap.exists()) return showToast('Salon introuvable');
+        const room = els.joinCode.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+        if (room.length !== 5) throw new Error('Entre le code à 5 caractères.');
+
+        const snap = await get(ref(state.db, `rooms/${room}`));
+        if (!snap.exists()) throw new Error('Salon introuvable.');
+
         const data = snap.val();
-        if (Object.keys(data.players || {}).length >= 2 && !data.players[state.playerId]) return showToast('Salon déjà complet');
+        const alreadyIn = Boolean(data.players?.[state.playerId]);
+        const count = Object.keys(data.players || {}).length;
+        if (count >= 2 && !alreadyIn) throw new Error('Salon déjà complet.');
+
         state.roomCode = room;
-        await update(ref(db, `rooms/${room}`), {
-          [`players/${state.playerId}`]: { name: safeName(), host: false, joinedAt: now() },
+        await update(ref(state.db, `rooms/${room}`), {
+          [`players/${state.playerId}`]: { name: safeName(), host: false, joinedAt: alreadyIn ? data.players[state.playerId].joinedAt : now() },
           [`scores/${state.playerId}`]: data.scores?.[state.playerId] || 0
         });
+
         attachRoom(room);
         showView('lobby');
         showToast('Salon rejoint');
       } catch (err) {
-        console.error(err);
-        showToast('Connexion impossible : vérifie le code, databaseURL et les règles.');
+        showError('Connexion impossible.', err);
       } finally {
         els.joinRoomBtn.disabled = false;
       }
     }
 
     function attachRoom(room) {
-      detachRoom();
+      detachRoom(false);
       state.roomCode = room;
       els.roomCodeLabel.textContent = room;
-      const mainRef = ref(db, `rooms/${room}`);
-      const cb = (snap) => {
+      const mainRef = ref(state.db, `rooms/${room}`);
+      const cb = snap => {
         state.room = snap.val();
         if (!state.room) {
+          detachRoom(false);
           showView('home');
           showToast('Salon fermé');
-          detachRoom();
           return;
         }
         render();
       };
-      onValue(mainRef, cb);
+      onValue(mainRef, cb, err => showError('Lecture du salon impossible.', err));
       state.unsub.push(() => off(mainRef, 'value', cb));
     }
 
-    function detachRoom() {
+    function detachRoom(clearCode = true) {
       state.unsub.forEach(fn => fn());
       state.childUnsub.forEach(fn => fn());
       state.unsub = [];
       state.childUnsub = [];
       clearInterval(state.timerInterval);
+      state.timerInterval = null;
       state.room = null;
-      state.roomCode = null;
+      state.segments = [];
+      state.strokesKey = null;
+      if (clearCode) state.roomCode = null;
     }
 
     async function leaveRoom() {
-      if (!state.roomCode) return;
-      const room = state.room;
-      const players = Object.keys(room?.players || {});
-      if (players.length <= 1 || isHost()) await remove(roomRef());
-      else await remove(roomRef(`players/${state.playerId}`));
+      if (!state.roomCode || !state.room) {
+        detachRoom();
+        showView('home');
+        return;
+      }
+      try {
+        const players = Object.keys(state.room.players || {});
+        if (players.length <= 1 || isHost()) {
+          await remove(roomRef());
+        } else {
+          await remove(roomRef(`players/${state.playerId}`));
+        }
+      } catch (err) {
+        showError('Impossible de quitter proprement.', err);
+      }
       detachRoom();
       showView('home');
     }
@@ -926,38 +828,45 @@
     }
 
     async function startGame() {
-      const players = playerList();
-      if (players.length !== 2) return showToast('Il faut exactement 2 joueurs');
-      const choices = makeChoices();
-      await update(roomRef(), {
-        status: 'choose',
-        round: 1,
-        choices,
-        activeWord: null,
-        attempts: {},
-        revealed: [],
-        roundWinner: null,
-        phaseStartedAt: now(),
-        phaseDeadline: 0,
-        strokes: null,
-        clearSignal: 0
-      });
+      if (!isHost()) return;
+      if (playerList().length !== 2) return showToast('Il faut exactement 2 joueurs.');
+      try {
+        await update(roomRef(), {
+          status: 'choose',
+          round: 1,
+          choices: makeChoices(),
+          activeWord: null,
+          attempts: {},
+          revealed: [],
+          roundWinner: null,
+          phaseStartedAt: now(),
+          phaseDeadline: 0,
+          strokes: null,
+          clearSignal: now()
+        });
+      } catch (err) {
+        showError('Lancement impossible.', err);
+      }
     }
 
     async function chooseWord(choice) {
       if (!isArtist()) return;
-      await update(roomRef(), {
-        status: 'draw',
-        activeWord: choice,
-        attempts: {},
-        revealed: [],
-        roundWinner: null,
-        phaseStartedAt: now(),
-        phaseDeadline: deadline(Number(state.room.settings?.drawTimer || 0)),
-        strokes: null,
-        clearSignal: now()
-      });
-      resetCanvas(true);
+      try {
+        await update(roomRef(), {
+          status: 'draw',
+          activeWord: choice,
+          attempts: {},
+          revealed: [],
+          roundWinner: null,
+          phaseStartedAt: now(),
+          phaseDeadline: deadline(Number(state.room.settings?.drawTimer || 0)),
+          strokes: null,
+          clearSignal: now()
+        });
+        resetCanvas(true);
+      } catch (err) {
+        showError('Choix du mot impossible.', err);
+      }
     }
 
     function normalizeText(str) {
@@ -970,83 +879,96 @@
       if (!guess) return;
       els.guessInput.value = '';
       const word = state.room?.activeWord?.word || '';
-      if (normalizeText(guess) === normalizeText(word)) {
-        await winRound();
-        return;
+      try {
+        if (normalizeText(guess) === normalizeText(word)) {
+          await winRound();
+          return;
+        }
+
+        const attempts = Number(state.room?.attempts?.[state.playerId] || 0) + 1;
+        const updates = { [`attempts/${state.playerId}`]: attempts };
+        const revealed = [...(state.room?.revealed || [])];
+
+        if ((attempts === 2 || attempts === 3) && revealed.length < 2) {
+          const idx = randomHiddenIndex(word, revealed);
+          if (idx !== null) revealed.push(idx);
+          updates.revealed = revealed;
+        }
+
+        if (attempts >= CONFIG.maxAttempts) {
+          updates.status = 'roundEnd';
+          updates.roundWinner = 'artist';
+          updates.roundEndedAt = now();
+        }
+
+        await update(roomRef(), updates);
+      } catch (err) {
+        showError('Réponse impossible.', err);
       }
-      const attempts = (state.room?.attempts?.[state.playerId] || 0) + 1;
-      const updates = { [`attempts/${state.playerId}`]: attempts };
-      const revealed = [...(state.room?.revealed || [])];
-      if ((attempts === 2 || attempts === 3) && revealed.length < 2) {
-        const idx = randomHiddenIndex(word, revealed);
-        if (idx !== null) revealed.push(idx);
-        updates.revealed = revealed;
-      }
-      if (attempts >= CONFIG.maxAttempts) {
-        updates.status = 'roundEnd';
-        updates.roundWinner = 'artist';
-        updates.roundEndedAt = now();
-      }
-      await update(roomRef(), updates);
     }
 
     function randomHiddenIndex(word, revealed) {
       const candidates = [...word].map((ch, i) => /[a-zA-ZÀ-ÿ0-9]/.test(ch) && !revealed.includes(i) ? i : null).filter(v => v !== null);
-      if (!candidates.length) return null;
-      return candidates[Math.floor(Math.random() * candidates.length)];
+      return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
     }
 
     async function winRound() {
-      const wordPoints = Number(state.room.activeWord?.points || 1);
+      const points = Number(state.room.activeWord?.points || 1);
       const artist = currentArtistId();
       const guesser = state.playerId;
-      const updates = {
+      await update(roomRef(), {
         status: 'roundEnd',
         roundWinner: guesser,
         roundEndedAt: now(),
-        [`scores/${guesser}`]: scoreOf(guesser) + wordPoints,
-        [`scores/${artist}`]: scoreOf(artist) + Math.max(1, Math.floor(wordPoints / 2))
-      };
-      await update(roomRef(), updates);
+        [`scores/${guesser}`]: scoreOf(guesser) + points,
+        [`scores/${artist}`]: scoreOf(artist) + Math.max(1, Math.floor(points / 2))
+      });
     }
 
     async function finishDrawing() {
       if (!isArtist()) return;
-      await saveCurrentDrawing();
-      await update(roomRef(), {
-        status: 'guess',
-        phaseStartedAt: now(),
-        phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)),
-        attempts: {},
-        revealed: []
-      });
+      try {
+        await saveCurrentDrawing();
+        await update(roomRef(), {
+          status: 'guess',
+          phaseStartedAt: now(),
+          phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)),
+          attempts: {},
+          revealed: []
+        });
+      } catch (err) {
+        showError('Impossible de terminer le dessin.', err);
+      }
     }
 
     async function nextRound() {
       if (!isHost()) return;
-      const round = Number(state.room.round || 1);
-      if (round >= CONFIG.totalRounds) {
-        await update(roomRef(), { status: 'gameOver', phaseStartedAt: now() });
-        return;
+      try {
+        const round = Number(state.room.round || 1);
+        if (round >= CONFIG.totalRounds) {
+          await update(roomRef(), { status: 'gameOver', phaseStartedAt: now() });
+          return;
+        }
+        await update(roomRef(), {
+          status: 'choose',
+          round: round + 1,
+          choices: makeChoices(),
+          activeWord: null,
+          attempts: {},
+          revealed: [],
+          roundWinner: null,
+          phaseStartedAt: now(),
+          phaseDeadline: 0,
+          strokes: null,
+          clearSignal: now()
+        });
+      } catch (err) {
+        showError('Manche suivante impossible.', err);
       }
-      await update(roomRef(), {
-        status: 'choose',
-        round: round + 1,
-        choices: makeChoices(),
-        activeWord: null,
-        attempts: {},
-        revealed: [],
-        roundWinner: null,
-        phaseStartedAt: now(),
-        phaseDeadline: 0,
-        strokes: null,
-        clearSignal: now()
-      });
-      resetCanvas(true);
     }
 
     async function saveCurrentDrawing() {
-      const canvas = els.drawCanvas.classList.contains('hidden') ? els.watchCanvas : els.drawCanvas;
+      const canvas = isArtist() ? els.drawCanvas : els.watchCanvas;
       const dataUrl = shrinkCanvasDataUrl(canvas);
       const roundKey = String(state.room.round || 1);
       await update(roomRef(`gallery/${roundKey}`), {
@@ -1055,7 +977,7 @@
         difficulty: state.room.activeWord?.label || '',
         points: state.room.activeWord?.points || 1,
         artistId: currentArtistId(),
-        artistName: opponentName(currentArtistId()),
+        artistName: playerNameById(currentArtistId()),
         createdAt: now()
       });
     }
@@ -1063,12 +985,12 @@
     function shrinkCanvasDataUrl(canvas) {
       const out = document.createElement('canvas');
       const maxW = 900;
-      const scale = Math.min(1, maxW / canvas.width);
-      out.width = Math.round(canvas.width * scale);
-      out.height = Math.round(canvas.height * scale);
+      const scale = Math.min(1, maxW / Math.max(1, canvas.width));
+      out.width = Math.max(1, Math.round(canvas.width * scale));
+      out.height = Math.max(1, Math.round(canvas.height * scale));
       const ctx = out.getContext('2d');
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0,0,out.width,out.height);
+      ctx.fillRect(0, 0, out.width, out.height);
       ctx.drawImage(canvas, 0, 0, out.width, out.height);
       let q = .9;
       let url = out.toDataURL('image/jpeg', q);
@@ -1085,7 +1007,6 @@
       if (room.status === 'lobby') showView('lobby');
       if (['choose','draw','guess','roundEnd'].includes(room.status)) showView('game');
       if (room.status === 'gameOver') showView('gallery');
-
       renderLobby();
       renderGame();
       renderGallery();
@@ -1097,18 +1018,18 @@
       els.roomCodeLabel.textContent = state.roomCode || '';
       const players = playerList();
       els.playersList.innerHTML = players.map(([id, p], idx) => `
-        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-cyan-400 text-slate-950' : 'bg-pink-400 text-slate-950'}">${idx + 1}</div>
-            <div>
-              <div class="font-black">${escapeHtml(p.name || 'Joueur')}</div>
+        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3 gap-2">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 shrink-0 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-cyan-400 text-slate-950' : 'bg-pink-400 text-slate-950'}">${idx + 1}</div>
+            <div class="min-w-0">
+              <div class="font-black truncate">${escapeHtml(p.name || 'Joueur')}</div>
               <div class="text-xs text-white/45">${p.host ? 'Hôte' : 'Invité'}${id === state.playerId ? ' • toi' : ''}</div>
             </div>
           </div>
           <div class="text-xl font-black">${scoreOf(id)}</div>
         </div>
       `).join('');
-      els.lobbyHint.textContent = players.length < 2 ? 'Partage le code avec ton adversaire. Le bouton de lancement sera actif dès que vous êtes deux.' : 'Les deux joueurs sont prêts. Que le meilleur gribouillage gagne.';
+      els.lobbyHint.textContent = players.length < 2 ? 'Partage ce code avec ton adversaire. Dès que vous êtes deux, l’hôte peut lancer.' : 'Les deux joueurs sont là. L’hôte peut lancer la partie.';
       els.startGameBtn.disabled = !isHost() || players.length !== 2;
       els.startGameBtn.textContent = isHost() ? 'Lancer la partie' : 'En attente de l’hôte';
     }
@@ -1116,16 +1037,16 @@
     function renderGame() {
       document.body.dataset.status = state.room?.status || '';
       if (!state.room || state.room.status === 'lobby' || state.room.status === 'gameOver') return;
+
       const room = state.room;
       const players = playerList();
-      els.roundLabel.textContent = `${room.round || 1}/${CONFIG.totalRounds}`;
-      els.scoreLabel.textContent = players.map(([id]) => scoreOf(id)).join(' - ');
-
       const artistId = currentArtistId();
-      const artistName = opponentName(artistId);
+      const artistName = playerNameById(artistId);
       const meArtist = artistId === state.playerId;
       const word = room.activeWord?.word || '';
 
+      els.roundLabel.textContent = `${room.round || 1}/${CONFIG.totalRounds}`;
+      els.scoreLabel.textContent = players.map(([id]) => scoreOf(id)).join(' - ');
       hidePanels();
 
       if (room.status === 'choose') {
@@ -1148,7 +1069,7 @@
         setupCanvasMode(false);
         attachStrokesListener();
         renderMaskedWord();
-        const attempts = room.attempts?.[state.playerId] || 0;
+        const attempts = Number(room.attempts?.[state.playerId] || 0);
         els.attemptsLabel.textContent = `${attempts}/${CONFIG.maxAttempts} erreurs`;
         els.guessInput.disabled = meArtist;
         els.guessBtn.disabled = meArtist;
@@ -1158,7 +1079,7 @@
         els.roundEndPanel.classList.remove('hidden');
         const guessed = room.roundWinner && room.roundWinner !== 'artist';
         els.roundEndTitle.textContent = guessed ? 'Mot trouvé !' : 'Fin de manche';
-        els.roundEndText.textContent = guessed ? `${opponentName(room.roundWinner)} a trouvé « ${word} ».` : `Personne n’a trouvé « ${word} ».`;
+        els.roundEndText.textContent = guessed ? `${playerNameById(room.roundWinner)} a trouvé « ${word} ».` : `Personne n’a trouvé « ${word} ».`;
         els.nextRoundBtn.disabled = !isHost();
         els.nextRoundBtn.textContent = isHost() ? (room.round >= CONFIG.totalRounds ? 'Voir la galerie' : 'Manche suivante') : 'En attente de l’hôte';
       }
@@ -1174,14 +1095,15 @@
       const choices = state.room.choices || [];
       els.wordChoices.innerHTML = choices.map((c, i) => `
         <button data-choice="${i}" class="btn btn-dark w-full text-left ${enabled ? '' : 'opacity-50'}" ${enabled ? '' : 'disabled'}>
-          <div class="flex items-center justify-between">
-            <span class="text-xl font-black">${escapeHtml(c.word)}</span>
-            <span class="rounded-full px-3 py-1 text-xs font-black bg-white/10">${c.points} pt${c.points > 1 ? 's' : ''}</span>
+          <div class="w-full flex items-center justify-between gap-2">
+            <span class="text-xl font-black truncate">${escapeHtml(c.word)}</span>
+            <span class="rounded-full px-3 py-1 text-xs font-black bg-white/10 shrink-0">${c.points} pt${c.points > 1 ? 's' : ''}</span>
           </div>
-          <div class="text-sm text-white/50 mt-1">${c.label}</div>
+          <div class="w-full text-sm text-white/50 mt-1">${escapeHtml(c.label)}</div>
         </button>
       `).join('');
-      [...els.wordChoices.querySelectorAll('[data-choice]')].forEach(btn => {
+
+      els.wordChoices.querySelectorAll('[data-choice]').forEach(btn => {
         btn.addEventListener('click', () => chooseWord(choices[Number(btn.dataset.choice)]));
       });
     }
@@ -1206,61 +1128,70 @@
     }
 
     function syncTimerGuard() {
-      clearInterval(state.timerInterval);
+      if (state.timerInterval) return;
       state.timerInterval = setInterval(async () => {
         if (!state.room) return;
         renderTimer();
         const deadlineMs = Number(state.room.phaseDeadline || 0);
         if (!deadlineMs || now() < deadlineMs || !isHost()) return;
-        if (state.room.status === 'draw') {
-          await update(roomRef(), { status: 'guess', phaseStartedAt: now(), phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)) });
-        } else if (state.room.status === 'guess') {
-          await update(roomRef(), { status: 'roundEnd', roundWinner: 'artist', roundEndedAt: now() });
+        try {
+          if (state.room.status === 'draw') {
+            if (isArtist()) await saveCurrentDrawing();
+            await update(roomRef(), {
+              status: 'guess',
+              phaseStartedAt: now(),
+              phaseDeadline: deadline(Number(state.room.settings?.guessTimer || 300)),
+              attempts: {},
+              revealed: []
+            });
+          } else if (state.room.status === 'guess') {
+            await update(roomRef(), { status: 'roundEnd', roundWinner: 'artist', roundEndedAt: now() });
+          }
+        } catch (err) {
+          showError('Timer impossible.', err);
         }
       }, 500);
     }
 
     function setupCanvasMode(canDraw) {
-      resizeCanvases();
+      resizeCanvases(true);
       els.drawCanvas.classList.toggle('hidden', !canDraw);
       els.watchCanvas.classList.toggle('hidden', canDraw);
       els.toolsPanel.classList.toggle('hidden', !canDraw);
-      els.toolsPanel.classList.toggle('flex', canDraw);
-      els.canvasLock.classList.toggle('hidden', state.room.status !== 'draw' || canDraw);
-      els.canvasLock.classList.toggle('grid', state.room.status === 'draw' && !canDraw);
+      els.canvasLock.classList.toggle('show', state.room.status === 'draw' && !canDraw);
       if (canDraw) initDrawEvents();
     }
 
-    function resizeCanvases() {
+    function resizeCanvases(replay = false) {
       [els.drawCanvas, els.watchCanvas].forEach(canvas => {
         const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        const w = Math.max(320, Math.floor(rect.width * ratio));
-        const h = Math.max(320, Math.floor(rect.height * ratio));
+        const w = Math.max(240, Math.round(rect.width * ratio));
+        const h = Math.max(240, Math.round(rect.height * ratio));
         if (canvas.width !== w || canvas.height !== h) {
-          const old = document.createElement('canvas');
-          old.width = canvas.width;
-          old.height = canvas.height;
-          old.getContext('2d').drawImage(canvas, 0, 0);
           canvas.width = w;
           canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, w, h);
-          if (old.width) ctx.drawImage(old, 0, 0, w, h);
+          fillWhite(canvas.getContext('2d'));
         }
       });
       state.ctx = els.drawCanvas.getContext('2d');
       state.watchCtx = els.watchCanvas.getContext('2d');
+      if (replay) replaySegments();
+    }
+
+    function fillWhite(ctx) {
+      if (!ctx) return;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 
     function resetCanvas(emit = false) {
-      resizeCanvases();
-      [state.ctx, state.watchCtx].forEach(ctx => {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      });
-      if (emit && state.roomCode) update(roomRef(), { strokes: null, clearSignal: now() });
+      state.segments = [];
+      resizeCanvases(false);
+      fillWhite(state.ctx);
+      fillWhite(state.watchCtx);
+      if (emit && state.roomCode) update(roomRef(), { strokes: null, clearSignal: now() }).catch(err => showError('Effacement impossible.', err));
     }
 
     let drawEventsReady = false;
@@ -1277,15 +1208,14 @@
     }
 
     function pointFromEvent(e) {
-      const canvas = els.drawCanvas;
-      const rect = canvas.getBoundingClientRect();
-      const ratioX = canvas.width / rect.width;
-      const ratioY = canvas.height / rect.height;
+      const rect = els.drawCanvas.getBoundingClientRect();
       return {
-        x: (e.clientX - rect.left) * ratioX,
-        y: (e.clientY - rect.top) * ratioY
+        x: clamp((e.clientX - rect.left) / Math.max(1, rect.width), 0, 1),
+        y: clamp((e.clientY - rect.top) / Math.max(1, rect.height), 0, 1)
       };
     }
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
     function startStroke(e) {
       if (!isArtist() || state.room?.status !== 'draw') return;
@@ -1306,8 +1236,9 @@
         size: state.eraser ? state.selectedSize * 2.2 : state.selectedSize,
         t: now()
       };
+      state.segments.push(segment);
       drawSegment(state.ctx, segment);
-      push(roomRef('strokes'), segment);
+      push(roomRef('strokes'), segment).catch(err => showError('Envoi du trait impossible.', err));
       state.lastPoint = to;
     }
 
@@ -1318,58 +1249,77 @@
 
     function drawSegment(ctx, s) {
       if (!ctx || !s?.from || !s?.to) return;
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = s.color;
-      ctx.lineWidth = s.size;
+      ctx.lineWidth = Math.max(1, s.size * Math.max(w, h) / 430);
       ctx.beginPath();
-      ctx.moveTo(s.from.x, s.from.y);
-      ctx.lineTo(s.to.x, s.to.y);
+      ctx.moveTo(s.from.x * w, s.from.y * h);
+      ctx.lineTo(s.to.x * w, s.to.y * h);
       ctx.stroke();
     }
 
+    function replaySegments() {
+      fillWhite(state.ctx);
+      fillWhite(state.watchCtx);
+      for (const segment of state.segments) {
+        drawSegment(state.ctx, segment);
+        drawSegment(state.watchCtx, segment);
+      }
+    }
+
     function attachStrokesListener() {
-      if (state.strokesRoom === state.roomCode && state.strokesRound === state.room?.round) return;
+      const key = `${state.roomCode}:${state.room?.round || 1}`;
+      if (state.strokesKey === key) return;
+
       state.childUnsub.forEach(fn => fn());
       state.childUnsub = [];
-      state.strokesRoom = state.roomCode;
-      state.strokesRound = state.room?.round;
+      state.strokesKey = key;
       resetCanvas(false);
-      const strokes = roomRef('strokes');
+
+      const strokesRef = roomRef('strokes');
       const cb = snap => {
         const segment = snap.val();
+        state.segments.push(segment);
         drawSegment(state.watchCtx, segment);
         if (!isArtist()) drawSegment(state.ctx, segment);
       };
-      onChildAdded(strokes, cb);
-      state.childUnsub.push(() => off(strokes, 'child_added', cb));
-      const clear = roomRef('clearSignal');
+      onChildAdded(strokesRef, cb);
+      state.childUnsub.push(() => off(strokesRef, 'child_added', cb));
+
+      const clearRef = roomRef('clearSignal');
       const clearCb = () => resetCanvas(false);
-      onValue(clear, clearCb);
-      state.childUnsub.push(() => off(clear, 'value', clearCb));
+      onValue(clearRef, clearCb);
+      state.childUnsub.push(() => off(clearRef, 'value', clearCb));
     }
 
     function buildTools() {
-      els.palette.innerHTML = CONFIG.colors.map(c => `<button class="color-dot" data-color="${c}" style="background:${c}"></button>`).join('');
-      [...els.palette.children].forEach(btn => btn.addEventListener('click', () => {
-        state.selectedColor = btn.dataset.color;
-        state.eraser = false;
-        updateToolState();
-      }));
+      els.palette.innerHTML = CONFIG.colors.map(c => `<button class="color-dot" data-color="${c}" style="background:${c}" aria-label="Couleur ${c}"></button>`).join('');
+      els.palette.querySelectorAll('[data-color]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedColor = btn.dataset.color;
+          state.eraser = false;
+          updateToolState();
+        });
+      });
 
-      els.sizes.innerHTML = CONFIG.sizes.map(s => `<button class="size-dot" data-size="${s}"><span style="width:${Math.min(s,18)}px;height:${Math.min(s,18)}px"></span></button>`).join('');
-      [...els.sizes.children].forEach(btn => btn.addEventListener('click', () => {
-        state.selectedSize = Number(btn.dataset.size);
-        updateToolState();
-      }));
+      els.sizes.innerHTML = CONFIG.sizes.map(s => `<button class="size-dot" data-size="${s}" aria-label="Taille ${s}"><span style="width:${Math.min(s,18)}px;height:${Math.min(s,18)}px"></span></button>`).join('');
+      els.sizes.querySelectorAll('[data-size]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedSize = Number(btn.dataset.size);
+          updateToolState();
+        });
+      });
       updateToolState();
     }
 
     function updateToolState() {
-      [...els.palette.children].forEach(btn => btn.classList.toggle('active', btn.dataset.color === state.selectedColor && !state.eraser));
-      [...els.sizes.children].forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === state.selectedSize));
-      els.eraserBtn.classList.toggle('ring-2', state.eraser);
-      els.eraserBtn.classList.toggle('ring-white', state.eraser);
+      els.palette.querySelectorAll('[data-color]').forEach(btn => btn.classList.toggle('active', btn.dataset.color === state.selectedColor && !state.eraser));
+      els.sizes.querySelectorAll('[data-size]').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === state.selectedSize));
+      els.toolEraser.classList.toggle('ring-2', state.eraser);
+      els.toolEraser.classList.toggle('ring-white', state.eraser);
     }
 
     function renderGallery() {
@@ -1377,10 +1327,10 @@
       const players = playerList();
       const sorted = [...players].sort((a,b) => scoreOf(b[0]) - scoreOf(a[0]));
       els.rankingBox.innerHTML = sorted.map(([id, p], idx) => `
-        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-yellow-300 text-slate-950' : 'bg-white/10'}">${idx + 1}</div>
-            <div class="font-black">${escapeHtml(p.name || 'Joueur')}${id === state.playerId ? ' <span class="text-white/40 text-xs">toi</span>' : ''}</div>
+        <div class="flex items-center justify-between rounded-2xl bg-white/[.06] px-3 py-3 gap-2">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 shrink-0 rounded-full grid place-items-center font-black ${idx === 0 ? 'bg-yellow-300 text-slate-950' : 'bg-white/10'}">${idx + 1}</div>
+            <div class="font-black truncate">${escapeHtml(p.name || 'Joueur')}${id === state.playerId ? ' <span class="text-white/40 text-xs">toi</span>' : ''}</div>
           </div>
           <div class="text-2xl font-black">${scoreOf(id)}</div>
         </div>
@@ -1392,95 +1342,53 @@
         const voteCount = Object.values(votes).filter(v => String(v) === String(round)).length;
         const voted = String(votes[state.playerId] || '') === String(round);
         return `
-          <article class="glass rounded-[24px] p-2 overflow-hidden">
-            <img src="${item.dataUrl}" alt="Dessin manche ${round}" class="w-full aspect-square object-cover rounded-[18px] bg-white" />
+          <article class="glass rounded-[22px] p-2 overflow-hidden">
+            <img src="${item.dataUrl}" alt="Dessin manche ${round}" class="w-full aspect-square object-cover rounded-[16px] bg-white" />
             <div class="p-2">
               <div class="text-xs text-white/45">Manche ${round} • ${escapeHtml(item.difficulty || '')}</div>
               <div class="font-black truncate">${escapeHtml(item.word || '')}</div>
               <div class="text-xs text-white/50 truncate">par ${escapeHtml(item.artistName || 'Joueur')}</div>
-              <div class="grid grid-cols-2 gap-2 mt-2">
-                <button data-vote="${round}" class="btn btn-dark !min-h-0 !py-2 !px-2 text-xs ${voted ? 'ring-2 ring-yellow-300' : ''}">🏆 ${voteCount}</button>
-                <button data-download="${round}" class="btn btn-dark !min-h-0 !py-2 !px-2 text-xs">PNG</button>
-              </div>
+              <button data-vote="${round}" class="btn btn-dark w-full !min-h-0 !py-2 !px-2 text-xs mt-2 ${voted ? 'ring-2 ring-yellow-300' : ''}">🏆 ${voteCount}</button>
             </div>
           </article>
         `;
       }).join('');
 
-      [...els.galleryGrid.querySelectorAll('[data-vote]')].forEach(btn => btn.addEventListener('click', () => voteFor(btn.dataset.vote)));
-      [...els.galleryGrid.querySelectorAll('[data-download]')].forEach(btn => btn.addEventListener('click', () => downloadDrawing(btn.dataset.download)));
+      els.galleryGrid.querySelectorAll('[data-vote]').forEach(btn => btn.addEventListener('click', () => voteFor(btn.dataset.vote)));
     }
 
     async function voteFor(round) {
-      await update(roomRef(`votes`), { [state.playerId]: String(round) });
-      showToast('Vote enregistré');
-    }
-
-    function downloadDrawing(round) {
-      const item = state.room?.gallery?.[round];
-      if (!item?.dataUrl) return;
-      const a = document.createElement('a');
-      a.href = item.dataUrl;
-      a.download = `drawduel-manche-${round}-${slug(item.word || 'dessin')}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function slug(str) {
-      return normalizeText(str).slice(0, 28) || 'dessin';
+      try {
+        await update(roomRef('votes'), { [state.playerId]: String(round) });
+        showToast('Vote enregistré');
+      } catch (err) {
+        showError('Vote impossible.', err);
+      }
     }
 
     function escapeHtml(str) {
       return String(str).replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
     }
 
-    function installPwaManifest() {
-      const manifest = {
-        name: 'DrawDuel', short_name: 'DrawDuel', start_url: '.', display: 'standalone',
-        background_color: '#09090f', theme_color: '#111827', orientation: 'portrait',
-        icons: [
-          { src: iconSvg('#22d3ee'), sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: iconSvg('#ec4899'), sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = URL.createObjectURL(blob);
-      document.head.appendChild(link);
-    }
-
-    function iconSvg(color) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#09090f"/><circle cx="160" cy="170" r="66" fill="${color}"/><path d="M128 350c92-142 162-162 256-208-46 96-78 168-224 256-20 12-44-28-32-48z" fill="#fff"/></svg>`;
-      return 'data:image/svg+xml;base64,' + btoa(svg);
-    }
-
-    window.addEventListener('resize', () => setTimeout(resizeCanvases, 120));
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) renderTimer(); });
-
     els.createRoomBtn.addEventListener('click', createRoom);
     els.joinRoomBtn.addEventListener('click', joinRoom);
-    els.joinCode.addEventListener('input', () => els.joinCode.value = els.joinCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
+    els.joinCode.addEventListener('input', () => {
+      els.joinCode.value = els.joinCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+    });
     els.leaveBtn.addEventListener('click', leaveRoom);
     els.startGameBtn.addEventListener('click', startGame);
-    els.eraserBtn.addEventListener('click', () => { state.eraser = !state.eraser; updateToolState(); });
-    els.clearBtn.addEventListener('click', () => resetCanvas(true));
-    els.finishDrawingBtn.addEventListener('click', finishDrawing);
+    els.toolEraser.addEventListener('click', () => { state.eraser = !state.eraser; updateToolState(); });
+    els.toolClear.addEventListener('click', () => resetCanvas(true));
+    els.toolDone.addEventListener('click', finishDrawing);
     els.guessBtn.addEventListener('click', submitGuess);
     els.guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
     els.nextRoundBtn.addEventListener('click', nextRound);
     els.newGameBtn.addEventListener('click', () => { detachRoom(); showView('home'); });
 
     els.playerName.value = localStorage.getItem('drawduel_name') || '';
-    if (!firebaseReady) {
-      els.createRoomBtn.textContent = 'Configurer Firebase d’abord';
-      els.joinRoomBtn.textContent = 'Config';
-      setTimeout(() => showToast('Firebase n’est pas encore configuré dans le fichier.'), 500);
-    }
     buildTools();
-    installPwaManifest();
-    setTimeout(resizeCanvases, 300);
+    initFirebase();
+    setTimeout(() => resizeCanvases(true), 250);
   </script>
 </body>
 </html>
