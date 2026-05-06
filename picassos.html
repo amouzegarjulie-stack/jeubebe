@@ -1044,18 +1044,34 @@ if (correct) {
   };
 }
 
-    function drawSegment(from, to, stroke) {
-      const rect = canvas.getBoundingClientRect();
-      ctx.save();
-      ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
-      ctx.strokeStyle = stroke.color || "#111827";
-      ctx.lineWidth = stroke.size || 8;
-      ctx.beginPath();
-      ctx.moveTo(from.x * rect.width, from.y * rect.height);
-      ctx.lineTo(to.x * rect.width, to.y * rect.height);
-      ctx.stroke();
-      ctx.restore();
-    }
+  function drawSegment(from, to, stroke) {
+  if (!from || !to) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  const fromX = from.x * rect.width;
+  const fromY = from.y * rect.height;
+  const toX = to.x * rect.width;
+  const toY = to.y * rect.height;
+
+  ctx.save();
+  ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
+  ctx.strokeStyle = stroke.color || "#111827";
+  ctx.lineWidth = stroke.size || 8;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // Courbe au lieu d'une simple ligne droite : beaucoup plus naturel au doigt
+  const midX = (fromX + toX) / 2;
+  const midY = (fromY + toY) / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.quadraticCurveTo(fromX, fromY, midX, midY);
+  ctx.stroke();
+
+  ctx.restore();
+}
 
    async function beginDraw(event) {
   if (!isDrawer() || state.room?.phase !== "drawing") return;
@@ -1081,24 +1097,26 @@ if (correct) {
   });
 }
 
-  async function moveDraw(event) {
+ function moveDraw(event) {
   if (!state.drawing || !state.currentStrokeId) return;
 
   event.preventDefault();
 
   const point = getPoint(event);
+
   const stroke = {
     color: state.tool.color,
     size: state.tool.size,
     eraser: state.tool.eraser
   };
 
+  // Dessin local immédiat, sans attendre Firebase
   drawSegment(state.lastPoint, point, stroke);
   state.lastPoint = point;
 
-  await push(roomRef(`strokes/${state.currentStrokeId}/points`), point);
+  // Envoi Firebase sans await, pour ne pas ralentir le doigt
+  push(roomRef(`strokes/${state.currentStrokeId}/points`), point).catch(console.error);
 }
-
    function endDraw(event) {
   if (!state.drawing) return;
 
