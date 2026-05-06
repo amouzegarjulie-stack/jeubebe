@@ -9,7 +9,6 @@
   <meta name="apple-mobile-web-app-title" content="Draw Duel" />
   <title>Draw Duel - Pictionnary mobile</title>
 
-  <!-- PWA minimaliste : le manifest est injecté en JS pour garder un seul fichier HTML. -->
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%237c3aed'/%3E%3Cpath d='M137 354l29-91 119-119c22-22 58-22 80 0s22 58 0 80L246 343l-91 29c-11 3-21-7-18-18z' fill='white'/%3E%3C/svg%3E" />
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,7 +46,7 @@
       margin: 0;
       overflow: hidden;
       overscroll-behavior: none;
-      touch-action: manipulation;
+      touch-action: none;
       background: #f7f7ff;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -112,6 +111,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      touch-action: pan-y;
     }
 
     .no-scrollbar::-webkit-scrollbar {
@@ -126,6 +126,7 @@
       transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
       touch-action: manipulation;
       user-select: none;
+      -webkit-user-select: none;
     }
 
     .btn-primary {
@@ -195,6 +196,9 @@
       border: 1px solid rgba(99, 102, 241, 0.16);
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 16px 34px rgba(38, 31, 79, 0.08);
       touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     #drawCanvas {
@@ -203,6 +207,10 @@
       display: block;
       background: white;
       touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      cursor: crosshair;
     }
 
     .tool-dot {
@@ -297,12 +305,12 @@
     }
   </style>
 </head>
+
 <body>
   <main class="iphone-shell">
     <section class="app-frame relative">
       <div id="toast" class="toast"></div>
 
-      <!-- HOME -->
       <section id="view-home" class="view active p-4 gap-4">
         <header class="pt-2 text-center">
           <div class="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-[24px] bg-gradient-to-br from-violet-600 via-fuchsia-500 to-rose-400 text-3xl shadow-glow">✏️</div>
@@ -345,11 +353,10 @@
         </div>
 
         <div class="mt-auto card p-4 text-xs leading-relaxed text-slate-500">
-          <p><strong class="text-slate-700">Firebase requis :</strong> colle tes clés dans la section <code>firebaseConfig</code> du JavaScript. La base Realtime Database doit être activée.</p>
+          <p><strong class="text-slate-700">Firebase requis :</strong> colle tes clés dans la section <code>firebaseConfig</code>. La base Realtime Database doit être activée.</p>
         </div>
       </section>
 
-      <!-- SALON -->
       <section id="view-lobby" class="view p-4 gap-3">
         <header class="flex items-center justify-between gap-2">
           <button id="leaveLobbyBtn" class="btn btn-secondary min-h-0 px-3 py-2">←</button>
@@ -381,7 +388,6 @@
         </div>
       </section>
 
-      <!-- GAME -->
       <section id="view-game" class="view p-3 gap-2">
         <header class="flex items-center justify-between gap-2">
           <div class="pill">M<span id="roundLabel">1</span>/6</div>
@@ -414,18 +420,17 @@
         </div>
 
         <div id="drawingTools" class="card p-2 space-y-2 hidden">
-      <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2">
-  <div id="colorTools" class="flex min-w-0 flex-wrap gap-1.5"></div>
-  <button id="eraserBtn" class="btn btn-secondary min-h-0 px-2 py-2 text-xs">Gomme</button>
-  <button id="clearBtn" class="btn btn-danger min-h-0 px-2 py-2 text-xs">Effacer</button>
-</div>
+          <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+            <div id="colorTools" class="flex min-w-0 flex-wrap gap-1.5"></div>
+            <button id="eraserBtn" class="btn btn-secondary min-h-0 px-2 py-2 text-xs">Gomme</button>
+            <button id="clearBtn" class="btn btn-danger min-h-0 px-2 py-2 text-xs">Effacer</button>
+          </div>
           <div id="sizeTools" class="flex items-center justify-center gap-3"></div>
         </div>
 
         <button id="forceNextBtn" class="btn btn-secondary hidden">Terminer la manche</button>
       </section>
 
-      <!-- GALLERY -->
       <section id="view-gallery" class="view p-4 gap-3">
         <header class="text-center">
           <p class="text-xs font-black uppercase tracking-wide text-slate-400">Fin de partie</p>
@@ -434,28 +439,13 @@
         </header>
 
         <div id="finalScores" class="grid grid-cols-2 gap-3"></div>
-
         <div id="galleryGrid" class="scroll-area no-scrollbar grid grid-cols-2 content-start gap-3 pb-2"></div>
-
         <button id="newGameBtn" class="btn btn-primary w-full">Nouvelle partie</button>
       </section>
     </section>
   </main>
 
   <script type="module">
-    /**********************************************************************
-     * CONFIGURATION FIREBASE
-     * 1. Crée un projet Firebase.
-     * 2. Active Realtime Database.
-     * 3. Colle tes clés ci-dessous.
-     * 4. Pour tester vite, règles temporaires possibles :
-     *    {
-     *      "rules": {
-     *        "rooms": { ".read": true, ".write": true }
-     *      }
-     *    }
-     *    Attention : ces règles ouvertes sont uniquement pour du prototype.
-     **********************************************************************/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
       getDatabase,
@@ -480,14 +470,10 @@ const firebaseConfig = {
   messagingSenderId: "1018160779227",
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    /**********************************************************************
-     * BASE DE MOTS INTERNE
-     * Facile = 1 point, Moyen = 2 points, Difficile = 3 points.
-     * Ajoute simplement des mots dans les tableaux.
-     **********************************************************************/
     const WORD_BANK = {
       easy: [
         "chat", "chien", "soleil", "lune", "maison", "arbre", "fleur", "pomme", "banane", "voiture",
@@ -495,7 +481,7 @@ const firebaseConfig = {
         "pizza", "glace", "gateau", "pluie", "neige", "nuage", "coeur", "etoile", "main", "pied",
         "nez", "oeil", "bouche", "poisson", "oiseau", "lapin", "souris", "tasse", "cle", "sac",
         "montre", "ballon", "crayon", "feu", "eau", "pont", "route", "roi", "reine", "couronne",
-        "brosse", "savon", "cactus", "fantome", "robot", "dinosaure", "fusée", "tortue", "serpent", "grenouille",
+        "brosse", "savon", "cactus", "fantome", "robot", "dinosaure", "fusee", "tortue", "serpent", "grenouille"
       ],
       medium: [
         "parapluie", "ordinateur", "telephone", "montagne", "chateau", "fromage", "boulangerie", "pompier", "policier", "docteur",
@@ -503,7 +489,7 @@ const firebaseConfig = {
         "helicoptere", "tracteur", "ambulance", "bibliotheque", "cinema", "restaurant", "supermarche", "ascenseur", "escalier", "miroir",
         "batterie", "guitare", "violon", "microphone", "appareil photo", "volcan", "desert", "ile", "phare", "camping",
         "valise", "lunettes", "chaussure", "bonhomme de neige", "arc en ciel", "cerf volant", "sous marin", "machine a laver", "toboggan", "skateboard",
-        "basketball", "football", "tennis", "natation", "yoga", "magicien", "facteur", "astronaute", "detective", "jardinier",
+        "basketball", "football", "tennis", "natation", "yoga", "magicien", "facteur", "astronaute", "detective", "jardinier"
       ],
       hard: [
         "microscope", "labyrinthe", "camouflage", "equilibriste", "parachute", "constellation", "satellite", "hippocampe", "ornithorynque", "metamorphose",
@@ -511,7 +497,7 @@ const firebaseConfig = {
         "tourbillon", "avalanche", "boussole", "telescope", "thermometre", "engrenage", "robot aspirateur", "panneau solaire", "voiture electrique", "empreinte digitale",
         "sablier", "accordeon", "xylophone", "scaphandrier", "epouvantail", "naufrage", "feu d artifice", "machine a remonter le temps", "porte bonheur", "chasse au tresor",
         "capitaine", "funambule", "alchimiste", "cartographe", "labourer", "hibernation", "eclipse", "mirage", "tsunami", "quarantaine",
-        "teleportation", "horloge coucou", "tapis volant", "station spatiale", "roue hydraulique", "origami", "domino", "puzzle", "masque de carnaval", "theatre d ombres",
+        "teleportation", "horloge coucou", "tapis volant", "station spatiale", "roue hydraulique", "origami", "domino", "puzzle", "masque de carnaval", "theatre d ombres"
       ],
     };
 
@@ -525,10 +511,9 @@ const firebaseConfig = {
     const MAX_ATTEMPTS = 5;
     const COLORS = ["#111827", "#ef4444", "#f59e0b", "#22c55e", "#06b6d4", "#8b5cf6"];
     const SIZES = [4, 8, 14];
+    const DPR_MAX = 2;
+    const FIREBASE_FLUSH_MS = 45;
 
-    /**********************************************************************
-     * ETAT LOCAL
-     **********************************************************************/
     const state = {
       roomCode: null,
       playerId: localStorage.getItem("drawDuelPlayerId") || crypto.randomUUID(),
@@ -537,14 +522,18 @@ const firebaseConfig = {
       currentView: "home",
       unsubRoom: null,
       unsubStrokes: null,
+      remotePointUnsubs: [],
       drawing: false,
       currentStrokeId: null,
       lastPoint: null,
       tool: { color: COLORS[0], size: SIZES[1], eraser: false },
       timerInterval: null,
-      revealedIndexes: [],
       canvasSnapshotTimer: null,
+      pendingRemotePoints: [],
+      flushTimer: null,
+      localStrokeIds: new Set(),
     };
+
     localStorage.setItem("drawDuelPlayerId", state.playerId);
 
     const $ = (id) => document.getElementById(id);
@@ -556,21 +545,18 @@ const firebaseConfig = {
     };
 
     const canvas = $("drawCanvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
 
-    /**********************************************************************
-     * UTILITAIRES UI + PWA
-     **********************************************************************/
     function setVH() {
       document.documentElement.style.setProperty("--vh", `${window.innerHeight * 0.01}px`);
       resizeCanvasKeepingContent();
     }
-    window.addEventListener("resize", setVH);
-    window.addEventListener("orientationchange", setVH);
-    setVH();
+
+    window.addEventListener("resize", setVH, { passive: true });
+    window.addEventListener("orientationchange", setVH, { passive: true });
 
     document.addEventListener("touchmove", (event) => {
-      if (event.target.closest("#drawCanvas")) return;
+      if (event.target === canvas) return;
       if (!event.target.closest(".scroll-area")) event.preventDefault();
     }, { passive: false });
 
@@ -588,6 +574,7 @@ const firebaseConfig = {
         type: "image/svg+xml",
       }],
     };
+
     const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
     const manifestUrl = URL.createObjectURL(manifestBlob);
     const manifestLink = document.createElement("link");
@@ -607,7 +594,7 @@ const firebaseConfig = {
       Object.values(views).forEach((view) => view.classList.remove("active"));
       views[name].classList.add("active");
       state.currentView = name;
-      setTimeout(resizeCanvasKeepingContent, 80);
+      requestAnimationFrame(() => requestAnimationFrame(resizeCanvasKeepingContent));
     }
 
     function normalizeText(value) {
@@ -633,30 +620,24 @@ const firebaseConfig = {
       return state.playerSlot;
     }
 
-    function otherSlot() {
-      return state.playerSlot === "p1" ? "p2" : "p1";
-    }
-
     function currentDrawerSlot(room = state.room) {
       const round = room?.round || 1;
       return round % 2 === 1 ? "p1" : "p2";
-    }
-
-    function isDrawer() {
-      return mySlot() === currentDrawerSlot();
     }
 
     function currentGuesserSlot(room = state.room) {
       return currentDrawerSlot(room) === "p1" ? "p2" : "p1";
     }
 
-    /**********************************************************************
-     * FIREBASE SALONS
-     **********************************************************************/
+    function isDrawer() {
+      return mySlot() === currentDrawerSlot();
+    }
+
     async function createRoom() {
       const roomCode = code();
       const drawDuration = Number($("drawDuration").value);
       const guessDuration = Number($("guessDuration").value);
+
       const initialRoom = {
         code: roomCode,
         createdAt: serverTimestamp(),
@@ -672,17 +653,22 @@ const firebaseConfig = {
         drawings: {},
         galleryVotes: {},
       };
+
       await set(ref(db, `rooms/${roomCode}`), initialRoom);
       enterRoom(roomCode, "p1");
     }
 
     async function joinRoom() {
       const roomCode = $("joinCodeInput").value.trim().toUpperCase();
+
       if (roomCode.length !== 4) return toast("Entre un code de 4 caractères.");
+
       const snap = await get(ref(db, `rooms/${roomCode}`));
       if (!snap.exists()) return toast("Salon introuvable.");
+
       const room = snap.val();
       let slot = null;
+
       if (room.players?.p1?.id === state.playerId) slot = "p1";
       else if (room.players?.p2?.id === state.playerId) slot = "p2";
       else if (!room.players?.p2) slot = "p2";
@@ -694,6 +680,7 @@ const firebaseConfig = {
         online: true,
         score: room.players?.[slot]?.score || 0,
       });
+
       enterRoom(roomCode, slot);
     }
 
@@ -708,12 +695,14 @@ const firebaseConfig = {
 
     function listenRoom() {
       if (state.unsubRoom) off(roomRef(), "value", state.unsubRoom);
+
       state.unsubRoom = onValue(roomRef(), (snap) => {
         if (!snap.exists()) {
           resetLocal();
           toast("Salon fermé.");
           return;
         }
+
         state.room = snap.val();
         renderFromRoom();
       });
@@ -726,21 +715,28 @@ const firebaseConfig = {
     }
 
     function resetLocal() {
-      if (state.unsubRoom) off(roomRef(), "value", state.unsubRoom);
+      if (state.unsubRoom && state.roomCode) off(roomRef(), "value", state.unsubRoom);
       stopStrokeListener();
       clearInterval(state.timerInterval);
+      clearTimeout(state.flushTimer);
+      clearTimeout(state.canvasSnapshotTimer);
+
       state.roomCode = null;
       state.playerSlot = null;
       state.room = null;
       state.unsubRoom = null;
+      state.drawing = false;
+      state.currentStrokeId = null;
+      state.lastPoint = null;
+      state.pendingRemotePoints = [];
+      state.localStrokeIds.clear();
+
       showView("home");
     }
 
-    /**********************************************************************
-     * FLOW DE JEU
-     **********************************************************************/
     async function startGame() {
       if (state.playerSlot !== "p1") return;
+
       await update(roomRef(), {
         status: "game",
         phase: "choice",
@@ -763,10 +759,14 @@ const firebaseConfig = {
 
     async function chooseWord(choice) {
       if (!isDrawer()) return;
+
+      stopStrokeListener();
       await set(roomRef("strokes"), null);
       clearCanvas();
+
       const now = Date.now();
       const drawDuration = state.room.settings?.drawDuration ?? 180;
+
       await update(roomRef(), {
         phase: "drawing",
         current: {
@@ -779,6 +779,7 @@ const firebaseConfig = {
           attempts: 0,
           guesses: [],
           revealed: [],
+          solved: false,
           startedAt: now,
           endsAt: drawDuration > 0 ? now + drawDuration * 1000 : 0,
         },
@@ -787,9 +788,13 @@ const firebaseConfig = {
 
     async function finishDrawing() {
       if (!isDrawer() || state.room.phase !== "drawing") return;
+
+      await flushRemotePointsNow();
       await saveCurrentDrawing(false);
+
       const now = Date.now();
       const guessDuration = state.room.settings?.guessDuration ?? 300;
+
       await update(roomRef(), {
         phase: "guessing",
         "current/guessStartedAt": now,
@@ -800,29 +805,31 @@ const firebaseConfig = {
     async function submitGuess() {
       const value = $("guessInput").value;
       $("guessInput").value = "";
+
       if (!value.trim()) return;
-    if (!["drawing", "guessing"].includes(state.room.phase) || isDrawer()) return;
+      if (!["drawing", "guessing"].includes(state.room.phase) || isDrawer()) return;
 
       const current = state.room.current;
       const correct = normalizeText(value) === current.normalizedWord;
       const attempts = (current.attempts || 0) + (correct ? 0 : 1);
       const guesses = [...(current.guesses || []), { value, correct, at: Date.now() }];
-if (correct) {
-  const slot = mySlot();
-  const newScore = (state.room.scores?.[slot] || 0) + current.points;
 
-  await saveCurrentDrawing(true);
+      if (correct) {
+        const slot = mySlot();
+        const newScore = (state.room.scores?.[slot] || 0) + current.points;
 
-  await update(roomRef(), {
-    [`scores/${slot}`]: newScore,
-    "current/guesses": guesses,
-    "current/solved": true,
-  });
+        await saveCurrentDrawing(true);
 
-  toast(`Bravo ! +${current.points} point${current.points > 1 ? "s" : ""}`);
-  setTimeout(nextRound, 900);
-  return;
-}
+        await update(roomRef(), {
+          [`scores/${slot}`]: newScore,
+          "current/guesses": guesses,
+          "current/solved": true,
+        });
+
+        toast(`Bravo ! +${current.points} point${current.points > 1 ? "s" : ""}`);
+        setTimeout(nextRound, 900);
+        return;
+      }
 
       const revealed = buildHints(current.normalizedWord, attempts, current.revealed || []);
       await update(roomRef("current"), { attempts, guesses, revealed });
@@ -839,20 +846,29 @@ if (correct) {
       const next = new Set(revealed || []);
       const targetCount = attempts >= 3 ? 2 : attempts >= 2 ? 1 : 0;
       const eligible = [...word].map((char, index) => ({ char, index })).filter(({ char }) => char !== " ");
+
       while (next.size < targetCount && next.size < eligible.length) {
         const pick = eligible[Math.floor(Math.random() * eligible.length)].index;
         next.add(pick);
       }
+
       return [...next];
     }
 
     async function nextRound() {
       if (!state.room || !state.roomCode) return;
-      const round = state.room.round || 1;
+
+      await flushRemotePointsNow();
       await saveCurrentDrawing(true);
+
+      const round = state.room.round || 1;
+
       if (round >= TOTAL_ROUNDS) {
         await update(roomRef(), { phase: "finished", status: "finished" });
       } else {
+        stopStrokeListener();
+        state.localStrokeIds.clear();
+
         await update(roomRef(), {
           round: round + 1,
           phase: "choice",
@@ -864,10 +880,12 @@ if (correct) {
 
     async function saveCurrentDrawing(finalize) {
       const room = state.room;
-      if (!room?.current) return;
+      if (!room?.current || !state.roomCode) return;
+
       const round = room.round || 1;
       const dataUrl = canvas.toDataURL("image/png");
       const current = room.current;
+
       await update(roomRef(`drawings/round${round}`), {
         dataUrl,
         word: current.word || "Mot inconnu",
@@ -879,12 +897,10 @@ if (correct) {
       });
     }
 
-    /**********************************************************************
-     * RENDER GLOBAL
-     **********************************************************************/
     function renderFromRoom() {
       const room = state.room;
       if (!room) return;
+
       if (room.status === "lobby") {
         if (state.currentView !== "lobby") showView("lobby");
         renderLobby(room);
@@ -903,312 +919,484 @@ if (correct) {
       $("startGameBtn").disabled = !(state.playerSlot === "p1" && room.players?.p1 && room.players?.p2);
     }
 
-   function renderGame(room) {
-  $("roundLabel").textContent = room.round || 1;
-  $("scoreLabel").textContent = `${room.scores?.p1 || 0} - ${room.scores?.p2 || 0}`;
+    function renderGame(room) {
+      $("roundLabel").textContent = room.round || 1;
+      $("scoreLabel").textContent = `${room.scores?.p1 || 0} - ${room.scores?.p2 || 0}`;
 
-  const drawer = currentDrawerSlot(room);
-  const meDrawer = mySlot() === drawer;
-  const phase = room.phase;
-  const role = meDrawer ? "Tu dessines" : "Tu devines";
-  const canGuessNow = (phase === "drawing" || phase === "guessing") && !meDrawer;
+      const drawer = currentDrawerSlot(room);
+      const meDrawer = mySlot() === drawer;
+      const phase = room.phase;
+      const role = meDrawer ? "Tu dessines" : "Tu devines";
+      const canGuessNow = (phase === "drawing" || phase === "guessing") && !meDrawer;
 
-  $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
+      $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
 
-  $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
-  $("guessPanel").classList.toggle("hidden", !canGuessNow);
-  $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
-  $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
+      $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
+      $("guessPanel").classList.toggle("hidden", !canGuessNow);
+      $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
+      $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
 
-  $("canvasLocked").classList.toggle("hidden", phase !== "choice");
-  $("canvasLocked").classList.toggle("grid", phase === "choice");
+      $("canvasLocked").classList.toggle("hidden", phase !== "choice");
+      $("canvasLocked").classList.toggle("grid", phase === "choice");
 
-  canvas.style.pointerEvents = phase === "drawing" && meDrawer ? "auto" : "none";
+      canvas.style.pointerEvents = phase === "drawing" && meDrawer ? "auto" : "none";
 
-  if (phase === "choice" && meDrawer) {
-    renderChoices();
-  }
+      if (phase === "choice" && meDrawer) renderChoices();
+      if (canGuessNow) renderGuess(room.current);
 
-  if (canGuessNow) {
-    renderGuess(room.current);
-  }
+      if (phase === "drawing" || phase === "guessing") {
+        startStrokeListener();
+      } else {
+        stopStrokeListener();
+      }
 
-  if (phase === "drawing" || phase === "guessing") {
-    startStrokeListener();
-  } else {
-    stopStrokeListener();
-  }
-
-  updateTimer(room);
-}
+      updateTimer(room);
+    }
 
     function renderChoices() {
       const container = $("wordChoices");
+
       if (container.dataset.round === String(state.room.round)) return;
+
       container.dataset.round = String(state.room.round);
       container.innerHTML = "";
+
       pickThreeWords().forEach((choice) => {
         const meta = DIFFICULTY[choice.difficulty];
         const button = document.createElement("button");
+
         button.className = `btn bg-gradient-to-r ${meta.color} text-slate-900 text-left`;
         button.innerHTML = `<span class="block text-lg font-black">${choice.word}</span><span class="text-xs font-black uppercase opacity-70">${meta.label} · ${choice.points} pt${choice.points > 1 ? "s" : ""}</span>`;
         button.onclick = () => chooseWord(choice);
+
         container.appendChild(button);
       });
     }
 
     function renderGuess(current) {
       if (!current) return;
+
       const word = current.normalizedWord || normalizeText(current.word);
       const revealed = new Set(current.revealed || []);
+
       $("maskedWord").innerHTML = [...word].map((char, index) => {
         if (char === " ") return `<span class="inline-block w-3"></span>`;
         const value = revealed.has(index) ? char.toUpperCase() : "_";
         return `<span class="guess-slot">${value}</span>`;
       }).join("");
+
       $("attemptLabel").textContent = current.attempts || 0;
+
       const left = Math.max(0, MAX_ATTEMPTS - (current.attempts || 0));
       $("hintLabel").textContent = left === 1 ? "Dernière chance" : "Aide auto après erreurs";
     }
 
     function updateTimer(room) {
       clearInterval(state.timerInterval);
+
       const phase = room.phase;
       const current = room.current;
       const infinite = phase === "drawing" && current?.endsAt === 0;
+
       if (infinite) {
         $("timerLabel").textContent = "∞";
         return;
       }
+
       const endsAt = phase === "drawing" ? current?.endsAt : phase === "guessing" ? current?.guessEndsAt : 0;
+
       if (!endsAt) {
         $("timerLabel").textContent = "--:--";
         return;
       }
+
       const tick = async () => {
         const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
         const minutes = String(Math.floor(left / 60)).padStart(2, "0");
         const seconds = String(left % 60).padStart(2, "0");
+
         $("timerLabel").textContent = `${minutes}:${seconds}`;
+
         if (left <= 0) {
           clearInterval(state.timerInterval);
           if (phase === "drawing" && isDrawer()) finishDrawing();
           if (phase === "guessing" && state.playerSlot === currentGuesserSlot(room)) nextRound();
         }
       };
+
       tick();
       state.timerInterval = setInterval(tick, 500);
     }
 
-    /**********************************************************************
-     * CANVAS HTML5 + SYNC REALTIME
-     **********************************************************************/
     function resizeCanvasKeepingContent() {
       if (!canvas || !canvas.parentElement) return;
+
       const rect = canvas.parentElement.getBoundingClientRect();
       if (rect.width < 50 || rect.height < 50) return;
+
       const old = document.createElement("canvas");
       old.width = canvas.width || 1;
       old.height = canvas.height || 1;
       old.getContext("2d").drawImage(canvas, 0, 0);
-      const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(rect.width * ratio);
-      canvas.height = Math.floor(rect.height * ratio);
+
+      const ratio = Math.min(window.devicePixelRatio || 1, DPR_MAX);
+
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.imageSmoothingEnabled = true;
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, rect.width, rect.height);
-      if (old.width > 1) ctx.drawImage(old, 0, 0, old.width / ratio, old.height / ratio, 0, 0, rect.width, rect.height);
+
+      if (old.width > 1 && old.height > 1) {
+        ctx.drawImage(
+          old,
+          0,
+          0,
+          old.width,
+          old.height,
+          0,
+          0,
+          rect.width,
+          rect.height
+        );
+      }
+
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
     }
 
     function clearCanvas() {
       const rect = canvas.getBoundingClientRect();
+
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
+
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, rect.width, rect.height);
     }
 
- function getPoint(event) {
-  const rect = canvas.getBoundingClientRect();
+    function getPoint(event) {
+      const rect = canvas.getBoundingClientRect();
 
-  const clientX = event.clientX;
-  const clientY = event.clientY;
-
-  return {
-    x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
-    y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
-  };
-}
-
-  function drawSegment(from, to, stroke) {
-  if (!from || !to) return;
-
-  const rect = canvas.getBoundingClientRect();
-
-  const fromX = from.x * rect.width;
-  const fromY = from.y * rect.height;
-  const toX = to.x * rect.width;
-  const toY = to.y * rect.height;
-
-  ctx.save();
-  ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
-  ctx.strokeStyle = stroke.color || "#111827";
-  ctx.lineWidth = stroke.size || 8;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  // Courbe au lieu d'une simple ligne droite : beaucoup plus naturel au doigt
-  const midX = (fromX + toX) / 2;
-  const midY = (fromY + toY) / 2;
-
-  ctx.beginPath();
-  ctx.moveTo(fromX, fromY);
-  ctx.quadraticCurveTo(fromX, fromY, midX, midY);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-   async function beginDraw(event) {
-  if (!isDrawer() || state.room?.phase !== "drawing") return;
-
-  event.preventDefault();
-
-  canvas.setPointerCapture?.(event.pointerId);
-
-  state.drawing = true;
-  state.lastPoint = getPoint(event);
-
-  const strokeRef = push(roomRef("strokes"));
-  state.currentStrokeId = strokeRef.key;
-
-  await set(strokeRef, {
-    color: state.tool.color,
-    size: state.tool.size,
-    eraser: state.tool.eraser,
-    points: {
-      start: state.lastPoint
-    },
-    at: Date.now(),
-  });
-}
-
- function moveDraw(event) {
-  if (!state.drawing || !state.currentStrokeId) return;
-
-  event.preventDefault();
-
-  const point = getPoint(event);
-
-  const stroke = {
-    color: state.tool.color,
-    size: state.tool.size,
-    eraser: state.tool.eraser
-  };
-
-  // Dessin local immédiat, sans attendre Firebase
-  drawSegment(state.lastPoint, point, stroke);
-  state.lastPoint = point;
-
-  // Envoi Firebase sans await, pour ne pas ralentir le doigt
-  push(roomRef(`strokes/${state.currentStrokeId}/points`), point).catch(console.error);
-}
-   function endDraw(event) {
-  if (!state.drawing) return;
-
-  event.preventDefault();
-
-  canvas.releasePointerCapture?.(event.pointerId);
-
-  state.drawing = false;
-  state.currentStrokeId = null;
-  state.lastPoint = null;
-
-  clearTimeout(state.canvasSnapshotTimer);
-  state.canvasSnapshotTimer = setTimeout(() => saveCurrentDrawing(false), 250);
-}
-
-    function startStrokeListener() {
-  if (state.unsubStrokes || !state.roomCode) return;
-
-  clearCanvas();
-
-  state.unsubStrokes = onChildAdded(roomRef("strokes"), (snap) => {
-    const stroke = snap.val();
-    if (!stroke || stroke.clear) {
-      clearCanvas();
-      return;
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
     }
 
-    const points = Object.values(stroke.points || {});
+    function normalizePoint(point) {
+      const rect = canvas.getBoundingClientRect();
 
-    for (let i = 1; i < points.length; i++) {
-      drawSegment(points[i - 1], points[i], stroke);
+      return {
+        x: Math.max(0, Math.min(1, point.x / rect.width)),
+        y: Math.max(0, Math.min(1, point.y / rect.height)),
+      };
     }
 
-    let lastPoint = points[points.length - 1] || null;
+    function denormalizePoint(point) {
+      const rect = canvas.getBoundingClientRect();
 
-    onChildAdded(roomRef(`strokes/${snap.key}/points`), (pointSnap) => {
-      const nextPoint = pointSnap.val();
+      return {
+        x: point.x * rect.width,
+        y: point.y * rect.height,
+      };
+    }
 
-      if (!nextPoint || !lastPoint) {
-        lastPoint = nextPoint;
+    function drawDot(point, stroke) {
+      ctx.save();
+      ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
+      ctx.fillStyle = stroke.color || "#111827";
+
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, (stroke.size || 8) / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawSegment(from, to, stroke) {
+      if (!from || !to) return;
+
+      ctx.save();
+      ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
+      ctx.strokeStyle = stroke.color || "#111827";
+      ctx.lineWidth = stroke.size || 8;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawSmoothPoints(points, stroke) {
+      if (!points.length) return;
+
+      if (points.length === 1) {
+        drawDot(points[0], stroke);
         return;
       }
 
-      drawSegment(lastPoint, nextPoint, stroke);
-      lastPoint = nextPoint;
-    });
-  });
-}
+      ctx.save();
+      ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
+      ctx.strokeStyle = stroke.color || "#111827";
+      ctx.lineWidth = stroke.size || 8;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      if (points.length === 2) {
+        ctx.lineTo(points[1].x, points[1].y);
+      } else {
+        for (let i = 1; i < points.length - 1; i++) {
+          const midX = (points[i].x + points[i + 1].x) / 2;
+          const midY = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+        }
+
+        const last = points[points.length - 1];
+        ctx.lineTo(last.x, last.y);
+      }
+
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function scheduleRemoteFlush() {
+      if (state.flushTimer) return;
+
+      state.flushTimer = setTimeout(() => {
+        state.flushTimer = null;
+        flushRemotePointsNow();
+      }, FIREBASE_FLUSH_MS);
+    }
+
+    async function flushRemotePointsNow() {
+      if (!state.currentStrokeId || !state.pendingRemotePoints.length || !state.roomCode) return;
+
+      const batch = state.pendingRemotePoints.splice(0, state.pendingRemotePoints.length);
+      const updates = {};
+
+      batch.forEach((point) => {
+        const key = crypto.randomUUID();
+        updates[`strokes/${state.currentStrokeId}/points/${key}`] = point;
+      });
+
+      try {
+        await update(roomRef(), updates);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function beginDraw(event) {
+      if (!isDrawer() || state.room?.phase !== "drawing") return;
+
+      event.preventDefault();
+
+      canvas.setPointerCapture?.(event.pointerId);
+
+      const point = getPoint(event);
+      const normalized = normalizePoint(point);
+
+      state.drawing = true;
+      state.lastPoint = point;
+
+      const strokeRef = push(roomRef("strokes"));
+      state.currentStrokeId = strokeRef.key;
+      state.localStrokeIds.add(state.currentStrokeId);
+
+      const stroke = {
+        color: state.tool.color,
+        size: state.tool.size,
+        eraser: state.tool.eraser,
+      };
+
+      drawDot(point, stroke);
+
+      try {
+        await set(strokeRef, {
+          owner: state.playerId,
+          color: state.tool.color,
+          size: state.tool.size,
+          eraser: state.tool.eraser,
+          points: {
+            start: normalized,
+          },
+          at: Date.now(),
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function moveDraw(event) {
+      if (!state.drawing || !state.currentStrokeId) return;
+
+      event.preventDefault();
+
+      const stroke = {
+        color: state.tool.color,
+        size: state.tool.size,
+        eraser: state.tool.eraser,
+      };
+
+      const events = typeof event.getCoalescedEvents === "function"
+        ? event.getCoalescedEvents()
+        : [event];
+
+      for (const e of events) {
+        const point = getPoint(e);
+
+        if (state.lastPoint) {
+          drawSegment(state.lastPoint, point, stroke);
+        }
+
+        state.lastPoint = point;
+        state.pendingRemotePoints.push(normalizePoint(point));
+      }
+
+      scheduleRemoteFlush();
+    }
+
+    function endDraw(event) {
+      if (!state.drawing) return;
+
+      event.preventDefault();
+
+      canvas.releasePointerCapture?.(event.pointerId);
+
+      flushRemotePointsNow();
+
+      state.drawing = false;
+      state.currentStrokeId = null;
+      state.lastPoint = null;
+
+      clearTimeout(state.canvasSnapshotTimer);
+      state.canvasSnapshotTimer = setTimeout(() => saveCurrentDrawing(false), 500);
+    }
+
+    function startStrokeListener() {
+      if (state.unsubStrokes || !state.roomCode) return;
+
+      clearCanvas();
+
+      state.remotePointUnsubs = [];
+
+      state.unsubStrokes = onChildAdded(roomRef("strokes"), (snap) => {
+        const stroke = snap.val();
+        const strokeId = snap.key;
+
+        if (!stroke || stroke.clear) {
+          clearCanvas();
+          return;
+        }
+
+        if (stroke.owner === state.playerId || state.localStrokeIds.has(strokeId)) {
+          return;
+        }
+
+        const points = Object.values(stroke.points || {}).map(denormalizePoint);
+
+        if (points.length === 1) {
+          drawDot(points[0], stroke);
+        } else {
+          drawSmoothPoints(points, stroke);
+        }
+
+        let lastPoint = points[points.length - 1] || null;
+
+        const pointCallback = onChildAdded(roomRef(`strokes/${strokeId}/points`), (pointSnap) => {
+          const rawPoint = pointSnap.val();
+          if (!rawPoint) return;
+
+          const nextPoint = denormalizePoint(rawPoint);
+
+          if (!lastPoint) {
+            lastPoint = nextPoint;
+            drawDot(nextPoint, stroke);
+            return;
+          }
+
+          drawSegment(lastPoint, nextPoint, stroke);
+          lastPoint = nextPoint;
+        });
+
+        state.remotePointUnsubs.push({ path: `strokes/${strokeId}/points`, callback: pointCallback });
+      });
+    }
 
     function stopStrokeListener() {
-      if (!state.unsubStrokes || !state.roomCode) return;
-      off(roomRef("strokes"), "child_added", state.unsubStrokes);
-      state.unsubStrokes = null;
+      if (!state.roomCode) return;
+
+      if (state.unsubStrokes) {
+        off(roomRef("strokes"), "child_added", state.unsubStrokes);
+        state.unsubStrokes = null;
+      }
+
+      state.remotePointUnsubs.forEach((item) => {
+        off(roomRef(item.path), "child_added", item.callback);
+      });
+
+      state.remotePointUnsubs = [];
     }
 
     function renderTools() {
       const colorTools = $("colorTools");
       colorTools.innerHTML = "";
+
       COLORS.forEach((color) => {
         const button = document.createElement("button");
         button.className = `tool-dot ${state.tool.color === color && !state.tool.eraser ? "active" : ""}`;
         button.style.background = color;
+
         button.onclick = () => {
           state.tool.color = color;
           state.tool.eraser = false;
           renderTools();
         };
+
         colorTools.appendChild(button);
       });
 
       const sizeTools = $("sizeTools");
       sizeTools.innerHTML = "";
+
       SIZES.forEach((size) => {
         const button = document.createElement("button");
         button.className = `size-dot ${state.tool.size === size ? "active" : ""}`;
         button.innerHTML = `<span style="width:${size + 4}px;height:${size + 4}px;border-radius:999px;background:currentColor;display:block"></span>`;
+
         button.onclick = () => {
           state.tool.size = size;
           renderTools();
         };
+
         sizeTools.appendChild(button);
       });
+
       $("eraserBtn").classList.toggle("btn-primary", state.tool.eraser);
     }
 
-    /**********************************************************************
-     * GALERIE + VOTES + TELECHARGEMENT
-     **********************************************************************/
     function renderGallery(room) {
       const p1 = room.scores?.p1 || 0;
       const p2 = room.scores?.p2 || 0;
-      $("winnerLabel").textContent = p1 === p2 ? `Égalité ${p1}-${p2}` : `${p1 > p2 ? "Joueur 1" : "Joueur 2"} gagne ${Math.max(p1, p2)}-${Math.min(p1, p2)}`;
+
+      $("winnerLabel").textContent = p1 === p2
+        ? `Égalité ${p1}-${p2}`
+        : `${p1 > p2 ? "Joueur 1" : "Joueur 2"} gagne ${Math.max(p1, p2)}-${Math.min(p1, p2)}`;
+
       $("finalScores").innerHTML = `
         <div class="card p-3 text-center"><p class="text-xs font-black text-slate-400">Joueur 1</p><p class="text-3xl font-black text-violet-700">${p1}</p></div>
         <div class="card p-3 text-center"><p class="text-xs font-black text-slate-400">Joueur 2</p><p class="text-3xl font-black text-fuchsia-600">${p2}</p></div>
@@ -1216,12 +1404,15 @@ if (correct) {
 
       const grid = $("galleryGrid");
       grid.innerHTML = "";
+
       const drawings = room.drawings || {};
+
       for (let i = 1; i <= TOTAL_ROUNDS; i++) {
         const item = drawings[`round${i}`];
         const card = document.createElement("article");
         card.className = "thumb-card card p-2 space-y-2";
         const votes = Object.values(room.galleryVotes?.[`round${i}`] || {}).length;
+
         card.innerHTML = `
           ${item?.dataUrl ? `<img src="${item.dataUrl}" alt="Dessin manche ${i}" />` : `<div class="grid aspect-[4/3] place-items-center rounded-2xl bg-slate-100 text-xs font-bold text-slate-400">Vide</div>`}
           <div>
@@ -1233,20 +1424,24 @@ if (correct) {
             <button class="download btn btn-primary min-h-0 px-2 py-2 text-xs">PNG</button>
           </div>
         `;
+
         card.querySelector(".vote")?.addEventListener("click", () => voteDrawing(`round${i}`));
         card.querySelector(".download")?.addEventListener("click", () => downloadDrawing(item?.dataUrl, `draw-duel-manche-${i}.png`));
+
         grid.appendChild(card);
       }
     }
 
     async function voteDrawing(roundKey) {
       if (!state.roomCode || !state.playerSlot) return;
+
       await set(roomRef(`galleryVotes/${roundKey}/${state.playerSlot}`), true);
       toast("Vote enregistré.");
     }
 
     function downloadDrawing(dataUrl, filename) {
       if (!dataUrl) return toast("Dessin indisponible.");
+
       const link = document.createElement("a");
       link.href = dataUrl;
       link.download = filename;
@@ -1255,39 +1450,53 @@ if (correct) {
       link.remove();
     }
 
-    /**********************************************************************
-     * EVENEMENTS
-     **********************************************************************/
     $("createRoomBtn").addEventListener("click", createRoom);
     $("joinRoomBtn").addEventListener("click", joinRoom);
+
     $("joinCodeInput").addEventListener("input", (event) => {
       event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
     });
+
     $("leaveLobbyBtn").addEventListener("click", leaveRoom);
+
     $("copyCodeBtn").addEventListener("click", async () => {
       if (!state.roomCode) return;
+
       await navigator.clipboard?.writeText(state.roomCode);
       toast("Code copié.");
     });
+
     $("startGameBtn").addEventListener("click", startGame);
     $("submitGuessBtn").addEventListener("click", submitGuess);
+
     $("guessInput").addEventListener("keydown", (event) => {
       if (event.key === "Enter") submitGuess();
     });
+
     $("forceNextBtn").addEventListener("click", finishDrawing);
+
     $("eraserBtn").addEventListener("click", () => {
       state.tool.eraser = !state.tool.eraser;
       renderTools();
     });
+
     $("clearBtn").addEventListener("click", async () => {
       if (!isDrawer()) return;
+
       clearCanvas();
+      state.localStrokeIds.clear();
       await set(roomRef("strokes"), null);
-      await push(roomRef("strokes"), { color: "#ffffff", size: 1, eraser: false, points: [], clear: true, at: Date.now() });
+      await push(roomRef("strokes"), { clear: true, at: Date.now() });
+
       toast("Canvas effacé.");
     });
+
     $("newGameBtn").addEventListener("click", async () => {
       if (state.playerSlot !== "p1") return toast("Seul le Joueur 1 peut relancer.");
+
+      stopStrokeListener();
+      state.localStrokeIds.clear();
+
       await update(roomRef(), {
         status: "game",
         phase: "choice",
@@ -1300,13 +1509,14 @@ if (correct) {
       });
     });
 
-   canvas.addEventListener("pointerdown", beginDraw, { passive: false });
-canvas.addEventListener("pointermove", moveDraw, { passive: false });
-canvas.addEventListener("pointerup", endDraw, { passive: false });
-canvas.addEventListener("pointercancel", endDraw, { passive: false });
-canvas.addEventListener("pointerleave", endDraw, { passive: false });
+    canvas.addEventListener("pointerdown", beginDraw, { passive: false });
+    canvas.addEventListener("pointermove", moveDraw, { passive: false });
+    canvas.addEventListener("pointerup", endDraw, { passive: false });
+    canvas.addEventListener("pointercancel", endDraw, { passive: false });
+    canvas.addEventListener("lostpointercapture", endDraw, { passive: false });
 
     renderTools();
+    setVH();
     resizeCanvasKeepingContent();
 
     window.addEventListener("beforeunload", () => {
