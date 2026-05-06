@@ -903,29 +903,44 @@ if (correct) {
       $("startGameBtn").disabled = !(state.playerSlot === "p1" && room.players?.p1 && room.players?.p2);
     }
 
-    function renderGame(room) {
-      $("roundLabel").textContent = room.round || 1;
-      $("scoreLabel").textContent = `${room.scores?.p1 || 0} - ${room.scores?.p2 || 0}`;
-      const drawer = currentDrawerSlot(room);
-      const meDrawer = mySlot() === drawer;
-      const phase = room.phase;
-      const role = meDrawer ? "Tu dessines" : "Tu devines";
-      $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
+   function renderGame(room) {
+  $("roundLabel").textContent = room.round || 1;
+  $("scoreLabel").textContent = `${room.scores?.p1 || 0} - ${room.scores?.p2 || 0}`;
 
-      $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
-$("guessPanel").classList.toggle("hidden", !((phase === "drawing" || phase === "guessing") && !meDrawer));
-      $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
-      $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
-      $("canvasLocked").classList.toggle("hidden", phase !== "choice");
-      $("canvasLocked").classList.toggle("grid", phase === "choice");
-      canvas.style.pointerEvents = phase === "drawing" && meDrawer ? "auto" : "none";
+  const drawer = currentDrawerSlot(room);
+  const meDrawer = mySlot() === drawer;
+  const phase = room.phase;
+  const role = meDrawer ? "Tu dessines" : "Tu devines";
+  const canGuessNow = (phase === "drawing" || phase === "guessing") && !meDrawer;
 
-      if (phase === "choice" && meDrawer) renderChoices();
-      if (phase === "guessing") renderGuess(room.current);
-      if (phase === "drawing" || phase === "guessing") startStrokeListener();
-      else stopStrokeListener();
-      updateTimer(room);
-    }
+  $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
+
+  $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
+  $("guessPanel").classList.toggle("hidden", !canGuessNow);
+  $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
+  $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
+
+  $("canvasLocked").classList.toggle("hidden", phase !== "choice");
+  $("canvasLocked").classList.toggle("grid", phase === "choice");
+
+  canvas.style.pointerEvents = phase === "drawing" && meDrawer ? "auto" : "none";
+
+  if (phase === "choice" && meDrawer) {
+    renderChoices();
+  }
+
+  if (canGuessNow) {
+    renderGuess(room.current);
+  }
+
+  if (phase === "drawing" || phase === "guessing") {
+    startStrokeListener();
+  } else {
+    stopStrokeListener();
+  }
+
+  updateTimer(room);
+}
 
     function renderChoices() {
       const container = $("wordChoices");
@@ -1017,17 +1032,15 @@ $("guessPanel").classList.toggle("hidden", !((phase === "drawing" || phase === "
       ctx.fillRect(0, 0, rect.width, rect.height);
     }
 
-  function getPoint(event) {
-  const touch = event.touches?.[0] || event.changedTouches?.[0] || event;
+ function getPoint(event) {
   const rect = canvas.getBoundingClientRect();
 
-  // Décalage spécial doigt iPhone :
-  // le trait apparaît environ 34px au-dessus du doigt.
-  const fingerOffsetY = 34;
+  const clientX = event.clientX;
+  const clientY = event.clientY;
 
   return {
-    x: Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)),
-    y: Math.max(0, Math.min(1, (touch.clientY - rect.top - fingerOffsetY) / rect.height)),
+    x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+    y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
   };
 }
 
@@ -1044,61 +1057,96 @@ $("guessPanel").classList.toggle("hidden", !((phase === "drawing" || phase === "
       ctx.restore();
     }
 
-    async function beginDraw(event) {
-      if (!isDrawer() || state.room?.phase !== "drawing") return;
-      event.preventDefault();
-      state.drawing = true;
-      state.lastPoint = getPoint(event);
-      const strokeRef = push(roomRef("strokes"));
-      state.currentStrokeId = strokeRef.key;
-      await set(strokeRef, {
-        color: state.tool.color,
-        size: state.tool.size,
-        eraser: state.tool.eraser,
-        points: [state.lastPoint],
-        at: Date.now(),
-      });
-    }
+   async function beginDraw(event) {
+  if (!isDrawer() || state.room?.phase !== "drawing") return;
 
-    async function moveDraw(event) {
-      if (!state.drawing || !state.currentStrokeId) return;
-      event.preventDefault();
-      const point = getPoint(event);
-      const stroke = { color: state.tool.color, size: state.tool.size, eraser: state.tool.eraser };
-      drawSegment(state.lastPoint, point, stroke);
-      state.lastPoint = point;
-      await push(roomRef(`strokes/${state.currentStrokeId}/points`), point);
-    }
+  event.preventDefault();
 
-    function endDraw(event) {
-      if (!state.drawing) return;
-      event.preventDefault();
-      state.drawing = false;
-      state.currentStrokeId = null;
-      state.lastPoint = null;
-      clearTimeout(state.canvasSnapshotTimer);
-      state.canvasSnapshotTimer = setTimeout(() => saveCurrentDrawing(false), 250);
-    }
+  canvas.setPointerCapture?.(event.pointerId);
+
+  state.drawing = true;
+  state.lastPoint = getPoint(event);
+
+  const strokeRef = push(roomRef("strokes"));
+  state.currentStrokeId = strokeRef.key;
+
+  await set(strokeRef, {
+    color: state.tool.color,
+    size: state.tool.size,
+    eraser: state.tool.eraser,
+    points: {
+      start: state.lastPoint
+    },
+    at: Date.now(),
+  });
+}
+
+  async function moveDraw(event) {
+  if (!state.drawing || !state.currentStrokeId) return;
+
+  event.preventDefault();
+
+  const point = getPoint(event);
+  const stroke = {
+    color: state.tool.color,
+    size: state.tool.size,
+    eraser: state.tool.eraser
+  };
+
+  drawSegment(state.lastPoint, point, stroke);
+  state.lastPoint = point;
+
+  await push(roomRef(`strokes/${state.currentStrokeId}/points`), point);
+}
+
+   function endDraw(event) {
+  if (!state.drawing) return;
+
+  event.preventDefault();
+
+  canvas.releasePointerCapture?.(event.pointerId);
+
+  state.drawing = false;
+  state.currentStrokeId = null;
+  state.lastPoint = null;
+
+  clearTimeout(state.canvasSnapshotTimer);
+  state.canvasSnapshotTimer = setTimeout(() => saveCurrentDrawing(false), 250);
+}
 
     function startStrokeListener() {
-      if (state.unsubStrokes || !state.roomCode) return;
+  if (state.unsubStrokes || !state.roomCode) return;
+
+  clearCanvas();
+
+  state.unsubStrokes = onChildAdded(roomRef("strokes"), (snap) => {
+    const stroke = snap.val();
+    if (!stroke || stroke.clear) {
       clearCanvas();
-      state.unsubStrokes = onChildAdded(roomRef("strokes"), (snap) => {
-        const stroke = snap.val();
-        if (!stroke) return;
-        const points = Array.isArray(stroke.points) ? stroke.points : Object.values(stroke.points || {});
-        for (let i = 1; i < points.length; i++) drawSegment(points[i - 1], points[i], stroke);
-        onChildAdded(roomRef(`strokes/${snap.key}/points`), (pointSnap) => {
-          const nextPointsSnap = pointSnap.val();
-          if (!nextPointsSnap) return;
-          const latest = Array.isArray(stroke.points) ? stroke.points : Object.values(stroke.points || {});
-          const previous = latest[latest.length - 1];
-          if (previous && nextPointsSnap && previous !== nextPointsSnap) drawSegment(previous, nextPointsSnap, stroke);
-          latest.push(nextPointsSnap);
-          stroke.points = latest;
-        });
-      });
+      return;
     }
+
+    const points = Object.values(stroke.points || {});
+
+    for (let i = 1; i < points.length; i++) {
+      drawSegment(points[i - 1], points[i], stroke);
+    }
+
+    let lastPoint = points[points.length - 1] || null;
+
+    onChildAdded(roomRef(`strokes/${snap.key}/points`), (pointSnap) => {
+      const nextPoint = pointSnap.val();
+
+      if (!nextPoint || !lastPoint) {
+        lastPoint = nextPoint;
+        return;
+      }
+
+      drawSegment(lastPoint, nextPoint, stroke);
+      lastPoint = nextPoint;
+    });
+  });
+}
 
     function stopStrokeListener() {
       if (!state.unsubStrokes || !state.roomCode) return;
@@ -1234,14 +1282,11 @@ $("guessPanel").classList.toggle("hidden", !((phase === "drawing" || phase === "
       });
     });
 
-    canvas.addEventListener("touchstart", beginDraw, { passive: false });
-    canvas.addEventListener("touchmove", moveDraw, { passive: false });
-    canvas.addEventListener("touchend", endDraw, { passive: false });
-    canvas.addEventListener("touchcancel", endDraw, { passive: false });
-    canvas.addEventListener("pointerdown", beginDraw);
-    canvas.addEventListener("pointermove", moveDraw);
-    canvas.addEventListener("pointerup", endDraw);
-    canvas.addEventListener("pointerleave", endDraw);
+   canvas.addEventListener("pointerdown", beginDraw, { passive: false });
+canvas.addEventListener("pointermove", moveDraw, { passive: false });
+canvas.addEventListener("pointerup", endDraw, { passive: false });
+canvas.addEventListener("pointercancel", endDraw, { passive: false });
+canvas.addEventListener("pointerleave", endDraw, { passive: false });
 
     renderTools();
     resizeCanvasKeepingContent();
