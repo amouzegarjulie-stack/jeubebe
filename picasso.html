@@ -1,476 +1,522 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#7c3aed" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Draw Duel" />
-  <title>Draw Duel - Pictionnary mobile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <title>🎨 Pictionnary Mobile</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 
-  <!-- PWA minimaliste : le manifest est injecté en JS pour garder un seul fichier HTML. -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%237c3aed'/%3E%3Cpath d='M137 354l29-91 119-119c22-22 58-22 80 0s22 58 0 80L246 343l-91 29c-11 3-21-7-18-18z' fill='white'/%3E%3C/svg%3E" />
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-          },
-          boxShadow: {
-            glow: '0 18px 50px rgba(124, 58, 237, 0.25)',
-          },
-        },
-      },
-    };
-  </script>
+        .view {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
-  <style>
-    :root {
-      color-scheme: light;
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
-      --vh: 1vh;
-    }
+        .view.active {
+            display: flex;
+            flex-direction: column;
+        }
 
-    * {
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-    }
+        canvas {
+            touch-action: none;
+            border: 3px solid #fff;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
 
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      overscroll-behavior: none;
-      touch-action: manipulation;
-      background: #f7f7ff;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
 
-    body {
-      min-height: calc(var(--vh) * 100);
-      position: fixed;
-      width: 100%;
-      inset: 0;
-    }
+        .color-btn.active {
+            transform: scale(1.2);
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+        }
 
-    button,
-    input,
-    select {
-      font: inherit;
-    }
+        .tool-btn {
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
 
-    button:active {
-      transform: scale(0.98);
-    }
+        .tool-btn.active {
+            border-color: #fbbf24;
+            transform: scale(1.05);
+        }
 
-    .iphone-shell {
-      width: 100vw;
-      height: calc(var(--vh) * 100);
-      padding: calc(10px + var(--safe-top)) 12px calc(10px + var(--safe-bottom));
-      display: flex;
-      justify-content: center;
-      background:
-        radial-gradient(circle at 20% 12%, rgba(255, 58, 130, 0.18), transparent 32%),
-        radial-gradient(circle at 88% 10%, rgba(34, 211, 238, 0.20), transparent 30%),
-        linear-gradient(145deg, #f8f7ff 0%, #f6fbff 45%, #fff7fb 100%);
-    }
+        .word-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
 
-    .app-frame {
-      width: min(100%, 430px);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.78);
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 24px 70px rgba(38, 31, 79, 0.16);
-    }
+        .word-card:active {
+            transform: scale(0.98);
+        }
 
-    .view {
-      display: none;
-      height: 100%;
-      min-height: 0;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
 
-    .view.active {
-      display: flex;
-    }
+        .btn-primary:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
 
-    .scroll-area {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
-    }
+        .input-field {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            font-size: 16px;
+            width: 100%;
+        }
 
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
 
-    .btn {
-      border-radius: 18px;
-      min-height: 46px;
-      padding: 12px 14px;
-      font-weight: 800;
-      transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
-      touch-action: manipulation;
-      user-select: none;
-    }
+        .timer-badge {
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
 
-    .btn-primary {
-      color: white;
-      background: linear-gradient(135deg, #7c3aed, #ec4899);
-      box-shadow: 0 14px 28px rgba(124, 58, 237, 0.28);
-    }
+        .score-badge {
+            background: #10b981;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-weight: 700;
+        }
 
-    .btn-secondary {
-      color: #312e81;
-      background: #eef2ff;
-      border: 1px solid rgba(99, 102, 241, 0.14);
-    }
+        .letter-box {
+            display: inline-block;
+            width: 32px;
+            height: 40px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            margin: 0 3px;
+            text-align: center;
+            line-height: 40px;
+            font-size: 20px;
+            font-weight: 700;
+            background: white;
+        }
 
-    .btn-danger {
-      color: #fff;
-      background: linear-gradient(135deg, #fb7185, #f97316);
-    }
+        .letter-box.revealed {
+            background: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
 
-    .btn-good {
-      color: #064e3b;
-      background: linear-gradient(135deg, #86efac, #5eead4);
-    }
+        .drawing-thumbnail {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            border: 3px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
 
-    .pill {
-      border-radius: 999px;
-      padding: 8px 11px;
-      font-weight: 800;
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid rgba(99, 102, 241, 0.12);
-      box-shadow: 0 8px 20px rgba(39, 31, 83, 0.06);
-      white-space: nowrap;
-    }
+        .drawing-thumbnail:active {
+            transform: scale(0.95);
+        }
 
-    .card {
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid rgba(99, 102, 241, 0.12);
-      box-shadow: 0 16px 36px rgba(38, 31, 79, 0.08);
-    }
+        .drawing-thumbnail.voted {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+        }
 
-    .input {
-      width: 100%;
-      min-height: 48px;
-      border-radius: 17px;
-      border: 1px solid rgba(99, 102, 241, 0.18);
-      background: rgba(255, 255, 255, 0.92);
-      padding: 12px 14px;
-      font-weight: 800;
-      outline: none;
-      color: #312e81;
-    }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
-    .input:focus {
-      border-color: #8b5cf6;
-      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
-    }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
 
-    .canvas-wrap {
-      position: relative;
-      flex: 1;
-      min-height: 0;
-      border-radius: 22px;
-      overflow: hidden;
-      background: white;
-      border: 1px solid rgba(99, 102, 241, 0.16);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 16px 34px rgba(38, 31, 79, 0.08);
-      touch-action: none;
-    }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
 
-    #drawCanvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: white;
-      touch-action: none;
-    }
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
 
-    .tool-dot {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 3px solid white;
-      box-shadow: 0 8px 14px rgba(31, 41, 55, 0.14);
-    }
-
-    .tool-dot.active {
-      outline: 3px solid #111827;
-      outline-offset: 2px;
-    }
-
-    .size-dot {
-      width: 42px;
-      height: 34px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: #eef2ff;
-      border: 1px solid rgba(99, 102, 241, 0.14);
-    }
-
-    .size-dot.active {
-      background: #111827;
-      color: white;
-    }
-
-    .guess-slot {
-      display: inline-grid;
-      place-items: center;
-      width: 24px;
-      height: 34px;
-      margin: 0 2px 5px;
-      border-radius: 10px;
-      background: #eef2ff;
-      color: #312e81;
-      font-weight: 950;
-      font-size: 18px;
-    }
-
-    .thumb-card canvas,
-    .thumb-card img {
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      object-fit: contain;
-      background: white;
-      border-radius: 18px;
-      border: 1px solid rgba(99, 102, 241, 0.12);
-    }
-
-    .toast {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      bottom: calc(18px + var(--safe-bottom));
-      z-index: 50;
-      border-radius: 18px;
-      padding: 12px 14px;
-      color: white;
-      font-weight: 800;
-      background: rgba(17, 24, 39, 0.92);
-      box-shadow: 0 16px 36px rgba(17, 24, 39, 0.25);
-      transform: translateY(24px);
-      opacity: 0;
-      pointer-events: none;
-      transition: all 180ms ease;
-    }
-
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    @media (max-height: 740px) {
-      .compact-hide {
-        display: none !important;
-      }
-      .btn {
-        min-height: 42px;
-        padding: 10px 12px;
-      }
-      .pill {
-        padding: 7px 10px;
-      }
-      .tool-dot {
-        width: 30px;
-        height: 30px;
-      }
-    }
-  </style>
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
 </head>
 <body>
-  <main class="iphone-shell">
-    <section class="app-frame relative">
-      <div id="toast" class="toast"></div>
 
-      <!-- HOME -->
-      <section id="view-home" class="view active p-4 gap-4">
-        <header class="pt-2 text-center">
-          <div class="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-[24px] bg-gradient-to-br from-violet-600 via-fuchsia-500 to-rose-400 text-3xl shadow-glow">✏️</div>
-          <h1 class="text-3xl font-black tracking-tight text-slate-900">Draw Duel</h1>
-          <p class="mt-1 text-sm font-semibold text-slate-500">Pictionnary multijoueur, pensé iPhone portrait.</p>
-        </header>
+    <!-- ========================================
+         VIEW 1: HOME / ACCUEIL
+    ======================================== -->
+    <div id="homeView" class="view active">
+        <div class="flex-1 flex flex-col justify-center items-center p-6 safe-area-top">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🎨</div>
+                <h1 class="text-4xl font-bold text-white mb-2">Pictionnary</h1>
+                <p class="text-white/80 text-sm">Dessinez, devinez, gagnez !</p>
+            </div>
 
-        <div class="card p-4 space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <label class="space-y-1">
-              <span class="text-xs font-black uppercase tracking-wide text-slate-400">Dessin</span>
-              <select id="drawDuration" class="input text-sm">
-                <option value="60">1 min</option>
-                <option value="180" selected>3 min</option>
-                <option value="0">Infini</option>
-              </select>
-            </label>
-            <label class="space-y-1">
-              <span class="text-xs font-black uppercase tracking-wide text-slate-400">Devinette</span>
-              <select id="guessDuration" class="input text-sm">
-                <option value="180">3 min</option>
-                <option value="300" selected>5 min</option>
-                <option value="600">10 min</option>
-              </select>
-            </label>
-          </div>
+            <div class="w-full max-w-sm space-y-4">
+                <input 
+                    type="text" 
+                    id="playerNameInput" 
+                    class="input-field" 
+                    placeholder="Votre nom"
+                    maxlength="15"
+                >
+
+                <button onclick="createRoom()" class="btn-primary w-full text-lg">
+                    ✨ Créer un salon
+                </button>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t-2 border-white/30"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-transparent text-white font-semibold">OU</span>
+                    </div>
+                </div>
+
+                <input 
+                    type="text" 
+                    id="roomCodeInput" 
+                    class="input-field" 
+                    placeholder="Code du salon"
+                    maxlength="6"
+                >
+
+                <button onclick="joinRoom()" class="btn-primary w-full text-lg">
+                    🚀 Rejoindre
+                </button>
+
+                <button onclick="showSettings()" class="mt-6 text-white/80 text-sm underline w-full">
+                    ⚙️ Paramètres
+                </button>
+            </div>
         </div>
+    </div>
 
-        <div class="card p-4 space-y-3">
-          <button id="createRoomBtn" class="btn btn-primary w-full">Créer un salon</button>
-          <div class="flex items-center gap-2">
-            <div class="h-px flex-1 bg-slate-200"></div>
-            <span class="text-xs font-black uppercase text-slate-400">ou</span>
-            <div class="h-px flex-1 bg-slate-200"></div>
-          </div>
-          <div class="flex gap-2">
-            <input id="joinCodeInput" class="input text-center uppercase tracking-[0.35em]" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" />
-            <button id="joinRoomBtn" class="btn btn-secondary px-5">Rejoindre</button>
-          </div>
+    <!-- ========================================
+         VIEW 2: LOBBY / SALON D'ATTENTE
+    ======================================== -->
+    <div id="lobbyView" class="view">
+        <div class="flex-1 flex flex-col p-6 safe-area-top">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2">Salon</h2>
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 inline-block">
+                    <p class="text-white/70 text-xs mb-1">Code du salon</p>
+                    <p id="roomCodeDisplay" class="text-3xl font-bold text-white tracking-wider">------</p>
+                </div>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
+                <h3 class="text-white font-bold mb-4 text-center">👥 Joueurs</h3>
+                <div class="space-y-3">
+                    <div class="bg-white/20 rounded-xl p-3 flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-xl mr-3">🎨</div>
+                        <span id="player1Name" class="text-white font-semibold">En attente...</span>
+                    </div>
+                    <div class="bg-white/20 rounded-xl p-3 flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-xl mr-3">🎭</div>
+                        <span id="player2Name" class="text-white font-semibold pulse">En attente...</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" id="startGameBtn" class="btn-primary w-full text-lg" disabled style="opacity: 0.5;">
+                🎮 Démarrer la partie
+            </button>
+
+            <button onclick="leaveRoom()" class="mt-4 text-white/70 text-sm underline w-full">
+                ← Quitter le salon
+            </button>
         </div>
+    </div>
 
-        <div class="mt-auto card p-4 text-xs leading-relaxed text-slate-500">
-          <p><strong class="text-slate-700">Firebase requis :</strong> colle tes clés dans la section <code>firebaseConfig</code> du JavaScript. La base Realtime Database doit être activée.</p>
+    <!-- ========================================
+         VIEW 3: WORD CHOICE / CHOIX DU MOT
+    ======================================== -->
+    <div id="wordChoiceView" class="view">
+        <div class="flex-1 flex flex-col p-6 safe-area-top">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2">Choisissez votre mot</h2>
+                <p class="text-white/80 text-sm">Plus c'est difficile, plus vous gagnez de points !</p>
+            </div>
+
+            <div id="wordChoiceContainer" class="space-y-4 flex-1 flex flex-col justify-center">
+                <!-- Words will be injected here -->
+            </div>
+
+            <div class="text-center text-white/60 text-xs mt-4">
+                Manche <span id="currentRound">1</span>/6
+            </div>
         </div>
-      </section>
+    </div>
 
-      <!-- SALON -->
-      <section id="view-lobby" class="view p-4 gap-3">
-        <header class="flex items-center justify-between gap-2">
-          <button id="leaveLobbyBtn" class="btn btn-secondary min-h-0 px-3 py-2">←</button>
-          <div class="text-center">
-            <p class="text-xs font-black uppercase tracking-wide text-slate-400">Salon</p>
-            <h2 id="roomCodeLabel" class="text-2xl font-black tracking-[0.25em] text-violet-700">----</h2>
-          </div>
-          <button id="copyCodeBtn" class="btn btn-secondary min-h-0 px-3 py-2">Copier</button>
-        </header>
+    <!-- ========================================
+         VIEW 4: DRAWING / PHASE DE DESSIN
+    ======================================== -->
+    <div id="drawingView" class="view">
+        <div class="flex flex-col h-full safe-area-top">
+            <!-- Header -->
+            <div class="bg-white/10 backdrop-blur-sm p-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="score-badge">🏆 <span id="drawerScore">0</span></span>
+                    <div class="text-white font-semibold text-sm" id="drawerName">Joueur</div>
+                </div>
+                <div class="timer-badge" id="drawTimer">--:--</div>
+            </div>
 
-        <div class="card p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="font-black text-slate-800">Joueur 1</span>
-            <span id="p1Status" class="pill">En attente</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="font-black text-slate-800">Joueur 2</span>
-            <span id="p2Status" class="pill">En attente</span>
-          </div>
+            <!-- Word to draw -->
+            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-center py-2">
+                <p class="text-white font-bold text-lg" id="wordToDraw">MOT</p>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="flex-1 flex items-center justify-center p-3 bg-white/5">
+                <canvas id="drawingCanvas" width="320" height="320"></canvas>
+            </div>
+
+            <!-- Drawing Tools -->
+            <div class="bg-white/10 backdrop-blur-sm p-3">
+                <!-- Colors -->
+                <div class="flex justify-center space-x-2 mb-3">
+                    <div class="color-btn active" style="background: #ef4444;" data-color="#ef4444"></div>
+                    <div class="color-btn" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                    <div class="color-btn" style="background: #10b981;" data-color="#10b981"></div>
+                    <div class="color-btn" style="background: #f59e0b;" data-color="#f59e0b"></div>
+                    <div class="color-btn" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                    <div class="color-btn" style="background: #1f2937;" data-color="#1f2937"></div>
+                </div>
+
+                <!-- Size & Tools -->
+                <div class="flex justify-center items-center space-x-2 mb-2">
+                    <button class="tool-btn bg-white/20 text-white active" data-size="2">
+                        <span class="inline-block w-2 h-2 bg-white rounded-full"></span>
+                    </button>
+                    <button class="tool-btn bg-white/20 text-white" data-size="5">
+                        <span class="inline-block w-3 h-3 bg-white rounded-full"></span>
+                    </button>
+                    <button class="tool-btn bg-white/20 text-white" data-size="10">
+                        <span class="inline-block w-4 h-4 bg-white rounded-full"></span>
+                    </button>
+                    <button onclick="setEraser()" class="tool-btn bg-pink-500 text-white px-4">
+                        🧹
+                    </button>
+                    <button onclick="clearCanvas()" class="tool-btn bg-red-500 text-white px-4">
+                        🗑️
+                    </button>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="card p-4 space-y-3">
-          <p class="text-sm font-semibold text-slate-500">Partage le code avec ton ami. Quand les deux joueurs sont connectés, le Joueur 1 lance la partie.</p>
-          <button id="startGameBtn" class="btn btn-primary w-full disabled:opacity-40" disabled>Lancer la partie</button>
+    <!-- ========================================
+         VIEW 5: GUESSING / PHASE DE DEVINETTE
+    ======================================== -->
+    <div id="guessingView" class="view">
+        <div class="flex flex-col h-full safe-area-top">
+            <!-- Header -->
+            <div class="bg-white/10 backdrop-blur-sm p-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="score-badge">🏆 <span id="guesserScore">0</span></span>
+                    <div class="text-white font-semibold text-sm" id="guesserName">Joueur</div>
+                </div>
+                <div class="timer-badge" id="guessTimer">--:--</div>
+            </div>
+
+            <!-- Canvas View (read-only) -->
+            <div class="flex-1 flex flex-col items-center justify-center p-3 bg-white/5">
+                <canvas id="guessingCanvas" width="320" height="320"></canvas>
+                
+                <!-- Word Display -->
+                <div class="mt-6 mb-4" id="wordLetters">
+                    <!-- Letters will be injected here -->
+                </div>
+
+                <!-- Attempts -->
+                <div class="text-white/70 text-sm mb-4">
+                    Tentatives: <span id="attemptsLeft">5</span>/5
+                </div>
+
+                <!-- Input -->
+                <div class="w-full max-w-xs">
+                    <input 
+                        type="text" 
+                        id="guessInput" 
+                        class="input-field text-center text-lg font-bold" 
+                        placeholder="Votre réponse"
+                        autocomplete="off"
+                    >
+                    <button onclick="submitGuess()" class="btn-primary w-full mt-3">
+                        ✅ Valider
+                    </button>
+                </div>
+
+                <!-- Feedback -->
+                <div id="guessFeedback" class="mt-4 text-center font-semibold text-lg">
+                    <!-- Feedback messages -->
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="mt-auto rounded-3xl bg-gradient-to-br from-cyan-100 to-fuchsia-100 p-4 text-sm font-bold text-slate-700">
-          6 manches alternées. Le dessinateur choisit un mot, l'autre devine, les points sont attribués selon la difficulté.
+    <!-- ========================================
+         VIEW 6: RESULTS / FIN DE PARTIE
+    ======================================== -->
+    <div id="resultsView" class="view">
+        <div class="flex-1 flex flex-col p-6 safe-area-top overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="text-6xl mb-3">🏆</div>
+                <h2 class="text-3xl font-bold text-white mb-2">Partie terminée !</h2>
+            </div>
+
+            <!-- Winner Display -->
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
+                <h3 class="text-white text-center font-bold mb-4 text-xl" id="winnerText">🎉 Résultats</h3>
+                <div class="space-y-3">
+                    <div class="bg-white/20 rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-xl mr-3">🎨</div>
+                            <span id="finalPlayer1Name" class="text-white font-semibold">Joueur 1</span>
+                        </div>
+                        <span class="score-badge text-xl" id="finalPlayer1Score">0</span>
+                    </div>
+                    <div class="bg-white/20 rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-xl mr-3">🎭</div>
+                            <span id="finalPlayer2Name" class="text-white font-semibold">Joueur 2</span>
+                        </div>
+                        <span class="score-badge text-xl" id="finalPlayer2Score">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Section -->
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6">
+                <h3 class="text-white font-bold mb-3 text-center">🖼️ Galerie des dessins</h3>
+                <div class="grid grid-cols-2 gap-3" id="galleryGrid">
+                    <!-- Drawings will be injected here -->
+                </div>
+                <p class="text-white/60 text-xs text-center mt-3">Cliquez sur un dessin pour voter et télécharger</p>
+            </div>
+
+            <button onclick="returnToHome()" class="btn-primary w-full text-lg">
+                🏠 Retour à l'accueil
+            </button>
         </div>
-      </section>
+    </div>
 
-      <!-- GAME -->
-      <section id="view-game" class="view p-3 gap-2">
-        <header class="flex items-center justify-between gap-2">
-          <div class="pill">M<span id="roundLabel">1</span>/6</div>
-          <div class="pill">⏱ <span id="timerLabel">--:--</span></div>
-          <div class="pill">⭐ <span id="scoreLabel">0 - 0</span></div>
-        </header>
+    <!-- ========================================
+         VIEW 7: SETTINGS / PARAMÈTRES
+    ======================================== -->
+    <div id="settingsView" class="view">
+        <div class="flex-1 flex flex-col p-6 safe-area-top overflow-y-auto">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2">⚙️ Paramètres</h2>
+            </div>
 
-        <div id="roleBanner" class="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 py-2 text-center text-sm font-black text-white shadow-glow">Connexion...</div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-5 mb-6 space-y-5">
+                <!-- Draw Timer -->
+                <div>
+                    <label class="text-white font-semibold block mb-2">Timer de dessin</label>
+                    <select id="drawTimerSetting" class="input-field">
+                        <option value="60">1 minute</option>
+                        <option value="180" selected>3 minutes</option>
+                        <option value="0">Infini</option>
+                    </select>
+                </div>
 
-        <div id="choicePanel" class="card p-3 space-y-3 hidden">
-          <p class="text-center text-sm font-black text-slate-700">Choisis ton mot à dessiner</p>
-          <div id="wordChoices" class="grid gap-2"></div>
+                <!-- Guess Timer -->
+                <div>
+                    <label class="text-white font-semibold block mb-2">Timer de devinette</label>
+                    <select id="guessTimerSetting" class="input-field">
+                        <option value="180">3 minutes</option>
+                        <option value="300" selected>5 minutes</option>
+                        <option value="600">10 minutes</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="hideSettings()" class="btn-primary w-full text-lg">
+                ✅ Sauvegarder
+            </button>
         </div>
+    </div>
 
-        <div id="guessPanel" class="card p-3 space-y-2 hidden">
-          <div id="maskedWord" class="text-center leading-9"></div>
-          <div class="flex gap-2">
-            <input id="guessInput" class="input min-h-0 flex-1" placeholder="Ta réponse" autocomplete="off" autocapitalize="none" />
-            <button id="submitGuessBtn" class="btn btn-primary min-h-0 px-4 py-2">OK</button>
-          </div>
-          <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-            <span>Essais : <b id="attemptLabel">0</b>/5</span>
-            <span id="hintLabel">Aide après 2 erreurs</span>
-          </div>
-        </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-        <div class="canvas-wrap">
-          <canvas id="drawCanvas"></canvas>
-          <div id="canvasLocked" class="pointer-events-none absolute inset-0 hidden place-items-center bg-white/60 text-center text-lg font-black text-violet-700 backdrop-blur-[2px]">En attente...</div>
-        </div>
-
-        <div id="drawingTools" class="card p-2 space-y-2 hidden">
-          <div class="flex items-center justify-between gap-2">
-            <div id="colorTools" class="flex gap-2"></div>
-            <button id="eraserBtn" class="btn btn-secondary min-h-0 px-3 py-2 text-sm">Gomme</button>
-            <button id="clearBtn" class="btn btn-danger min-h-0 px-3 py-2 text-sm">Effacer</button>
-          </div>
-          <div id="sizeTools" class="flex items-center justify-center gap-3"></div>
-        </div>
-
-        <button id="forceNextBtn" class="btn btn-secondary hidden">Terminer la manche</button>
-      </section>
-
-      <!-- GALLERY -->
-      <section id="view-gallery" class="view p-4 gap-3">
-        <header class="text-center">
-          <p class="text-xs font-black uppercase tracking-wide text-slate-400">Fin de partie</p>
-          <h2 class="text-2xl font-black text-slate-900">Galerie Trophée</h2>
-          <p id="winnerLabel" class="mt-1 text-sm font-bold text-violet-700"></p>
-        </header>
-
-        <div id="finalScores" class="grid grid-cols-2 gap-3"></div>
-
-        <div id="galleryGrid" class="scroll-area no-scrollbar grid grid-cols-2 content-start gap-3 pb-2"></div>
-
-        <button id="newGameBtn" class="btn btn-primary w-full">Nouvelle partie</button>
-      </section>
-    </section>
-  </main>
-
-  <script type="module">
-    /**********************************************************************
-     * CONFIGURATION FIREBASE
-     * 1. Crée un projet Firebase.
-     * 2. Active Realtime Database.
-     * 3. Colle tes clés ci-dessous.
-     * 4. Pour tester vite, règles temporaires possibles :
-     *    {
-     *      "rules": {
-     *        "rooms": { ".read": true, ".write": true }
-     *      }
-     *    }
-     *    Attention : ces règles ouvertes sont uniquement pour du prototype.
-     **********************************************************************/
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      set,
-      get,
-      update,
-      onValue,
-      onChildAdded,
-      off,
-      remove,
-      push,
-      serverTimestamp,
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-const firebaseConfig = {
+    <script>
+        // ========================================
+        // FIREBASE CONFIGURATION
+        // ========================================
+        // TODO: Replace with your Firebase configuration
+    const firebaseConfig = {
   apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
   authDomain: "mille-bornes-355ca.firebaseapp.com",
   databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
@@ -480,769 +526,424 @@ const firebaseConfig = {
   appId: "1:1018160779227:web:e686d32f117dfef63261fe"
 };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-    /**********************************************************************
-     * BASE DE MOTS INTERNE
-     * Facile = 1 point, Moyen = 2 points, Difficile = 3 points.
-     * Ajoute simplement des mots dans les tableaux.
-     **********************************************************************/
-    const WORD_BANK = {
-      easy: [
-        "chat", "chien", "soleil", "lune", "maison", "arbre", "fleur", "pomme", "banane", "voiture",
-        "velo", "train", "avion", "bateau", "livre", "table", "chaise", "porte", "lit", "lampe",
-        "pizza", "glace", "gateau", "pluie", "neige", "nuage", "coeur", "etoile", "main", "pied",
-        "nez", "oeil", "bouche", "poisson", "oiseau", "lapin", "souris", "tasse", "cle", "sac",
-        "montre", "ballon", "crayon", "feu", "eau", "pont", "route", "roi", "reine", "couronne",
-        "brosse", "savon", "cactus", "fantome", "robot", "dinosaure", "fusée", "tortue", "serpent", "grenouille",
-      ],
-      medium: [
-        "parapluie", "ordinateur", "telephone", "montagne", "chateau", "fromage", "boulangerie", "pompier", "policier", "docteur",
-        "pirate", "sirene", "vampire", "sorcier", "dragon", "kangourou", "girafe", "elephant", "crocodile", "papillon",
-        "helicoptere", "tracteur", "ambulance", "bibliotheque", "cinema", "restaurant", "supermarche", "ascenseur", "escalier", "miroir",
-        "batterie", "guitare", "violon", "microphone", "appareil photo", "volcan", "desert", "ile", "phare", "camping",
-        "valise", "lunettes", "chaussure", "bonhomme de neige", "arc en ciel", "cerf volant", "sous marin", "machine a laver", "toboggan", "skateboard",
-        "basketball", "football", "tennis", "natation", "yoga", "magicien", "facteur", "astronaute", "detective", "jardinier",
-      ],
-      hard: [
-        "microscope", "labyrinthe", "camouflage", "equilibriste", "parachute", "constellation", "satellite", "hippocampe", "ornithorynque", "metamorphose",
-        "marionnette", "catapulte", "tyrolienne", "montgolfiere", "sarcophage", "archeologue", "philosophe", "illusion", "perspective", "symetrie",
-        "tourbillon", "avalanche", "boussole", "telescope", "thermometre", "engrenage", "robot aspirateur", "panneau solaire", "voiture electrique", "empreinte digitale",
-        "sablier", "accordeon", "xylophone", "scaphandrier", "epouvantail", "naufrage", "feu d artifice", "machine a remonter le temps", "porte bonheur", "chasse au tresor",
-        "capitaine", "funambule", "alchimiste", "cartographe", "labourer", "hibernation", "eclipse", "mirage", "tsunami", "quarantaine",
-        "teleportation", "horloge coucou", "tapis volant", "station spatiale", "roue hydraulique", "origami", "domino", "puzzle", "masque de carnaval", "theatre d ombres",
-      ],
-    };
-
-    const DIFFICULTY = {
-      easy: { label: "Facile", points: 1, color: "from-emerald-300 to-cyan-300" },
-      medium: { label: "Moyen", points: 2, color: "from-amber-300 to-orange-300" },
-      hard: { label: "Difficile", points: 3, color: "from-fuchsia-400 to-rose-400" },
-    };
-
-    const TOTAL_ROUNDS = 6;
-    const MAX_ATTEMPTS = 5;
-    const COLORS = ["#111827", "#ef4444", "#f59e0b", "#22c55e", "#06b6d4", "#8b5cf6"];
-    const SIZES = [4, 8, 14];
-
-    /**********************************************************************
-     * ETAT LOCAL
-     **********************************************************************/
-    const state = {
-      roomCode: null,
-      playerId: localStorage.getItem("drawDuelPlayerId") || crypto.randomUUID(),
-      playerSlot: null,
-      room: null,
-      currentView: "home",
-      unsubRoom: null,
-      unsubStrokes: null,
-      drawing: false,
-      currentStrokeId: null,
-      lastPoint: null,
-      tool: { color: COLORS[0], size: SIZES[1], eraser: false },
-      timerInterval: null,
-      revealedIndexes: [],
-      canvasSnapshotTimer: null,
-    };
-    localStorage.setItem("drawDuelPlayerId", state.playerId);
-
-    const $ = (id) => document.getElementById(id);
-    const views = {
-      home: $("view-home"),
-      lobby: $("view-lobby"),
-      game: $("view-game"),
-      gallery: $("view-gallery"),
-    };
-
-    const canvas = $("drawCanvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-    /**********************************************************************
-     * UTILITAIRES UI + PWA
-     **********************************************************************/
-    function setVH() {
-      document.documentElement.style.setProperty("--vh", `${window.innerHeight * 0.01}px`);
-      resizeCanvasKeepingContent();
-    }
-    window.addEventListener("resize", setVH);
-    window.addEventListener("orientationchange", setVH);
-    setVH();
-
-    document.addEventListener("touchmove", (event) => {
-      if (event.target.closest("#drawCanvas")) return;
-      if (!event.target.closest(".scroll-area")) event.preventDefault();
-    }, { passive: false });
-
-    const manifest = {
-      name: "Draw Duel",
-      short_name: "Draw Duel",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#f7f7ff",
-      theme_color: "#7c3aed",
-      orientation: "portrait",
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%237c3aed'/%3E%3Cpath d='M137 354l29-91 119-119c22-22 58-22 80 0s22 58 0 80L246 343l-91 29c-11 3-21-7-18-18z' fill='white'/%3E%3C/svg%3E",
-        sizes: "512x512",
-        type: "image/svg+xml",
-      }],
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-    const manifestUrl = URL.createObjectURL(manifestBlob);
-    const manifestLink = document.createElement("link");
-    manifestLink.rel = "manifest";
-    manifestLink.href = manifestUrl;
-    document.head.appendChild(manifestLink);
-
-    function toast(message) {
-      const box = $("toast");
-      box.textContent = message;
-      box.classList.add("show");
-      clearTimeout(box.hideTimer);
-      box.hideTimer = setTimeout(() => box.classList.remove("show"), 2300);
-    }
-
-    function showView(name) {
-      Object.values(views).forEach((view) => view.classList.remove("active"));
-      views[name].classList.add("active");
-      state.currentView = name;
-      setTimeout(resizeCanvasKeepingContent, 80);
-    }
-
-    function normalizeText(value) {
-      return String(value || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toLowerCase();
-    }
-
-    function code() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-    }
-
-    function roomRef(path = "") {
-      return ref(db, `rooms/${state.roomCode}${path ? `/${path}` : ""}`);
-    }
-
-    function mySlot() {
-      return state.playerSlot;
-    }
-
-    function otherSlot() {
-      return state.playerSlot === "p1" ? "p2" : "p1";
-    }
-
-    function currentDrawerSlot(room = state.room) {
-      const round = room?.round || 1;
-      return round % 2 === 1 ? "p1" : "p2";
-    }
-
-    function isDrawer() {
-      return mySlot() === currentDrawerSlot();
-    }
-
-    function currentGuesserSlot(room = state.room) {
-      return currentDrawerSlot(room) === "p1" ? "p2" : "p1";
-    }
-
-    /**********************************************************************
-     * FIREBASE SALONS
-     **********************************************************************/
-    async function createRoom() {
-      const roomCode = code();
-      const drawDuration = Number($("drawDuration").value);
-      const guessDuration = Number($("guessDuration").value);
-      const initialRoom = {
-        code: roomCode,
-        createdAt: serverTimestamp(),
-        settings: { drawDuration, guessDuration },
-        players: {
-          p1: { id: state.playerId, joinedAt: Date.now(), online: true, score: 0, votes: {} },
-          p2: null,
-        },
-        status: "lobby",
-        round: 1,
-        phase: "waiting",
-        scores: { p1: 0, p2: 0 },
-        drawings: {},
-        galleryVotes: {},
-      };
-      await set(ref(db, `rooms/${roomCode}`), initialRoom);
-      enterRoom(roomCode, "p1");
-    }
-
-    async function joinRoom() {
-      const roomCode = $("joinCodeInput").value.trim().toUpperCase();
-      if (roomCode.length !== 4) return toast("Entre un code de 4 caractères.");
-      const snap = await get(ref(db, `rooms/${roomCode}`));
-      if (!snap.exists()) return toast("Salon introuvable.");
-      const room = snap.val();
-      let slot = null;
-      if (room.players?.p1?.id === state.playerId) slot = "p1";
-      else if (room.players?.p2?.id === state.playerId) slot = "p2";
-      else if (!room.players?.p2) slot = "p2";
-      else return toast("Ce salon est déjà complet.");
-
-      await update(ref(db, `rooms/${roomCode}/players/${slot}`), {
-        id: state.playerId,
-        joinedAt: Date.now(),
-        online: true,
-        score: room.players?.[slot]?.score || 0,
-      });
-      enterRoom(roomCode, slot);
-    }
-
-    function enterRoom(roomCode, slot) {
-      state.roomCode = roomCode;
-      state.playerSlot = slot;
-      $("roomCodeLabel").textContent = roomCode;
-      showView("lobby");
-      listenRoom();
-      toast(slot === "p1" ? "Salon créé." : "Salon rejoint.");
-    }
-
-    function listenRoom() {
-      if (state.unsubRoom) off(roomRef(), "value", state.unsubRoom);
-      state.unsubRoom = onValue(roomRef(), (snap) => {
-        if (!snap.exists()) {
-          resetLocal();
-          toast("Salon fermé.");
-          return;
-        }
-        state.room = snap.val();
-        renderFromRoom();
-      });
-    }
-
-    async function leaveRoom() {
-      if (!state.roomCode || !state.playerSlot) return resetLocal();
-      await update(roomRef(`players/${state.playerSlot}`), { online: false });
-      resetLocal();
-    }
-
-    function resetLocal() {
-      if (state.unsubRoom) off(roomRef(), "value", state.unsubRoom);
-      stopStrokeListener();
-      clearInterval(state.timerInterval);
-      state.roomCode = null;
-      state.playerSlot = null;
-      state.room = null;
-      state.unsubRoom = null;
-      showView("home");
-    }
-
-    /**********************************************************************
-     * FLOW DE JEU
-     **********************************************************************/
-    async function startGame() {
-      if (state.playerSlot !== "p1") return;
-      await update(roomRef(), {
-        status: "game",
-        phase: "choice",
-        round: 1,
-        scores: { p1: 0, p2: 0 },
-        current: null,
-        drawings: {},
-        galleryVotes: {},
-        strokes: null,
-      });
-    }
-
-    function pickThreeWords() {
-      return ["easy", "medium", "hard"].map((difficulty) => {
-        const words = WORD_BANK[difficulty];
-        const word = words[Math.floor(Math.random() * words.length)];
-        return { word, difficulty, points: DIFFICULTY[difficulty].points };
-      });
-    }
-
-    async function chooseWord(choice) {
-      if (!isDrawer()) return;
-      await set(roomRef("strokes"), null);
-      clearCanvas();
-      const now = Date.now();
-      const drawDuration = state.room.settings?.drawDuration ?? 180;
-      await update(roomRef(), {
-        phase: "drawing",
-        current: {
-          word: choice.word,
-          normalizedWord: normalizeText(choice.word),
-          difficulty: choice.difficulty,
-          points: choice.points,
-          drawer: currentDrawerSlot(),
-          guesser: currentGuesserSlot(),
-          attempts: 0,
-          guesses: [],
-          revealed: [],
-          startedAt: now,
-          endsAt: drawDuration > 0 ? now + drawDuration * 1000 : 0,
-        },
-      });
-    }
-
-    async function finishDrawing() {
-      if (!isDrawer() || state.room.phase !== "drawing") return;
-      await saveCurrentDrawing(false);
-      const now = Date.now();
-      const guessDuration = state.room.settings?.guessDuration ?? 300;
-      await update(roomRef(), {
-        phase: "guessing",
-        "current/guessStartedAt": now,
-        "current/guessEndsAt": now + guessDuration * 1000,
-      });
-    }
-
-    async function submitGuess() {
-      const value = $("guessInput").value;
-      $("guessInput").value = "";
-      if (!value.trim()) return;
-      if (state.room.phase !== "guessing" || isDrawer()) return;
-
-      const current = state.room.current;
-      const correct = normalizeText(value) === current.normalizedWord;
-      const attempts = (current.attempts || 0) + (correct ? 0 : 1);
-      const guesses = [...(current.guesses || []), { value, correct, at: Date.now() }];
-
-      if (correct) {
-        const slot = mySlot();
-        const newScore = (state.room.scores?.[slot] || 0) + current.points;
-        await update(roomRef(), {
-          [`scores/${slot}`]: newScore,
-          "current/guesses": guesses,
-          "current/solved": true,
-        });
-        toast(`Bravo ! +${current.points} point${current.points > 1 ? "s" : ""}`);
-        setTimeout(nextRound, 900);
-        return;
-      }
-
-      const revealed = buildHints(current.normalizedWord, attempts, current.revealed || []);
-      await update(roomRef("current"), { attempts, guesses, revealed });
-
-      if (attempts >= MAX_ATTEMPTS) {
-        toast(`Perdu ! Le mot était : ${current.word}`);
-        setTimeout(nextRound, 1200);
-      } else {
-        toast("Mauvaise réponse.");
-      }
-    }
-
-    function buildHints(word, attempts, revealed) {
-      const next = new Set(revealed || []);
-      const targetCount = attempts >= 3 ? 2 : attempts >= 2 ? 1 : 0;
-      const eligible = [...word].map((char, index) => ({ char, index })).filter(({ char }) => char !== " ");
-      while (next.size < targetCount && next.size < eligible.length) {
-        const pick = eligible[Math.floor(Math.random() * eligible.length)].index;
-        next.add(pick);
-      }
-      return [...next];
-    }
-
-    async function nextRound() {
-      if (!state.room || !state.roomCode) return;
-      const round = state.room.round || 1;
-      await saveCurrentDrawing(true);
-      if (round >= TOTAL_ROUNDS) {
-        await update(roomRef(), { phase: "finished", status: "finished" });
-      } else {
-        await update(roomRef(), {
-          round: round + 1,
-          phase: "choice",
-          current: null,
-          strokes: null,
-        });
-      }
-    }
-
-    async function saveCurrentDrawing(finalize) {
-      const room = state.room;
-      if (!room?.current) return;
-      const round = room.round || 1;
-      const dataUrl = canvas.toDataURL("image/png");
-      const current = room.current;
-      await update(roomRef(`drawings/round${round}`), {
-        dataUrl,
-        word: current.word || "Mot inconnu",
-        difficulty: current.difficulty || "easy",
-        drawer: current.drawer || currentDrawerSlot(room),
-        points: current.points || 1,
-        finalized: Boolean(finalize),
-        savedAt: Date.now(),
-      });
-    }
-
-    /**********************************************************************
-     * RENDER GLOBAL
-     **********************************************************************/
-    function renderFromRoom() {
-      const room = state.room;
-      if (!room) return;
-      if (room.status === "lobby") {
-        if (state.currentView !== "lobby") showView("lobby");
-        renderLobby(room);
-      } else if (room.status === "finished" || room.phase === "finished") {
-        if (state.currentView !== "gallery") showView("gallery");
-        renderGallery(room);
-      } else {
-        if (state.currentView !== "game") showView("game");
-        renderGame(room);
-      }
-    }
-
-    function renderLobby(room) {
-      $("p1Status").textContent = room.players?.p1?.online ? "Connecté" : "En attente";
-      $("p2Status").textContent = room.players?.p2?.online ? "Connecté" : "En attente";
-      $("startGameBtn").disabled = !(state.playerSlot === "p1" && room.players?.p1 && room.players?.p2);
-    }
-
-    function renderGame(room) {
-      $("roundLabel").textContent = room.round || 1;
-      $("scoreLabel").textContent = `${room.scores?.p1 || 0} - ${room.scores?.p2 || 0}`;
-      const drawer = currentDrawerSlot(room);
-      const meDrawer = mySlot() === drawer;
-      const phase = room.phase;
-      const role = meDrawer ? "Tu dessines" : "Tu devines";
-      $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
-
-      $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
-      $("guessPanel").classList.toggle("hidden", !(phase === "guessing" && !meDrawer));
-      $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
-      $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
-      $("canvasLocked").classList.toggle("hidden", phase !== "choice");
-      $("canvasLocked").classList.toggle("grid", phase === "choice");
-      canvas.style.pointerEvents = phase === "drawing" && meDrawer ? "auto" : "none";
-
-      if (phase === "choice" && meDrawer) renderChoices();
-      if (phase === "guessing") renderGuess(room.current);
-      if (phase === "drawing" || phase === "guessing") startStrokeListener();
-      else stopStrokeListener();
-      updateTimer(room);
-    }
-
-    function renderChoices() {
-      const container = $("wordChoices");
-      if (container.dataset.round === String(state.room.round)) return;
-      container.dataset.round = String(state.room.round);
-      container.innerHTML = "";
-      pickThreeWords().forEach((choice) => {
-        const meta = DIFFICULTY[choice.difficulty];
-        const button = document.createElement("button");
-        button.className = `btn bg-gradient-to-r ${meta.color} text-slate-900 text-left`;
-        button.innerHTML = `<span class="block text-lg font-black">${choice.word}</span><span class="text-xs font-black uppercase opacity-70">${meta.label} · ${choice.points} pt${choice.points > 1 ? "s" : ""}</span>`;
-        button.onclick = () => chooseWord(choice);
-        container.appendChild(button);
-      });
-    }
-
-    function renderGuess(current) {
-      if (!current) return;
-      const word = current.normalizedWord || normalizeText(current.word);
-      const revealed = new Set(current.revealed || []);
-      $("maskedWord").innerHTML = [...word].map((char, index) => {
-        if (char === " ") return `<span class="inline-block w-3"></span>`;
-        const value = revealed.has(index) ? char.toUpperCase() : "_";
-        return `<span class="guess-slot">${value}</span>`;
-      }).join("");
-      $("attemptLabel").textContent = current.attempts || 0;
-      const left = Math.max(0, MAX_ATTEMPTS - (current.attempts || 0));
-      $("hintLabel").textContent = left === 1 ? "Dernière chance" : "Aide auto après erreurs";
-    }
-
-    function updateTimer(room) {
-      clearInterval(state.timerInterval);
-      const phase = room.phase;
-      const current = room.current;
-      const infinite = phase === "drawing" && current?.endsAt === 0;
-      if (infinite) {
-        $("timerLabel").textContent = "∞";
-        return;
-      }
-      const endsAt = phase === "drawing" ? current?.endsAt : phase === "guessing" ? current?.guessEndsAt : 0;
-      if (!endsAt) {
-        $("timerLabel").textContent = "--:--";
-        return;
-      }
-      const tick = async () => {
-        const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
-        const minutes = String(Math.floor(left / 60)).padStart(2, "0");
-        const seconds = String(left % 60).padStart(2, "0");
-        $("timerLabel").textContent = `${minutes}:${seconds}`;
-        if (left <= 0) {
-          clearInterval(state.timerInterval);
-          if (phase === "drawing" && isDrawer()) finishDrawing();
-          if (phase === "guessing" && state.playerSlot === currentGuesserSlot(room)) nextRound();
-        }
-      };
-      tick();
-      state.timerInterval = setInterval(tick, 500);
-    }
-
-    /**********************************************************************
-     * CANVAS HTML5 + SYNC REALTIME
-     **********************************************************************/
-    function resizeCanvasKeepingContent() {
-      if (!canvas || !canvas.parentElement) return;
-      const rect = canvas.parentElement.getBoundingClientRect();
-      if (rect.width < 50 || rect.height < 50) return;
-      const old = document.createElement("canvas");
-      old.width = canvas.width || 1;
-      old.height = canvas.height || 1;
-      old.getContext("2d").drawImage(canvas, 0, 0);
-      const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(rect.width * ratio);
-      canvas.height = Math.floor(rect.height * ratio);
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-      if (old.width > 1) ctx.drawImage(old, 0, 0, old.width / ratio, old.height / ratio, 0, 0, rect.width, rect.height);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-    }
-
-    function clearCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-    }
-
-    function getPoint(event) {
-      const touch = event.touches?.[0] || event.changedTouches?.[0] || event;
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)),
-        y: Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height)),
-      };
-    }
-
-    function drawSegment(from, to, stroke) {
-      const rect = canvas.getBoundingClientRect();
-      ctx.save();
-      ctx.globalCompositeOperation = stroke.eraser ? "destination-out" : "source-over";
-      ctx.strokeStyle = stroke.color || "#111827";
-      ctx.lineWidth = stroke.size || 8;
-      ctx.beginPath();
-      ctx.moveTo(from.x * rect.width, from.y * rect.height);
-      ctx.lineTo(to.x * rect.width, to.y * rect.height);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    async function beginDraw(event) {
-      if (!isDrawer() || state.room?.phase !== "drawing") return;
-      event.preventDefault();
-      state.drawing = true;
-      state.lastPoint = getPoint(event);
-      const strokeRef = push(roomRef("strokes"));
-      state.currentStrokeId = strokeRef.key;
-      await set(strokeRef, {
-        color: state.tool.color,
-        size: state.tool.size,
-        eraser: state.tool.eraser,
-        points: [state.lastPoint],
-        at: Date.now(),
-      });
-    }
-
-    async function moveDraw(event) {
-      if (!state.drawing || !state.currentStrokeId) return;
-      event.preventDefault();
-      const point = getPoint(event);
-      const stroke = { color: state.tool.color, size: state.tool.size, eraser: state.tool.eraser };
-      drawSegment(state.lastPoint, point, stroke);
-      state.lastPoint = point;
-      await push(roomRef(`strokes/${state.currentStrokeId}/points`), point);
-    }
-
-    function endDraw(event) {
-      if (!state.drawing) return;
-      event.preventDefault();
-      state.drawing = false;
-      state.currentStrokeId = null;
-      state.lastPoint = null;
-      clearTimeout(state.canvasSnapshotTimer);
-      state.canvasSnapshotTimer = setTimeout(() => saveCurrentDrawing(false), 250);
-    }
-
-    function startStrokeListener() {
-      if (state.unsubStrokes || !state.roomCode) return;
-      clearCanvas();
-      state.unsubStrokes = onChildAdded(roomRef("strokes"), (snap) => {
-        const stroke = snap.val();
-        if (!stroke) return;
-        const points = Array.isArray(stroke.points) ? stroke.points : Object.values(stroke.points || {});
-        for (let i = 1; i < points.length; i++) drawSegment(points[i - 1], points[i], stroke);
-        onChildAdded(roomRef(`strokes/${snap.key}/points`), (pointSnap) => {
-          const nextPointsSnap = pointSnap.val();
-          if (!nextPointsSnap) return;
-          const latest = Array.isArray(stroke.points) ? stroke.points : Object.values(stroke.points || {});
-          const previous = latest[latest.length - 1];
-          if (previous && nextPointsSnap && previous !== nextPointsSnap) drawSegment(previous, nextPointsSnap, stroke);
-          latest.push(nextPointsSnap);
-          stroke.points = latest;
-        });
-      });
-    }
-
-    function stopStrokeListener() {
-      if (!state.unsubStrokes || !state.roomCode) return;
-      off(roomRef("strokes"), "child_added", state.unsubStrokes);
-      state.unsubStrokes = null;
-    }
-
-    function renderTools() {
-      const colorTools = $("colorTools");
-      colorTools.innerHTML = "";
-      COLORS.forEach((color) => {
-        const button = document.createElement("button");
-        button.className = `tool-dot ${state.tool.color === color && !state.tool.eraser ? "active" : ""}`;
-        button.style.background = color;
-        button.onclick = () => {
-          state.tool.color = color;
-          state.tool.eraser = false;
-          renderTools();
+        // ========================================
+        // WORDS DATABASE
+        // ========================================
+        const wordsDatabase = {
+            easy: [
+                "chat", "chien", "maison", "soleil", "fleur", "arbre", "voiture", "ballon",
+                "pomme", "étoile", "lune", "nuage", "oiseau", "poisson", "pain", "eau",
+                "porte", "fenêtre", "table", "chaise", "livre", "stylo", "téléphone", "clé",
+                "chapeau", "sac", "vélo", "train", "avion", "bateau", "guitare", "piano"
+            ],
+            medium: [
+                "ordinateur", "parapluie", "papillon", "montagne", "rivière", "chocolat", 
+                "restaurant", "hôpital", "bibliothèque", "pharmacie", "boulangerie", "croissant",
+                "éléphant", "girafe", "kangourou", "pingouin", "caméléon", "microscope",
+                "télescope", "ascenseur", "escalier", "hélicoptère", "ambulance", "pompier",
+                "sandwich", "gâteau", "pastèque", "ananas", "banane", "framboise", "cerise", "raisin"
+            ],
+            hard: [
+                "hippopotame", "rhinocéros", "extraterrestre", "astronaute", "archéologue", 
+                "parachute", "pyramide", "volcan", "aurore boréale", "galaxie", "constellation",
+                "chauve-souris", "méduse", "pieuvre", "nautilus", "stalagmite", "stalactite",
+                "cathédrale", "labyrinthe", "forteresse", "colisée", "acropole", "sphinx",
+                "dinosaure", "tyrannosaure", "diplodocus", "tricératops", "mammouth", "sabre laser",
+                "tapis volant", "lampe magique", "baguette magique", "parchemin"
+            ]
         };
-        colorTools.appendChild(button);
-      });
 
-      const sizeTools = $("sizeTools");
-      sizeTools.innerHTML = "";
-      SIZES.forEach((size) => {
-        const button = document.createElement("button");
-        button.className = `size-dot ${state.tool.size === size ? "active" : ""}`;
-        button.innerHTML = `<span style="width:${size + 4}px;height:${size + 4}px;border-radius:999px;background:currentColor;display:block"></span>`;
-        button.onclick = () => {
-          state.tool.size = size;
-          renderTools();
-        };
-        sizeTools.appendChild(button);
-      });
-      $("eraserBtn").classList.toggle("btn-primary", state.tool.eraser);
-    }
+        // ========================================
+        // GLOBAL STATE
+        // ========================================
+        let currentView = 'homeView';
+        let roomCode = null;
+        let playerName = null;
+        let playerNumber = null; // 1 or 2
+        let currentRound = 1;
+        let isDrawer = false;
+        let currentWord = null;
+        let currentWordPoints = 0;
+        let drawTimerInterval = null;
+        let guessTimerInterval = null;
+        let roomRef = null;
+        let canvasRef = null;
 
-    /**********************************************************************
-     * GALERIE + VOTES + TELECHARGEMENT
-     **********************************************************************/
-    function renderGallery(room) {
-      const p1 = room.scores?.p1 || 0;
-      const p2 = room.scores?.p2 || 0;
-      $("winnerLabel").textContent = p1 === p2 ? `Égalité ${p1}-${p2}` : `${p1 > p2 ? "Joueur 1" : "Joueur 2"} gagne ${Math.max(p1, p2)}-${Math.min(p1, p2)}`;
-      $("finalScores").innerHTML = `
-        <div class="card p-3 text-center"><p class="text-xs font-black text-slate-400">Joueur 1</p><p class="text-3xl font-black text-violet-700">${p1}</p></div>
-        <div class="card p-3 text-center"><p class="text-xs font-black text-slate-400">Joueur 2</p><p class="text-3xl font-black text-fuchsia-600">${p2}</p></div>
-      `;
+        // Canvas state
+        let isDrawing = false;
+        let currentColor = '#ef4444';
+        let currentSize = 2;
+        let isEraser = false;
+        let ctx = null;
+        let guessingCtx = null;
 
-      const grid = $("galleryGrid");
-      grid.innerHTML = "";
-      const drawings = room.drawings || {};
-      for (let i = 1; i <= TOTAL_ROUNDS; i++) {
-        const item = drawings[`round${i}`];
-        const card = document.createElement("article");
-        card.className = "thumb-card card p-2 space-y-2";
-        const votes = Object.values(room.galleryVotes?.[`round${i}`] || {}).length;
-        card.innerHTML = `
-          ${item?.dataUrl ? `<img src="${item.dataUrl}" alt="Dessin manche ${i}" />` : `<div class="grid aspect-[4/3] place-items-center rounded-2xl bg-slate-100 text-xs font-bold text-slate-400">Vide</div>`}
-          <div>
-            <p class="truncate text-sm font-black text-slate-800">M${i} · ${item?.word || "?"}</p>
-            <p class="text-[11px] font-bold text-slate-400">${item?.drawer === "p1" ? "Joueur 1" : "Joueur 2"} · ${votes} vote${votes > 1 ? "s" : ""}</p>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button class="vote btn btn-secondary min-h-0 px-2 py-2 text-xs">Voter</button>
-            <button class="download btn btn-primary min-h-0 px-2 py-2 text-xs">PNG</button>
-          </div>
-        `;
-        card.querySelector(".vote")?.addEventListener("click", () => voteDrawing(`round${i}`));
-        card.querySelector(".download")?.addEventListener("click", () => downloadDrawing(item?.dataUrl, `draw-duel-manche-${i}.png`));
-        grid.appendChild(card);
-      }
-    }
+        // Settings
+        let drawTimerDuration = 180; // 3 minutes default
+        let guessTimerDuration = 300; // 5 minutes default
 
-    async function voteDrawing(roundKey) {
-      if (!state.roomCode || !state.playerSlot) return;
-      await set(roomRef(`galleryVotes/${roundKey}/${state.playerSlot}`), true);
-      toast("Vote enregistré.");
-    }
+        // ========================================
+        // VIEW MANAGEMENT
+        // ========================================
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            currentView = viewId;
+        }
 
-    function downloadDrawing(dataUrl, filename) {
-      if (!dataUrl) return toast("Dessin indisponible.");
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
+        function showSettings() {
+            showView('settingsView');
+        }
 
-    /**********************************************************************
-     * EVENEMENTS
-     **********************************************************************/
-    $("createRoomBtn").addEventListener("click", createRoom);
-    $("joinRoomBtn").addEventListener("click", joinRoom);
-    $("joinCodeInput").addEventListener("input", (event) => {
-      event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    });
-    $("leaveLobbyBtn").addEventListener("click", leaveRoom);
-    $("copyCodeBtn").addEventListener("click", async () => {
-      if (!state.roomCode) return;
-      await navigator.clipboard?.writeText(state.roomCode);
-      toast("Code copié.");
-    });
-    $("startGameBtn").addEventListener("click", startGame);
-    $("submitGuessBtn").addEventListener("click", submitGuess);
-    $("guessInput").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") submitGuess();
-    });
-    $("forceNextBtn").addEventListener("click", finishDrawing);
-    $("eraserBtn").addEventListener("click", () => {
-      state.tool.eraser = !state.tool.eraser;
-      renderTools();
-    });
-    $("clearBtn").addEventListener("click", async () => {
-      if (!isDrawer()) return;
-      clearCanvas();
-      await set(roomRef("strokes"), null);
-      await push(roomRef("strokes"), { color: "#ffffff", size: 1, eraser: false, points: [], clear: true, at: Date.now() });
-      toast("Canvas effacé.");
-    });
-    $("newGameBtn").addEventListener("click", async () => {
-      if (state.playerSlot !== "p1") return toast("Seul le Joueur 1 peut relancer.");
-      await update(roomRef(), {
-        status: "game",
-        phase: "choice",
-        round: 1,
-        current: null,
-        scores: { p1: 0, p2: 0 },
-        drawings: {},
-        galleryVotes: {},
-        strokes: null,
-      });
-    });
+        function hideSettings() {
+            drawTimerDuration = parseInt(document.getElementById('drawTimerSetting').value);
+            guessTimerDuration = parseInt(document.getElementById('guessTimerSetting').value);
+            showView('homeView');
+        }
 
-    canvas.addEventListener("touchstart", beginDraw, { passive: false });
-    canvas.addEventListener("touchmove", moveDraw, { passive: false });
-    canvas.addEventListener("touchend", endDraw, { passive: false });
-    canvas.addEventListener("touchcancel", endDraw, { passive: false });
-    canvas.addEventListener("pointerdown", beginDraw);
-    canvas.addEventListener("pointermove", moveDraw);
-    canvas.addEventListener("pointerup", endDraw);
-    canvas.addEventListener("pointerleave", endDraw);
+        // ========================================
+        // ROOM MANAGEMENT
+        // ========================================
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
 
-    renderTools();
-    resizeCanvasKeepingContent();
+        async function createRoom() {
+            playerName = document.getElementById('playerNameInput').value.trim();
+            if (!playerName) {
+                alert('Veuillez entrer votre nom');
+                return;
+            }
 
-    window.addEventListener("beforeunload", () => {
-      if (state.roomCode && state.playerSlot) {
-        update(roomRef(`players/${state.playerSlot}`), { online: false });
-      }
-    });
-  </script>
-</body>
-</html>
+            roomCode = generateRoomCode();
+            playerNumber = 1;
+
+            roomRef = database.ref('rooms/' + roomCode);
+            
+            await roomRef.set({
+                players: {
+                    player1: {
+                        name: playerName,
+                        score: 0,
+                        connected: true
+                    }
+                },
+                gameState: 'lobby',
+                currentRound: 1,
+                settings: {
+                    drawTimer: drawTimerDuration,
+                    guessTimer: guessTimerDuration
+                }
+            });
+
+            listenToRoom();
+            showView('lobbyView');
+            document.getElementById('roomCodeDisplay').textContent = roomCode;
+            document.getElementById('player1Name').textContent = playerName;
+        }
+
+        async function joinRoom() {
+            playerName = document.getElementById('playerNameInput').value.trim();
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            
+            if (!playerName || !code) {
+                alert('Veuillez entrer votre nom et le code du salon');
+                return;
+            }
+
+            roomCode = code;
+            playerNumber = 2;
+            roomRef = database.ref('rooms/' + roomCode);
+
+            // Check if room exists
+            const snapshot = await roomRef.once('value');
+            if (!snapshot.exists()) {
+                alert('Ce salon n\'existe pas');
+                return;
+            }
+
+            // Check if room is full
+            if (snapshot.val().players.player2) {
+                alert('Ce salon est déjà complet');
+                return;
+            }
+
+            await roomRef.child('players/player2').set({
+                name: playerName,
+                score: 0,
+                connected: true
+            });
+
+            listenToRoom();
+            showView('lobbyView');
+        }
+
+        function listenToRoom() {
+            roomRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // Update lobby
+                if (data.players.player1) {
+                    document.getElementById('player1Name').textContent = data.players.player1.name;
+                }
+                if (data.players.player2) {
+                    document.getElementById('player2Name').textContent = data.players.player2.name;
+                    document.getElementById('player2Name').classList.remove('pulse');
+                    document.getElementById('startGameBtn').disabled = false;
+                    document.getElementById('startGameBtn').style.opacity = '1';
+                }
+
+                // Update game state
+                if (data.gameState === 'wordChoice' && currentView !== 'wordChoiceView') {
+                    handleWordChoice(data);
+                } else if (data.gameState === 'drawing' && currentView !== 'drawingView' && currentView !== 'guessingView') {
+                    handleDrawingPhase(data);
+                } else if (data.gameState === 'results' && currentView !== 'resultsView') {
+                    handleResults(data);
+                }
+
+                // Update canvas for guesser
+                if (data.canvas && !isDrawer && currentView === 'guessingView') {
+                    redrawCanvas(data.canvas);
+                }
+
+                // Update scores in real-time
+                if (data.players) {
+                    updateScoreDisplays(data.players);
+                }
+
+                // Update word letters for guesser
+                if (data.revealedLetters && currentView === 'guessingView') {
+                    updateRevealedLetters(data.revealedLetters);
+                }
+            });
+        }
+
+        async function startGame() {
+            if (!roomRef) return;
+            
+            await roomRef.update({
+                gameState: 'wordChoice',
+                currentRound: 1,
+                currentDrawer: 1
+            });
+        }
+
+        function leaveRoom() {
+            if (roomRef) {
+                roomRef.child('players/player' + playerNumber).remove();
+                roomRef.off();
+                roomRef = null;
+            }
+            roomCode = null;
+            playerNumber = null;
+            showView('homeView');
+        }
+
+        function returnToHome() {
+            if (roomRef) {
+                roomRef.remove();
+                roomRef.off();
+                roomRef = null;
+            }
+            roomCode = null;
+            playerNumber = null;
+            currentRound = 1;
+            showView('homeView');
+        }
+
+        // ========================================
+        // WORD CHOICE PHASE
+        // ========================================
+        function handleWordChoice(data) {
+            const drawer = data.currentDrawer;
+            isDrawer = (drawer === playerNumber);
+
+            if (!isDrawer) {
+                // Wait for drawer to choose
+                showView('lobbyView');
+                document.getElementById('player1Name').textContent = data.players.player1.name + ' choisit un mot...';
+                return;
+            }
+
+            showView('wordChoiceView');
+            document.getElementById('currentRound').textContent = data.currentRound || 1;
+
+            // Generate 3 random words
+            const easyWord = wordsDatabase.easy[Math.floor(Math.random() * wordsDatabase.easy.length)];
+            const mediumWord = wordsDatabase.medium[Math.floor(Math.random() * wordsDatabase.medium.length)];
+            const hardWord = wordsDatabase.hard[Math.floor(Math.random() * wordsDatabase.hard.length)];
+
+            const container = document.getElementById('wordChoiceContainer');
+            container.innerHTML = `
+                <div class="word-card" onclick="selectWord('${easyWord}', 1)">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-green-500 font-bold">😊 FACILE</span>
+                        <span class="score-badge">+1 pt</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">${easyWord}</p>
+                </div>
+
+                <div class="word-card" onclick="selectWord('${mediumWord}', 2)">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-yellow-500 font-bold">😐 MOYEN</span>
+                        <span class="score-badge">+2 pts</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">${mediumWord}</p>
+                </div>
+
+                <div class="word-card" onclick="selectWord('${hardWord}', 3)">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-red-500 font-bold">😰 DIFFICILE</span>
+                        <span class="score-badge">+3 pts</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">${hardWord}</p>
+                </div>
+            `;
+        }
+
+        async function selectWord(word, points) {
+            currentWord = word;
+            currentWordPoints = points;
+
+            await roomRef.update({
+                gameState: 'drawing',
+                currentWord: word,
+                currentWordPoints: points,
+                startTime: Date.now(),
+                attempts: 5,
+                revealedLetters: []
+            });
+        }
+
+        // ========================================
+        // DRAWING PHASE
+        // ========================================
+        function handleDrawingPhase(data) {
+            const drawer = data.currentDrawer;
+            isDrawer = (drawer === playerNumber);
+            currentWord = data.currentWord;
+            currentWordPoints = data.currentWordPoints;
+
+            if (isDrawer) {
+                showView('drawingView');
+                setupDrawingCanvas();
+                document.getElementById('wordToDraw').textContent = currentWord.toUpperCase();
+                document.getElementById('drawerName').textContent = playerName;
+                document.getElementById('drawerScore').textContent = data.players['player' + playerNumber].score;
+                
+                if (data.settings && data.settings.drawTimer > 0) {
+                    startDrawTimer(data.settings.drawTimer);
+                }
+            } else {
+                showView('guessingView');
+                setupGuessingCanvas();
+                displayWordLetters(currentWord);
+                document.getElementById('guesserName').textContent = playerName;
+                document.getElementById('guesserScore').textContent = data.players['player' + playerNumber].score;
+                document.getElementById('attemptsLeft').textContent = data.attempts || 5;
+                
+                if (data.settings && data.settings.guessTimer > 0) {
+                    startGuessTimer(data.settings.guessTimer);
+                }
+            }
+        }
+
+        // ========================================
+        // CANVAS SETUP & DRAWING
+        // ========================================
+        function setupDrawingCanvas() {
+            const canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            // Clear canvas
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Touch events
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // Mouse events (for testing on desktop)
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+
+            // Setup color buttons
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentColor = this.getAttribute('data-color');
+                    isEraser = false;
+                });
+            });
+
+            // Setup size buttons
+            document.querySelectorAll('.tool-btn[data-size]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn[data-size]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentSize = parseInt(this.getAttribute('data-size'));
+                    isEraser = false;
+                });
+            });
+        }
+
+        function setupGuessingCanvas() {
+            const canvas = document.getElementById('guessingCanvas');
+            guessingCtx = canvas.getContext('2d');
+            guessingCtx.lineJoin = 'round';
+            guessingCtx.lineCap = 'round';
+            
+            // Clear canvas
+            guessingCtx.fillStyle = 'white';
+            guessingCtx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function getCanvasCoordinates(e) {
+            const canvas = e.target;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function startDrawing(e) {
+            if (!isDrawer) return;
+            e.preventDefault();
+            isDrawing = true;
+            
+            const coords = getCanvasCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(coords.x, coords.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || !isDrawer) return;
+            e.preventDefault();
+
+            const coords = getCanvasCoordinates(e);
+            
+            ctx.strokeStyle = isEraser ? 'white' : currentColor;
+            ctx.lineWidth = isEr
