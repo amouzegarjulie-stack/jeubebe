@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Price Master</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --cream: #FDFCF0;
+      --mint: #B8F2D8;
+      --rose: #F7C8D0;
+      --lavender: #D8C7FF;
+      --ink: #22223B;
+      --soft: #FFF8FA;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      touch-action: manipulation;
+    }
+
+    .app-screen {
+      width: 100vw;
+      height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 18px 50px rgba(34, 34, 59, 0.08);
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(2px);
+      opacity: 0.8;
+      z-index: 0;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .blob-one {
+      width: 190px;
+      height: 190px;
+      background: var(--mint);
+      top: -60px;
+      right: -50px;
+    }
+
+    .blob-two {
+      width: 180px;
+      height: 180px;
+      background: var(--rose);
+      bottom: 20px;
+      left: -70px;
+      animation-delay: -2s;
+    }
+
+    .blob-three {
+      width: 140px;
+      height: 140px;
+      background: var(--lavender);
+      bottom: -40px;
+      right: 20px;
+      animation-delay: -4s;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 56px;
+      border-radius: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: white;
+      box-shadow: 0 14px 28px rgba(34, 34, 59, 0.18);
+    }
+
+    .btn-mint {
+      background: var(--mint);
+      color: var(--ink);
+      box-shadow: 0 14px 28px rgba(122, 214, 170, 0.28);
+    }
+
+    .btn-rose {
+      background: var(--rose);
+      color: var(--ink);
+      box-shadow: 0 14px 28px rgba(247, 200, 208, 0.38);
+    }
+
+    .btn-lavender {
+      background: var(--lavender);
+      color: var(--ink);
+      box-shadow: 0 14px 28px rgba(216, 199, 255, 0.38);
+    }
+
+    .screen {
+      display: none;
+      animation: popIn 0.35s ease both;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .product-img {
+      width: 100%;
+      height: 245px;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.45));
+      padding: 12px;
+    }
+
+    .price-input {
+      width: 100%;
+      height: 64px;
+      border: 0;
+      outline: none;
+      border-radius: 22px;
+      background: white;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      box-shadow: inset 0 0 0 2px rgba(34, 34, 59, 0.08);
+    }
+
+    .price-input:focus {
+      box-shadow: inset 0 0 0 3px var(--lavender), 0 10px 30px rgba(216, 199, 255, 0.28);
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .pulse {
+      animation: pulse 1.3s ease-in-out infinite;
+    }
+
+    .feedback-card {
+      animation: resultPop 0.55s cubic-bezier(.2,1.4,.4,1) both;
+    }
+
+    .shake {
+      animation: shake 0.42s ease both;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 8px;
+      height: 14px;
+      border-radius: 4px;
+      top: -20px;
+      animation: confetti 1.2s ease-out forwards;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes resultPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.78) rotate(-2deg);
+      }
+      70% {
+        opacity: 1;
+        transform: scale(1.08) rotate(1deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 0.78;
+      }
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translate3d(0, 0, 0);
+      }
+      50% {
+        transform: translate3d(12px, -14px, 0);
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      20% {
+        transform: translateX(-8px);
+      }
+      40% {
+        transform: translateX(8px);
+      }
+      60% {
+        transform: translateX(-6px);
+      }
+      80% {
+        transform: translateX(6px);
+      }
+    }
+
+    @keyframes confetti {
+      0% {
+        transform: translateY(0) rotate(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(760px) rotate(520deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-height: 740px) {
+      .product-img {
+        height: 190px;
+      }
+
+      .app-screen {
+        padding: 14px;
+      }
+
+      .compact-gap {
+        gap: 10px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-screen">
+    <div class="blob blob-one"></div>
+    <div class="blob blob-two"></div>
+    <div class="blob blob-three"></div>
+
+    <section id="homeScreen" class="screen active content flex-col gap-6">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-[28px] bg-white shadow-xl mb-5">
+          <span class="text-4xl">🏷️</span>
+        </div>
+        <h1 class="text-5xl font-black tracking-[-0.08em] leading-none">Price<br>Master</h1>
+        <p class="mt-4 text-sm font-semibold opacity-70">
+          Devine le prix exact. Bats ton adversaire.
+        </p>
+      </div>
+
+      <div class="glass rounded-[34px] p-5 flex flex-col gap-3">
+        <button id="createRoomBtn" class="btn btn-primary">Créer un Salon</button>
+        <button id="showJoinBtn" class="btn btn-mint">Rejoindre un Salon</button>
+
+        <div id="joinBox" class="hidden pt-2 flex flex-col gap-3">
+          <input
+            id="roomCodeInput"
+            class="price-input !text-2xl uppercase"
+            maxlength="6"
+            inputmode="text"
+            placeholder="CODE"
+          />
+          <button id="joinRoomBtn" class="btn btn-lavender">Entrer dans l'arène</button>
+        </div>
+      </div>
+
+      <p class="text-center text-xs font-semibold opacity-50">
+        Multijoueur avec Firebase Realtime Database
+      </p>
+    </section>
+
+    <section id="lobbyScreen" class="screen content flex-col gap-5">
+      <div class="text-center">
+        <p class="badge inline-block mb-4">Salon privé</p>
+        <h2 class="text-3xl font-black tracking-[-0.05em]">Partage ce code</h2>
+      </div>
+
+      <div class="glass rounded-[34px] p-6 text-center">
+        <div id="roomCodeDisplay" class="text-5xl font-black tracking-[0.12em]"></div>
+        <p id="playerStatus" class="mt-4 text-sm font-bold opacity-60 pulse">
+          En attente du joueur 2...
+        </p>
+      </div>
+
+      <button id="startGameBtn" class="btn btn-primary hidden">Lancer la partie</button>
+      <button id="leaveLobbyBtn" class="btn btn-rose">Quitter</button>
+    </section>
+
+    <section id="gameScreen" class="screen content flex-col h-full justify-between compact-gap gap-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-black opacity-50 uppercase">Manche</p>
+          <h2 id="roundLabel" class="text-2xl font-black tracking-[-0.05em]">1/6</h2>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-black opacity-50 uppercase">Score</p>
+          <h2 id="scoreLabel" class="text-2xl font-black tracking-[-0.05em]">0 - 0</h2>
+        </div>
+      </div>
+
+      <div class="glass rounded-[34px] p-3 flex flex-col gap-3">
+        <img id="productImage" class="product-img" alt="Produit" />
+        <div class="px-2 pb-1">
+          <p id="productCategory" class="badge inline-block mb-2"></p>
+          <h3 id="productTitle" class="text-xl font-black tracking-[-0.04em] leading-tight"></h3>
+        </div>
+      </div>
+
+      <div id="guessPanel" class="flex flex-col gap-3">
+        <div class="relative">
+          <input
+            id="guessInput"
+            class="price-input"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="Prix ?"
+          />
+          <span class="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black opacity-30">$</span>
+        </div>
+        <button id="submitGuessBtn" class="btn btn-primary">Valider</button>
+      </div>
+
+      <div id="waitingPanel" class="hidden glass rounded-[28px] p-5 text-center">
+        <p class="text-2xl mb-2">⏳</p>
+        <p class="font-black pulse">En attente de l'autre joueur...</p>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen content flex-col gap-4">
+      <div class="feedback-card glass rounded-[38px] p-6 text-center">
+        <p id="resultEmoji" class="text-6xl mb-3">🎯</p>
+        <h2 id="resultTitle" class="text-4xl font-black tracking-[-0.07em]"></h2>
+        <p id="actualPrice" class="mt-2 text-lg font-black"></p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="glass rounded-[26px] p-4 text-center">
+          <p class="text-xs font-black opacity-50 uppercase">Toi</p>
+          <p id="yourGuessText" class="text-2xl font-black"></p>
+          <p id="yourDiffText" class="text-xs font-bold opacity-60"></p>
+        </div>
+        <div class="glass rounded-[26px] p-4 text-center">
+          <p class="text-xs font-black opacity-50 uppercase">Rival</p>
+          <p id="opponentGuessText" class="text-2xl font-black"></p>
+          <p id="opponentDiffText" class="text-xs font-bold opacity-60"></p>
+        </div>
+      </div>
+
+      <button id="nextRoundBtn" class="btn btn-primary">Continuer</button>
+    </section>
+
+    <section id="finalScreen" class="screen content flex-col gap-5">
+      <div class="text-center">
+        <p id="finalEmoji" class="text-7xl mb-4">🏆</p>
+        <h2 id="finalTitle" class="text-5xl font-black tracking-[-0.08em] leading-none"></h2>
+        <p id="finalScore" class="mt-4 text-xl font-black"></p>
+      </div>
+
+      <div class="glass rounded-[34px] p-5 flex flex-col gap-3">
+        <button id="replayBtn" class="btn btn-mint">Rejouer</button>
+        <button id="backHomeBtn" class="btn btn-rose">Accueil</button>
+      </div>
+    </section>
+
+    <section id="loadingScreen" class="screen content flex-col gap-4 text-center">
+      <div class="glass rounded-[34px] p-8">
+        <p class="text-6xl mb-4 pulse">🛍️</p>
+        <h2 class="text-3xl font-black tracking-[-0.05em]">Chargement...</h2>
+        <p id="loadingText" class="mt-2 text-sm font-bold opacity-60">Préparation des produits</p>
+      </div>
+    </section>
+
+    <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-5 py-3 rounded-full bg-[#22223B] text-white text-sm font-black shadow-2xl"></div>
+  </main>
+
+  <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDc2vXIRfWp2OCkcNrr13pme-x0kKbn3DM",
+  authDomain: "mille-bornes-355ca.firebaseapp.com",
+  databaseURL: "https://mille-bornes-355ca-default-rtdb.firebaseio.com",
+  projectId: "mille-bornes-355ca",
+  storageBucket: "mille-bornes-355ca.appspot.com",
+  messagingSenderId: "1018160779227",
+  appId: "1:1018160779227:web:e686d32f117dfef63261fe"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const TOTAL_ROUNDS = 6;
+    const API_URL = "https://dummyjson.com/products?limit=100";
+
+    const state = {
+      roomId: null,
+      playerId: null,
+      playerKey: null,
+      isHost: false,
+      products: [],
+      roomRef: null,
+      unsubscribe: null,
+      lastResolvedRound: -1,
+      lastSeenStatus: null
+    };
+
+    const screens = {
+      home: document.getElementById("homeScreen"),
+      lobby: document.getElementById("lobbyScreen"),
+      game: document.getElementById("gameScreen"),
+      result: document.getElementById("resultScreen"),
+      final: document.getElementById("finalScreen"),
+      loading: document.getElementById("loadingScreen")
+    };
+
+    const el = {
+      createRoomBtn: document.getElementById("createRoomBtn"),
+      showJoinBtn: document.getElementById("showJoinBtn"),
+      joinBox: document.getElementById("joinBox"),
+      roomCodeInput: document.getElementById("roomCodeInput"),
+      joinRoomBtn: document.getElementById("joinRoomBtn"),
+      roomCodeDisplay: document.getElementById("roomCodeDisplay"),
+      playerStatus: document.getElementById("playerStatus"),
+      startGameBtn: document.getElementById("startGameBtn"),
+      leaveLobbyBtn: document.getElementById("leaveLobbyBtn"),
+      roundLabel: document.getElementById("roundLabel"),
+      scoreLabel: document.getElementById("scoreLabel"),
+      productImage: document.getElementById("productImage"),
+      productCategory: document.getElementById("productCategory"),
+      productTitle: document.getElementById("productTitle"),
+      guessInput: document.getElementById("guessInput"),
+      submitGuessBtn: document.getElementById("submitGuessBtn"),
+      guessPanel: document.getElementById("guessPanel"),
+      waitingPanel: document.getElementById("waitingPanel"),
+      resultEmoji: document.getElementById("resultEmoji"),
+      resultTitle: document.getElementById("resultTitle"),
+      actualPrice: document.getElementById("actualPrice"),
+      yourGuessText: document.getElementById("yourGuessText"),
+      yourDiffText: document.getElementById("yourDiffText"),
+      opponentGuessText: document.getElementById("opponentGuessText"),
+      opponentDiffText: document.getElementById("opponentDiffText"),
+      nextRoundBtn: document.getElementById("nextRoundBtn"),
+      finalEmoji: document.getElementById("finalEmoji"),
+      finalTitle: document.getElementById("finalTitle"),
+      finalScore: document.getElementById("finalScore"),
+      replayBtn: document.getElementById("replayBtn"),
+      backHomeBtn: document.getElementById("backHomeBtn"),
+      loadingText: document.getElementById("loadingText"),
+      toast: document.getElementById("toast")
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(screen => screen.classList.remove("active"));
+      screens[name].classList.add("active");
+    }
+
+    function toast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.remove("hidden");
+
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        el.toast.classList.add("hidden");
+      }, 2200);
+    }
+
+    function makeRoomId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+
+      for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      return code;
+    }
+
+    function makePlayerId() {
+      return "p_" + Math.random().toString(36).slice(2, 11);
+    }
+
+    async function fetchProducts() {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      return data.products.map(product => ({
+        id: product.id,
+        title: product.title,
+        category: product.category,
+        price: Number(product.price),
+        image: product.thumbnail || product.images?.[0] || ""
+      }));
+    }
+
+    function pickRandomProducts(products, count) {
+      const shuffled = [...products].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    }
+
+    function resetLocalRoundState() {
+      el.guessInput.value = "";
+      el.guessPanel.classList.remove("hidden");
+      el.waitingPanel.classList.add("hidden");
+      el.submitGuessBtn.disabled = false;
+      el.submitGuessBtn.style.opacity = "1";
+    }
+
+    function getPlayers(room) {
+      return room.players || {};
+    }
+
+    function getPlayerKeys(room) {
+      return Object.keys(getPlayers(room));
+    }
+
+    function getOpponentKey(room) {
+      return getPlayerKeys(room).find(key => key !== state.playerKey);
+    }
+
+    function getCurrentProduct(room) {
+      return room.products?.[room.currentRound];
+    }
+
+    function formatPrice(value) {
+      return Number(value).toFixed(2) + " $";
+    }
+
+    function calculateRound(room) {
+      const product = getCurrentProduct(room);
+      const guesses = room.guesses?.[room.currentRound] || {};
+      const playerKeys = getPlayerKeys(room);
+
+      if (!product || playerKeys.length < 2) return null;
+
+      const p1 = playerKeys[0];
+      const p2 = playerKeys[1];
+
+      if (!guesses[p1] || !guesses[p2]) return null;
+
+      const g1 = Number(guesses[p1].guess);
+      const g2 = Number(guesses[p2].guess);
+      const actual = Number(product.price);
+
+      const d1 = Math.abs(g1 - actual);
+      const d2 = Math.abs(g2 - actual);
+
+      let winner = null;
+
+      if (d1 < d2) winner = p1;
+      if (d2 < d1) winner = p2;
+      if (d1 === d2) winner = "tie";
+
+      return {
+        product,
+        actual,
+        guesses: {
+          [p1]: g1,
+          [p2]: g2
+        },
+        diffs: {
+          [p1]: d1,
+          [p2]: d2
+        },
+        winner
+      };
+    }
+
+    function getFeedback(result, myKey) {
+      const myGuess = result.guesses[myKey];
+      const myDiff = result.diffs[myKey];
+      const actual = result.actual;
+      const percentDiff = actual === 0 ? 0 : myDiff / actual;
+
+      if (result.winner === "tie") {
+        return {
+          title: "EX-ÆQUO !",
+          emoji: "🤝"
+        };
+      }
+
+      if (myDiff === 0) {
+        return {
+          title: "Bingo !",
+          emoji: "🎯"
+        };
+      }
+
+      if (percentDiff <= 0.1) {
+        return {
+          title: "Presque !",
+          emoji: "🔥"
+        };
+      }
+
+      if (result.winner === myKey) {
+        return {
+          title: "Gagné !",
+          emoji: "✨"
+        };
+      }
+
+      return {
+        title: "Perdu !",
+        emoji: "💔"
+      };
+    }
+
+    function renderGame(room) {
+      const product = getCurrentProduct(room);
+
+      if (!product) return;
+
+      const players = getPlayers(room);
+      const myScore = players[state.playerKey]?.score || 0;
+      const opponentKey = getOpponentKey(room);
+      const opponentScore = opponentKey ? players[opponentKey]?.score || 0 : 0;
+      const myGuess = room.guesses?.[room.currentRound]?.[state.playerKey];
+
+      el.roundLabel.textContent = `${room.currentRound + 1}/${TOTAL_ROUNDS}`;
+      el.scoreLabel.textContent = `${myScore} - ${opponentScore}`;
+      el.productImage.src = product.image;
+      el.productCategory.textContent = product.category;
+      el.productTitle.textContent = product.title;
+
+      if (myGuess) {
+        el.guessPanel.classList.add("hidden");
+        el.waitingPanel.classList.remove("hidden");
+      } else {
+        resetLocalRoundState();
+      }
+
+      showScreen("game");
+    }
+
+    function renderResult(room) {
+      const result = room.roundResults?.[room.currentRound] || calculateRound(room);
+      if (!result) return;
+
+      const opponentKey = getOpponentKey(room);
+      const feedback = getFeedback(result, state.playerKey);
+
+      el.resultEmoji.textContent = feedback.emoji;
+      el.resultTitle.textContent = feedback.title;
+      el.actualPrice.textContent = `Prix réel : ${formatPrice(result.actual)}`;
+
+      el.yourGuessText.textContent = formatPrice(result.guesses[state.playerKey]);
+      el.yourDiffText.textContent = `Écart : ${formatPrice(result.diffs[state.playerKey])}`;
+
+      el.opponentGuessText.textContent = formatPrice(result.guesses[opponentKey]);
+      el.opponentDiffText.textContent = `Écart : ${formatPrice(result.diffs[opponentKey])}`;
+
+      el.nextRoundBtn.textContent = room.currentRound >= TOTAL_ROUNDS - 1 ? "Voir le score final" : "Manche suivante";
+
+      showScreen("result");
+      makeConfetti(feedback.title);
+    }
+
+    function renderFinal(room) {
+      const players = getPlayers(room);
+      const opponentKey = getOpponentKey(room);
+
+      const myScore = players[state.playerKey]?.score || 0;
+      const opponentScore = opponentKey ? players[opponentKey]?.score || 0 : 0;
+
+      el.finalScore.textContent = `Score final : ${myScore} - ${opponentScore}`;
+
+      if (myScore > opponentScore) {
+        el.finalEmoji.textContent = "🏆";
+        el.finalTitle.textContent = "Victoire";
+      } else if (myScore < opponentScore) {
+        el.finalEmoji.textContent = "🥲";
+        el.finalTitle.textContent = "Défaite";
+      } else {
+        el.finalEmoji.textContent = "🤝";
+        el.finalTitle.textContent = "Égalité";
+      }
+
+      showScreen("final");
+      makeConfetti("final");
+    }
+
+    function renderLobby(room) {
+      const count = getPlayerKeys(room).length;
+
+      el.roomCodeDisplay.textContent = state.roomId;
+
+      if (count < 2) {
+        el.playerStatus.textContent = "En attente du joueur 2...";
+        el.startGameBtn.classList.add("hidden");
+      } else {
+        el.playerStatus.textContent = "Deux joueurs connectés";
+        if (state.isHost) {
+          el.startGameBtn.classList.remove("hidden");
+        }
+      }
+
+      showScreen("lobby");
+    }
+
+    async function resolveRoundIfNeeded(room) {
+      if (!state.isHost) return;
+      if (room.status !== "playing") return;
+
+      const round = room.currentRound;
+      const guesses = room.guesses?.[round] || {};
+      const playerKeys = getPlayerKeys(room);
+
+      if (playerKeys.length < 2) return;
+      if (!guesses[playerKeys[0]] || !guesses[playerKeys[1]]) return;
+      if (state.lastResolvedRound === round) return;
+
+      state.lastResolvedRound = round;
+
+      const result = calculateRound(room);
+      if (!result) return;
+
+      const updates = {};
+      updates[`roundResults/${round}`] = result;
+
+      if (result.winner !== "tie") {
+        const currentScore = room.players?.[result.winner]?.score || 0;
+        updates[`players/${result.winner}/score`] = currentScore + 1;
+      }
+
+      updates.status = "result";
+
+      await state.roomRef.update(updates);
+    }
+
+    function listenToRoom() {
+      if (!state.roomRef) return;
+
+      state.roomRef.on("value", async snapshot => {
+        const room = snapshot.val();
+
+        if (!room) {
+          cleanRoomListener();
+          toast("Le salon n'existe plus.");
+          showScreen("home");
+          return;
+        }
+
+        if (room.status === "playing") {
+          await resolveRoundIfNeeded(room);
+        }
+
+        if (room.status !== state.lastSeenStatus) {
+          state.lastSeenStatus = room.status;
+        }
+
+        if (room.status === "lobby") renderLobby(room);
+        if (room.status === "playing") renderGame(room);
+        if (room.status === "result") renderResult(room);
+        if (room.status === "finished") renderFinal(room);
+      });
+    }
+
+    function cleanRoomListener() {
+      if (state.roomRef) {
+        state.roomRef.off();
+      }
+    }
+
+    async function createRoom() {
+      try {
+        showScreen("loading");
+        el.loadingText.textContent = "Création du salon";
+
+        const products = await fetchProducts();
+        const selectedProducts = pickRandomProducts(products, TOTAL_ROUNDS);
+
+        const roomId = makeRoomId();
+        const playerId = makePlayerId();
+        const playerKey = "player1";
+
+        state.roomId = roomId;
+        state.playerId = playerId;
+        state.playerKey = playerKey;
+        state.isHost = true;
+        state.products = selectedProducts;
+        state.roomRef = db.ref(`rooms/${roomId}`);
+        state.lastResolvedRound = -1;
+
+        await state.roomRef.set({
+          createdAt: Date.now(),
+          status: "lobby",
+          currentRound: 0,
+          products: selectedProducts,
+          players: {
+            [playerKey]: {
+              id: playerId,
+              score: 0,
+              joinedAt: Date.now()
+            }
+          },
+          guesses: {},
+          roundResults: {}
+        });
+
+        listenToRoom();
+      } catch (error) {
+        console.error(error);
+        toast("Impossible de créer le salon.");
+        showScreen("home");
+      }
+    }
+
+    async function joinRoom() {
+      try {
+        const roomId = el.roomCodeInput.value.trim().toUpperCase();
+
+        if (roomId.length < 4) {
+          toast("Entre un code valide.");
+          return;
+        }
+
+        showScreen("loading");
+        el.loadingText.textContent = "Connexion au salon";
+
+        const roomRef = db.ref(`rooms/${roomId}`);
+        const snapshot = await roomRef.get();
+        const room = snapshot.val();
+
+        if (!room) {
+          toast("Salon introuvable.");
+          showScreen("home");
+          return;
+        }
+
+        const playerKeys = getPlayerKeys(room);
+
+        if (playerKeys.length >= 2 && !playerKeys.includes(state.playerKey)) {
+          toast("Ce salon est déjà complet.");
+          showScreen("home");
+          return;
+        }
+
+        const playerId = makePlayerId();
+        const playerKey = playerKeys.includes("player2") ? "player1" : "player2";
+
+        state.roomId = roomId;
+        state.playerId = playerId;
+        state.playerKey = playerKey;
+        state.isHost = false;
+        state.roomRef = roomRef;
+        state.lastResolvedRound = -1;
+
+        await roomRef.child(`players/${playerKey}`).set({
+          id: playerId,
+          score: 0,
+          joinedAt: Date.now()
+        });
+
+        listenToRoom();
+      } catch (error) {
+        console.error(error);
+        toast("Impossible de rejoindre le salon.");
+        showScreen("home");
+      }
+    }
+
+    async function startGame() {
+      const snapshot = await state.roomRef.get();
+      const room = snapshot.val();
+
+      if (!room || getPlayerKeys(room).length < 2) {
+        toast("Il faut deux joueurs.");
+        return;
+      }
+
+      await state.roomRef.update({
+        status: "playing",
+        currentRound: 0,
+        guesses: {},
+        roundResults: {}
+      });
+    }
+
+    async function submitGuess() {
+      const rawValue = el.guessInput.value;
+
+      if (!rawValue || Number(rawValue) < 0) {
+        el.guessPanel.classList.add("shake");
+        setTimeout(() => el.guessPanel.classList.remove("shake"), 450);
+        toast("Entre un prix.");
+        return;
+      }
+
+      el.submitGuessBtn.disabled = true;
+      el.submitGuessBtn.style.opacity = "0.5";
+
+      const snapshot = await state.roomRef.get();
+      const room = snapshot.val();
+
+      if (!room || room.status !== "playing") return;
+
+      await state.roomRef.child(`guesses/${room.currentRound}/${state.playerKey}`).set({
+        guess: Number(rawValue),
+        submittedAt: Date.now()
+      });
+    }
+
+    async function nextRound() {
+      const snapshot = await state.roomRef.get();
+      const room = snapshot.val();
+
+      if (!room) return;
+
+      if (room.currentRound >= TOTAL_ROUNDS - 1) {
+        await state.roomRef.update({
+          status: "finished"
+        });
+      } else {
+        await state.roomRef.update({
+          currentRound: room.currentRound + 1,
+          status: "playing"
+        });
+      }
+    }
+
+    async function replay() {
+      if (!state.isHost) {
+        toast("Seul l'hôte peut relancer.");
+        return;
+      }
+
+      showScreen("loading");
+      el.loadingText.textContent = "Nouvelle partie";
+
+      const products = await fetchProducts();
+      const selectedProducts = pickRandomProducts(products, TOTAL_ROUNDS);
+
+      state.lastResolvedRound = -1;
+
+      await state.roomRef.update({
+        status: "playing",
+        currentRound: 0,
+        products: selectedProducts,
+        guesses: {},
+        roundResults: {},
+        "players/player1/score": 0,
+        "players/player2/score": 0
+      });
+    }
+
+    async function leaveRoom() {
+      try {
+        if (state.roomRef && state.playerKey) {
+          await state.roomRef.child(`players/${state.playerKey}`).remove();
+
+          if (state.isHost) {
+            await state.roomRef.remove();
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      cleanRoomListener();
+
+      state.roomId = null;
+      state.playerId = null;
+      state.playerKey = null;
+      state.isHost = false;
+      state.roomRef = null;
+      state.lastResolvedRound = -1;
+      state.lastSeenStatus = null;
+
+      showScreen("home");
+    }
+
+    function makeConfetti(type) {
+      const shouldConfetti = ["Bingo !", "Presque !", "Gagné !", "EX-ÆQUO !", "final"].includes(type);
+      if (!shouldConfetti) return;
+
+      const colors = ["#B8F2D8", "#F7C8D0", "#D8C7FF", "#FFD166", "#FFFFFF"];
+
+      for (let i = 0; i < 28; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.35 + "s";
+        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+
+        document.body.appendChild(piece);
+
+        setTimeout(() => {
+          piece.remove();
+        }, 1600);
+      }
+    }
+
+    el.createRoomBtn.addEventListener("click", createRoom);
+
+    el.showJoinBtn.addEventListener("click", () => {
+      el.joinBox.classList.toggle("hidden");
+      setTimeout(() => el.roomCodeInput.focus(), 100);
+    });
+
+    el.joinRoomBtn.addEventListener("click", joinRoom);
+
+    el.roomCodeInput.addEventListener("input", event => {
+      event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    });
+
+    el.startGameBtn.addEventListener("click", startGame);
+    el.leaveLobbyBtn.addEventListener("click", leaveRoom);
+    el.submitGuessBtn.addEventListener("click", submitGuess);
+    el.nextRoundBtn.addEventListener("click", nextRound);
+    el.replayBtn.addEventListener("click", replay);
+    el.backHomeBtn.addEventListener("click", leaveRoom);
+
+    el.guessInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        submitGuess();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      cleanRoomListener();
+    });
+  </script>
+</body>
+</html>
