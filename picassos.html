@@ -206,8 +206,8 @@
     }
 
     .tool-dot {
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 999px;
       border: 3px solid white;
       box-shadow: 0 8px 14px rgba(31, 41, 55, 0.14);
@@ -291,8 +291,8 @@
         padding: 7px 10px;
       }
       .tool-dot {
-        width: 30px;
-        height: 30px;
+        width: 27px;
+        height: 27px;
       }
     }
   </style>
@@ -414,11 +414,11 @@
         </div>
 
         <div id="drawingTools" class="card p-2 space-y-2 hidden">
-          <div class="flex items-center justify-between gap-2">
-            <div id="colorTools" class="flex gap-2"></div>
-            <button id="eraserBtn" class="btn btn-secondary min-h-0 px-3 py-2 text-sm">Gomme</button>
-            <button id="clearBtn" class="btn btn-danger min-h-0 px-3 py-2 text-sm">Effacer</button>
-          </div>
+      <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+  <div id="colorTools" class="flex min-w-0 flex-wrap gap-1.5"></div>
+  <button id="eraserBtn" class="btn btn-secondary min-h-0 px-2 py-2 text-xs">Gomme</button>
+  <button id="clearBtn" class="btn btn-danger min-h-0 px-2 py-2 text-xs">Effacer</button>
+</div>
           <div id="sizeTools" class="flex items-center justify-center gap-3"></div>
         </div>
 
@@ -801,25 +801,28 @@ const firebaseConfig = {
       const value = $("guessInput").value;
       $("guessInput").value = "";
       if (!value.trim()) return;
-      if (state.room.phase !== "guessing" || isDrawer()) return;
+    if (!["drawing", "guessing"].includes(state.room.phase) || isDrawer()) return;
 
       const current = state.room.current;
       const correct = normalizeText(value) === current.normalizedWord;
       const attempts = (current.attempts || 0) + (correct ? 0 : 1);
       const guesses = [...(current.guesses || []), { value, correct, at: Date.now() }];
+if (correct) {
+  const slot = mySlot();
+  const newScore = (state.room.scores?.[slot] || 0) + current.points;
 
-      if (correct) {
-        const slot = mySlot();
-        const newScore = (state.room.scores?.[slot] || 0) + current.points;
-        await update(roomRef(), {
-          [`scores/${slot}`]: newScore,
-          "current/guesses": guesses,
-          "current/solved": true,
-        });
-        toast(`Bravo ! +${current.points} point${current.points > 1 ? "s" : ""}`);
-        setTimeout(nextRound, 900);
-        return;
-      }
+  await saveCurrentDrawing(true);
+
+  await update(roomRef(), {
+    [`scores/${slot}`]: newScore,
+    "current/guesses": guesses,
+    "current/solved": true,
+  });
+
+  toast(`Bravo ! +${current.points} point${current.points > 1 ? "s" : ""}`);
+  setTimeout(nextRound, 900);
+  return;
+}
 
       const revealed = buildHints(current.normalizedWord, attempts, current.revealed || []);
       await update(roomRef("current"), { attempts, guesses, revealed });
@@ -910,7 +913,7 @@ const firebaseConfig = {
       $("roleBanner").textContent = `${role} · ${drawer === "p1" ? "Joueur 1" : "Joueur 2"} au crayon`;
 
       $("choicePanel").classList.toggle("hidden", !(phase === "choice" && meDrawer));
-      $("guessPanel").classList.toggle("hidden", !(phase === "guessing" && !meDrawer));
+$("guessPanel").classList.toggle("hidden", !((phase === "drawing" || phase === "guessing") && !meDrawer));
       $("drawingTools").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
       $("forceNextBtn").classList.toggle("hidden", !(phase === "drawing" && meDrawer));
       $("canvasLocked").classList.toggle("hidden", phase !== "choice");
@@ -1014,14 +1017,19 @@ const firebaseConfig = {
       ctx.fillRect(0, 0, rect.width, rect.height);
     }
 
-    function getPoint(event) {
-      const touch = event.touches?.[0] || event.changedTouches?.[0] || event;
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)),
-        y: Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height)),
-      };
-    }
+  function getPoint(event) {
+  const touch = event.touches?.[0] || event.changedTouches?.[0] || event;
+  const rect = canvas.getBoundingClientRect();
+
+  // Décalage spécial doigt iPhone :
+  // le trait apparaît environ 34px au-dessus du doigt.
+  const fingerOffsetY = 34;
+
+  return {
+    x: Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)),
+    y: Math.max(0, Math.min(1, (touch.clientY - rect.top - fingerOffsetY) / rect.height)),
+  };
+}
 
     function drawSegment(from, to, stroke) {
       const rect = canvas.getBoundingClientRect();
