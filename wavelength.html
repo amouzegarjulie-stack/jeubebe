@@ -939,7 +939,7 @@
         clue: "",
         left: p[0],
         right: p[1],
-        rerollsLeft: 3,
+        rerollsLeft: 100,
         scores: [],
         lastScore: 0,
         creatorPerfect: false,
@@ -1185,7 +1185,7 @@
       els.rightWord.textContent = d.right || "";
       els.clueText.textContent = d.clue || (master ? "Écris un indice" : "En attente de l'indice");
       els.modeSelect.value = d.mode || "auto";
-      const rerollsLeft = typeof d.rerollsLeft === "number" ? d.rerollsLeft : 3;
+      const rerollsLeft = typeof d.rerollsLeft === "number" ? d.rerollsLeft : 100;
 
 els.rerollWords.classList.toggle("hidden", master || d.phase !== "clue" || rerollsLeft <= 0);
 els.rerollWords.disabled = master || d.phase !== "clue" || rerollsLeft <= 0;
@@ -1209,7 +1209,7 @@ els.rerollWords.title = "Changer les mots (" + rerollsLeft + " restant" + (rerol
       if (!master && d.phase === "clue") {
   els.gameHint.textContent = rerollsLeft > 0
     ? "Attends l'indice du Maître. Tu peux changer les mots encore " + rerollsLeft + " fois."
-    : "Attends l'indice du Maître. Tu as utilisé tes 3 changements de mots.";
+    : "Attends l'indice du Maître. Tu as utilisé tes 100 changements de mots.";
 }
 
       renderScores(d.scores || []);
@@ -1284,7 +1284,7 @@ els.rerollWords.title = "Changer les mots (" + rerollsLeft + " restant" + (rerol
 
   if (isCurrentMaster() || d.phase !== "clue") return;
 
-  const remaining = typeof d.rerollsLeft === "number" ? d.rerollsLeft : 3;
+  const remaining = typeof d.rerollsLeft === "number" ? d.rerollsLeft : 100;
 
   if (remaining <= 0) {
     els.gameHint.textContent = "Tu as déjà utilisé tes 3 changements de mots.";
@@ -1374,7 +1374,7 @@ els.rerollWords.title = "Changer les mots (" + rerollsLeft + " restant" + (rerol
   clue: "",
   left: p[0],
   right: p[1],
-  rerollsLeft: 3,
+  rerollsLeft: 100,
   lastScore: 0
 });
     });
