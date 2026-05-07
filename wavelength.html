@@ -1248,8 +1248,10 @@ els.rerollWords.title = "Changer les mots (" + rerollsLeft + " restant" + (rerol
 
     els.backHomeBtn.addEventListener("click", () => show(els.homeView));
     els.joinRoomBtn.addEventListener("click", joinRoom);
-    els.startAsMasterBtn.addEventListener("click", startGame);
-
+   els.startAsMasterBtn.addEventListener("click", () => {
+  state.role = "master";
+  startGame();
+});
     els.copyLinkBtn.addEventListener("click", async () => {
       const url = location.origin + location.pathname + "?room=" + encodeURIComponent(state.room);
 
